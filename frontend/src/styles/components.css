@@ -1,0 +1,164 @@
+/* Shared component header styling */
+.summarizer-container h2,
+.action-extractor h2,
+.meeting-notes-container h2,
+.signal-detector h2 {
+  color: var(--primary-color);
+  margin-bottom: 8px;
+  font-size: 28px;
+  border-left: 4px solid var(--secondary-color);
+  padding-left: 16px;
+  margin-top: 0;
+  margin-left: 0;
+}
+
+/* Shared subtitle styling */
+.summarizer-container .subtitle,
+.action-extractor .subtitle,
+.meeting-notes-container .subtitle,
+.signal-detector .subtitle {
+  color: #666;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+/* Shared form styling */
+.summarizer-container textarea,
+.action-extractor textarea,
+.meeting-notes-container textarea,
+.signal-detector textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 14px;
+  resize: vertical;
+  margin-bottom: 12px;
+  background-color: var(--white);
+}
+
+.summarizer-container textarea:focus,
+.action-extractor textarea:focus,
+.meeting-notes-container textarea:focus,
+.signal-detector textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(0, 46, 74, 0.1);
+}
+
+/* Shared button styling */
+.summarizer-container button,
+.action-extractor button,
+.meeting-notes-container button,
+.signal-detector button {
+  background: linear-gradient(135deg, var(--primary-color) 0%, #001f2e 100%);
+  color: var(--white);
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.summarizer-container button:hover:not(:disabled),
+.action-extractor button:hover:not(:disabled),
+.meeting-notes-container button:hover:not(:disabled),
+.signal-detector button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 46, 74, 0.3);
+}
+
+.summarizer-container button:disabled,
+.action-extractor button:disabled,
+.meeting-notes-container button:disabled,
+.signal-detector button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Shared result card styling */
+.result-card {
+  background: var(--white);
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid var(--secondary-color);
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 46, 74, 0.1);
+}
+
+.result-card h3 {
+  color: var(--primary-color);
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+.result-card p {
+  color: var(--dark-gray);
+  line-height: 1.6;
+  margin: 0 0 12px 0;
+}
+
+.result-card ul {
+  margin: 0;
+  padding-left: 24px;
+}
+
+.result-card li {
+  margin: 8px 0;
+  color: #555;
+}
+
+/* Shared error styling */
+.error {
+  color: var(--error-color);
+  background: #ffebee;
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 12px;
+  border-left: 4px solid var(--error-color);
+}
+
+/* Table styling */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--white);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th {
+  background-color: var(--primary-color);
+  color: var(--white);
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+}
+
+td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+tr:hover {
+  background-color: var(--light-gray);
+}
+
+/* Export and action buttons */
+.export-btn,
+.copy-btn {
+  background: var(--secondary-color);
+  color: var(--white);
+  padding: 8px 16px;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.export-btn:hover,
+.copy-btn:hover {
+  background: #e55a00;
+}

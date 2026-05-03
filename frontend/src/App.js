@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import Summarizer from './components/Summarizer';
 import ActionExtractor from './components/ActionExtractor';
+import MeetingNotes from './components/MeetingNotes';
+import SignalDetector from './components/SignalDetector';
+import './theme.css';
+import './styles/components.css';
 import './App.css';
 
 function App() {
@@ -9,27 +13,43 @@ function App() {
   return (
     <div className="App">
       <header className="header">
-        <h1>✉️ ConstructMail Intelligence</h1>
+        <h1>📧 ConstructMail</h1>
         <p>AI-powered email intelligence for General Contractors</p>
       </header>
-      
-      <div className="tabs">
-        <button 
-          className={`tab ${activeTab === 'summarizer' ? 'active' : ''}`}
+
+      <nav className="nav-tabs">
+        <button
+          className={`nav-tab ${activeTab === 'summarizer' ? 'active' : ''}`}
           onClick={() => setActiveTab('summarizer')}
         >
-          📄 Summarizer
+          📋 Summarizer
         </button>
-        <button 
-          className={`tab ${activeTab === 'actions' ? 'active' : ''}`}
+        <button
+          className={`nav-tab ${activeTab === 'actions' ? 'active' : ''}`}
           onClick={() => setActiveTab('actions')}
         >
           ✓ Actions
         </button>
-      </div>
+        <button
+          className={`nav-tab ${activeTab === 'meeting' ? 'active' : ''}`}
+          onClick={() => setActiveTab('meeting')}
+        >
+          👥 Meeting Notes
+        </button>
+        <button
+          className={`nav-tab ${activeTab === 'signals' ? 'active' : ''}`}
+          onClick={() => setActiveTab('signals')}
+        >
+          🚨 RFI/Change Orders
+        </button>
+      </nav>
 
-      {activeTab === 'summarizer' && <Summarizer />}
-      {activeTab === 'actions' && <ActionExtractor />}
+      <div className="tab-content">
+        {activeTab === 'summarizer' && <Summarizer />}
+        {activeTab === 'actions' && <ActionExtractor />}
+        {activeTab === 'meeting' && <MeetingNotes />}
+        {activeTab === 'signals' && <SignalDetector />}
+      </div>
     </div>
   );
 }
