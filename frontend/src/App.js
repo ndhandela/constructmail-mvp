@@ -14,7 +14,7 @@ function App() {
   return (
     <div className="App">
       <header className="header">
-        <h1>📧 ConstructMail Intelligence</h1>
+        <h1>📧 ConstructMail</h1>
         <p>AI-powered email intelligence for General Contractors</p>
       </header>
 
