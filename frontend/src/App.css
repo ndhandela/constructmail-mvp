@@ -21,10 +21,10 @@
 }
 
 .logo-pomar {
-  height: 120px;
+  height: 240px;
   width: auto;
   flex-shrink: 0;
-  min-width: 120px;
+  min-width: 240px;
 }
 
 .header-center {
@@ -37,7 +37,7 @@
 }
 
 .logo-constructmail {
-  height: 110px;
+  height: 240px;
   width: auto;
 }
 
