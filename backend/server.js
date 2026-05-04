@@ -221,6 +221,40 @@ app.post('/api/detect-signals', async (req, res) => {
   }
 });
 
+// Dashboard endpoints
+app.get('/api/recent-summaries', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM email_threads ORDER BY created_at DESC LIMIT 5'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/open-actions', async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM action_items WHERE status = 'open' ORDER BY due_date ASC LIMIT 10"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/recent-signals', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM signals ORDER BY created_at DESC LIMIT 5'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
