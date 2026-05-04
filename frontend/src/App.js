@@ -14,7 +14,13 @@ function App() {
   return (
     <div className="App">
       <header className="header">
-        <h1>📧 ConstructMail</h1>
+        <div className="header-content">
+          <img src="/logos/pomar.png" alt="pomar" className="logo-left" />
+          <div className="header-center">
+            <img src="/logos/constructmail.png" alt="ConstructMail" className="logo-center" />
+            <h1>ConstructMail</h1>
+          </div>
+        </div>
         <p>AI-powered email intelligence for General Contractors</p>
       </header>
 
