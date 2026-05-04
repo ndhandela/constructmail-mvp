@@ -13,15 +13,18 @@ function App() {
 
   return (
     <div className="App">
-      <header className="header">
-        <div className="header-top">
-          <img src="/logos/pomar.png" alt="pomar" className="logo-pomar" />
-          <div className="header-center">
+    <header className="header">
+      <div className="header-container">
+        <img src="/logos/pomar.png" alt="pomar" className="logo-pomar" />
+        <div className="header-middle">
+          <div className="header-top-section">
             <img src="/logos/constructmail.png" alt="ConstructMail" className="logo-constructmail" />
+            <h1>ConstructMail</h1>
           </div>
+          <p className="header-subtitle">AI-powered email intelligence for General Contractors</p>
         </div>
-        <p className="header-subtitle">AI-powered email intelligence for General Contractors</p>
-      </header>
+      </div>
+    </header>
 
       <nav className="nav-tabs">
         <button
