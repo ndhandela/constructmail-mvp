@@ -5,9 +5,9 @@
 
 .header {
   background-color: var(--white);
-  padding: 20px 40px;
-  border-top: 6px solid var(--primary-color);
-  border-bottom: 6px solid var(--primary-color);
+  padding: 30px 60px;
+  border-top: 8px solid var(--primary-color);
+  border-bottom: 8px solid var(--primary-color);
   box-shadow: 0 2px 8px rgba(0, 46, 74, 0.1);
 }
 
@@ -15,34 +15,36 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 1200px;
-  margin: 0 auto 12px auto;
-  gap: 40px;
+  max-width: 100%;
+  margin: 0 auto 16px auto;
+  gap: 60px;
 }
 
 .logo-pomar {
-  height: 80px;
+  height: 120px;
   width: auto;
   flex-shrink: 0;
+  min-width: 120px;
 }
 
 .header-center {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 24px;
   flex-grow: 1;
+  flex: 1;
 }
 
 .logo-constructmail {
-  height: 70px;
+  height: 110px;
   width: auto;
 }
 
 .header h1 {
   color: var(--primary-color);
   margin: 0;
-  font-size: 42px;
+  font-size: 48px;
   font-weight: 700;
 }
 
@@ -52,8 +54,6 @@
   font-size: 16px;
   text-align: center;
 }
-
-
 
 .nav-tabs {
   display: flex;
