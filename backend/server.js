@@ -19,6 +19,25 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'ConstructMail Intelligence API',
+    status: 'running',
+    version: '1.0.0',
+    endpoints: [
+      '/api/health',
+      '/api/summarize',
+      '/api/extract-actions',
+      '/api/process-meeting',
+      '/api/detect-signals',
+      '/api/recent-summaries',
+      '/api/open-actions',
+      '/api/recent-signals'
+    ]
+  });
+});
+
 // Summarize email endpoint
 app.post('/api/summarize', async (req, res) => {
   try {
