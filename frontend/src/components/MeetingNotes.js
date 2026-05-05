@@ -21,7 +21,6 @@ const handleSubmit = async (e) => {
     
     const response = await axios.post(`${API_BASE_URL}/api/process-meeting`, {
       notesText,
-      projectId: 1,
       userId: userId
     }, {
       timeout: 30000,

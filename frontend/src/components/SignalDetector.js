@@ -16,12 +16,11 @@ const handleSubmit = async (e) => {
   setError('');
   setSignals([]);
 
-  try {
+try {
     const userId = localStorage.getItem('constructmail_userId');
     
     const response = await axios.post(`${API_BASE_URL}/api/detect-signals`, {
       emailText,
-      projectId: 1,
       userId: userId
     }, {
       timeout: 30000,

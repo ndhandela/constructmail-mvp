@@ -21,7 +21,6 @@ const handleSubmit = async (e) => {
     
     const response = await axios.post(`${API_BASE_URL}/api/summarize`, {
       emailText,
-      projectId: 1,
       userId: userId
     }, {
       timeout: 30000,
