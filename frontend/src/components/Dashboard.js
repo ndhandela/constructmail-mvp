@@ -14,24 +14,39 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [summariesRes, actionsRes, signalsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/recent-summaries`),
-        axios.get(`${API_BASE_URL}/api/open-actions`),
-        axios.get(`${API_BASE_URL}/api/recent-signals`),
-      ]);
+useEffect(() => {
+  fetchData();
+}, []);
 
-      setSummaries(summariesRes.data || []);
-      setActions(actionsRes.data || []);
-      setSignals(signalsRes.data || []);
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-    } finally {
+const fetchData = async () => {
+  try {
+    const userId = localStorage.getItem('constructmail_userId');
+
+    if (!userId) {
+      console.error('No userId found in localStorage');
       setLoading(false);
+      return;
     }
-  };
+    
+    const [summariesRes, actionsRes, signalsRes] = await Promise.all([
+      fetch(`${API_BASE_URL}/api/recent-summaries?userId=${userId}`),
+      fetch(`${API_BASE_URL}/api/open-actions?userId=${userId}`),
+      fetch(`${API_BASE_URL}/api/recent-signals?userId=${userId}`)
+    ]);
+
+    const summaries = await summariesRes.json();
+    const actions = await actionsRes.json();
+    const signals = await signalsRes.json();
+
+    setSummaries(summaries);
+    setActions(actions);
+    setSignals(signals);
+    setLoading(false);
+  } catch (err) {
+    console.error('Error fetching data:', err);
+    setLoading(false);
+  }
+};
 
   if (loading) {
     return <div className="dashboard"><p className="loading">Loading dashboard...</p></div>;
