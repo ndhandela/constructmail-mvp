@@ -91,17 +91,17 @@ useEffect(() => {
   return (
     <div className="App">
       <header className="header">
-        <div className="header-content">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '100px', justifyContent: 'center', position: 'relative', paddingRight: '200px' }}>
           <img src="/logos/pomar.png" alt="pomar" className="logo-pomar" />
           <img src="/logos/constructmail.png" alt="ConstructMail" className="logo-constructmail" />
-          <div className="header-center">
-            <p className="header-subtitle">AI-powered email intelligence for General Contractors</p>
-            <p style={{ margin: '0', fontSize: '12px', color: '#999' }}>Logged in as: {user?.email}</p>
-          </div>
         </div>
+        
+        <p className="header-subtitle">AI-powered email intelligence for General Contractors</p>
+        <p style={{ margin: '0', fontSize: '12px', color: '#999', textAlign: 'center' }}>Logged in as: {user?.email}</p>
+        
         <button onClick={handleLogout} style={{
           position: 'absolute',
-          top: '20px',
+          top: '30px',
           right: '40px',
           padding: '10px 20px',
           background: 'var(--secondary-color)',
@@ -114,37 +114,13 @@ useEffect(() => {
         }}>
           🚪 Logout
         </button>
+        
         <nav className="nav-tabs">
-          <button
-            className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            📊 Dashboard
-          </button>
-          <button
-            className={`nav-tab ${activeTab === 'summarizer' ? 'active' : ''}`}
-            onClick={() => setActiveTab('summarizer')}
-          >
-            📋 Summarizer
-          </button>
-          <button
-            className={`nav-tab ${activeTab === 'actions' ? 'active' : ''}`}
-            onClick={() => setActiveTab('actions')}
-          >
-            ✓ Actions
-          </button>
-          <button
-            className={`nav-tab ${activeTab === 'meeting' ? 'active' : ''}`}
-            onClick={() => setActiveTab('meeting')}
-          >
-            👥 Meeting Notes
-          </button>
-          <button
-            className={`nav-tab ${activeTab === 'signals' ? 'active' : ''}`}
-            onClick={() => setActiveTab('signals')}
-          >
-            🚨 RFI/Change Orders
-          </button>
+          <button className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>📊 Dashboard</button>
+          <button className={`nav-tab ${activeTab === 'summarizer' ? 'active' : ''}`} onClick={() => setActiveTab('summarizer')}>📋 Summarizer</button>
+          <button className={`nav-tab ${activeTab === 'actions' ? 'active' : ''}`} onClick={() => setActiveTab('actions')}>✓ Actions</button>
+          <button className={`nav-tab ${activeTab === 'meeting' ? 'active' : ''}`} onClick={() => setActiveTab('meeting')}>👥 Meeting Notes</button>
+          <button className={`nav-tab ${activeTab === 'signals' ? 'active' : ''}`} onClick={() => setActiveTab('signals')}>🚨 RFI/Change Orders</button>
         </nav>
       </header>
 
