@@ -481,6 +481,24 @@ app.get('/api/auth/me', async (req, res) => {
   }
 });
 
+app.get('/api/debug/user-data/:userId', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    
+    const users = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+    const projects = await pool.query('SELECT * FROM projects WHERE user_id = $1', [userId]);
+    const signals = await pool.query('SELECT * FROM signals LIMIT 10');
+    
+    res.json({
+      user: users.rows[0],
+      projects: projects.rows,
+      allSignals: signals.rows
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
