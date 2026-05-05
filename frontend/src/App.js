@@ -98,17 +98,19 @@ function App() {
             <p className="header-subtitle">AI-powered email intelligence for General Contractors</p>
             <p style={{ margin: '0', fontSize: '12px', color: '#999' }}>Logged in as: {user?.email}</p>
           </div>
+        </div>
+        <div style={{ textAlign: 'right', paddingRight: '20px', marginTop: '10px' }}>
           <button onClick={handleLogout} style={{
-            padding: '8px 16px',
+            padding: '10px 20px',
             background: 'var(--secondary-color)',
             color: 'white',
             border: 'none',
             borderRadius: '6px',
             cursor: 'pointer',
-            fontSize: '12px',
+            fontSize: '14px',
             fontWeight: '600'
           }}>
-            Logout
+            🚪 Logout
           </button>
         </div>
         <nav className="nav-tabs">
