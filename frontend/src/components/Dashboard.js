@@ -10,13 +10,7 @@ export default function Dashboard() {
   const [signals, setSignals] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
 
-useEffect(() => {
-  fetchData();
-}, []);
 
 const fetchData = async () => {
   try {
@@ -47,6 +41,11 @@ const fetchData = async () => {
     setLoading(false);
   }
 };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
 
   if (loading) {
     return <div className="dashboard"><p className="loading">Loading dashboard...</p></div>;
