@@ -41,61 +41,46 @@ app.get('/', (req, res) => {
 // Summarize email endpoint
 app.post('/api/summarize', async (req, res) => {
   try {
-    const { emailText, projectId } = req.body;
+    const { emailText, projectId, userId } = req.body;
     
     if (!emailText || emailText.trim().length === 0) {
       return res.status(400).json({ error: 'emailText required and cannot be empty' });
     }
 
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     // Call Claude
     const result = await summarizeEmailThread(emailText);
 
-    // Try to save to database, but don't fail if it doesn't work
-    try {
-      // Create or get default user
-      let userId;
-      const userRes = await pool.query(
-        "SELECT id FROM users WHERE email = $1",
-        ['demo@constructmail.local']
-      );
-      
-      if (userRes.rows.length === 0) {
-        const newUserRes = await pool.query(
-          "INSERT INTO users (email, name, company) VALUES ($1, $2, $3) RETURNING id",
-          ['demo@constructmail.local', 'Demo User', 'Demo Company']
-        );
-        userId = newUserRes.rows[0].id;
-      } else {
-        userId = userRes.rows[0].id;
-      }
-
-      // Create or get default project
-      let pId;
+    // Get or create default project for this user
+    let pId = projectId;
+    if (!pId) {
       const projectRes = await pool.query(
         "SELECT id FROM projects WHERE user_id = $1 AND name = $2",
-        [userId, 'Demo Project']
+        [userId, 'Default Project']
       );
       
       if (projectRes.rows.length === 0) {
         const newProjectRes = await pool.query(
           "INSERT INTO projects (user_id, name) VALUES ($1, $2) RETURNING id",
-          [userId, 'Demo Project']
+          [userId, 'Default Project']
         );
         pId = newProjectRes.rows[0].id;
       } else {
         pId = projectRes.rows[0].id;
       }
-
-      // Save email thread
-      await pool.query(
-        'INSERT INTO email_threads (project_id, raw_text, summary, decisions) VALUES ($1, $2, $3, $4)',
-        [pId, emailText, result.summary, JSON.stringify(result.decisions)]
-      );
-    } catch (dbErr) {
-      console.log('Database save skipped:', dbErr.message);
     }
 
+    // Save email thread
+    const dbResult = await pool.query(
+      'INSERT INTO email_threads (project_id, raw_text, summary, decisions) VALUES ($1, $2, $3, $4) RETURNING *',
+      [pId, emailText, result.summary, JSON.stringify(result.decisions)]
+    );
+
     res.json({
+      id: dbResult.rows[0].id,
       summary: result.summary,
       decisions: result.decisions,
       open_items: result.open_items,
@@ -110,22 +95,36 @@ app.post('/api/summarize', async (req, res) => {
 // Placeholder routes (we'll build these on Days 3-4)
 app.post('/api/extract-actions', async (req, res) => {
   try {
-    const { emailText, projectId } = req.body;
+    const { emailText, projectId, userId } = req.body;
 
     if (!emailText || emailText.trim().length === 0) {
       return res.status(400).json({ error: 'emailText required' });
     }
 
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     // Call Claude
     const actions = await extractActionItems(emailText);
 
-    // Get or create default project
+    // Get or create default project for this user
     let pId = projectId;
     if (!pId) {
       const projectRes = await pool.query(
-        "SELECT id FROM projects LIMIT 1"
+        "SELECT id FROM projects WHERE user_id = $1 AND name = $2",
+        [userId, 'Default Project']
       );
-      pId = projectRes.rows[0].id;
+      
+      if (projectRes.rows.length === 0) {
+        const newProjectRes = await pool.query(
+          "INSERT INTO projects (user_id, name) VALUES ($1, $2) RETURNING id",
+          [userId, 'Default Project']
+        );
+        pId = newProjectRes.rows[0].id;
+      } else {
+        pId = projectRes.rows[0].id;
+      }
     }
 
     // Save each action to database
@@ -147,22 +146,38 @@ app.post('/api/extract-actions', async (req, res) => {
 
 app.post('/api/process-meeting', async (req, res) => {
   try {
-    const { notesText, projectId } = req.body;
+    const { notesText, projectId, userId } = req.body;
 
     if (!notesText || notesText.trim().length === 0) {
       return res.status(400).json({ error: 'notesText required' });
     }
 
-    const result = await processMeetingNotes(notesText);
-
-    // Get or create default project
-    let pId = projectId;
-    if (!pId) {
-      const projectRes = await pool.query("SELECT id FROM projects LIMIT 1");
-      pId = projectRes.rows[0].id;
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    // Save meeting notes (store arrays as JSON text)
+    const result = await processMeetingNotes(notesText);
+
+    // Get or create default project for this user
+    let pId = projectId;
+    if (!pId) {
+      const projectRes = await pool.query(
+        "SELECT id FROM projects WHERE user_id = $1 AND name = $2",
+        [userId, 'Default Project']
+      );
+      
+      if (projectRes.rows.length === 0) {
+        const newProjectRes = await pool.query(
+          "INSERT INTO projects (user_id, name) VALUES ($1, $2) RETURNING id",
+          [userId, 'Default Project']
+        );
+        pId = newProjectRes.rows[0].id;
+      } else {
+        pId = projectRes.rows[0].id;
+      }
+    }
+
+    // Save meeting notes
     const notesRes = await pool.query(
       'INSERT INTO meeting_notes (project_id, raw_text, attendees, decisions, action_items, open_issues, summary) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
       [
@@ -204,26 +219,42 @@ app.post('/api/process-meeting', async (req, res) => {
 
 app.post('/api/detect-signals', async (req, res) => {
   try {
-    const { emailText, projectId } = req.body;
+    const { emailText, projectId, userId } = req.body;
 
     if (!emailText || emailText.trim().length === 0) {
       return res.status(400).json({ error: 'emailText required' });
     }
 
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const result = await detectSignals(emailText);
 
-    // Get or create default project
+    // Get or create default project for this user
     let pId = projectId;
     if (!pId) {
-      const projectRes = await pool.query("SELECT id FROM projects LIMIT 1");
-      pId = projectRes.rows[0].id;
+      const projectRes = await pool.query(
+        "SELECT id FROM projects WHERE user_id = $1 AND name = $2",
+        [userId, 'Default Project']
+      );
+      
+      if (projectRes.rows.length === 0) {
+        const newProjectRes = await pool.query(
+          "INSERT INTO projects (user_id, name) VALUES ($1, $2) RETURNING id",
+          [userId, 'Default Project']
+        );
+        pId = newProjectRes.rows[0].id;
+      } else {
+        pId = projectRes.rows[0].id;
+      }
     }
 
     // Save signals to database
     const savedSignals = [];
     if (result.signals && result.signals.length > 0) {
       for (const signal of result.signals) {
-        if (signal.confidence >= 0.5) { // Lower threshold for MVP
+        if (signal.confidence >= 0.5) {
           const dbResult = await pool.query(
             'INSERT INTO signals (project_id, raw_text, signal_type, confidence) VALUES ($1, $2, $3, $4) RETURNING *',
             [pId, signal.excerpt, signal.type, signal.confidence]
@@ -243,8 +274,15 @@ app.post('/api/detect-signals', async (req, res) => {
 // Dashboard endpoints
 app.get('/api/recent-summaries', async (req, res) => {
   try {
+    const { userId } = req.query;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
     const result = await pool.query(
-      'SELECT * FROM email_threads ORDER BY created_at DESC LIMIT 5'
+      'SELECT * FROM email_threads WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1) ORDER BY created_at DESC LIMIT 5',
+      [userId]
     );
     res.json(result.rows);
   } catch (err) {
@@ -254,8 +292,15 @@ app.get('/api/recent-summaries', async (req, res) => {
 
 app.get('/api/open-actions', async (req, res) => {
   try {
+    const { userId } = req.query;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
     const result = await pool.query(
-      "SELECT * FROM action_items WHERE status = 'open' ORDER BY due_date ASC LIMIT 10"
+      "SELECT * FROM action_items WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1) AND status = 'open' ORDER BY due_date ASC LIMIT 10",
+      [userId]
     );
     res.json(result.rows);
   } catch (err) {
@@ -265,10 +310,137 @@ app.get('/api/open-actions', async (req, res) => {
 
 app.get('/api/recent-signals', async (req, res) => {
   try {
+    const { userId } = req.query;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
     const result = await pool.query(
-      'SELECT * FROM signals ORDER BY created_at DESC LIMIT 5'
+      'SELECT * FROM signals WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1) ORDER BY created_at DESC LIMIT 5',
+      [userId]
     );
     res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const crypto = require('crypto');
+
+// Send magic link
+app.post('/api/auth/send-magic-link', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email required' });
+    }
+
+    // Generate magic token
+    const magicToken = crypto.randomBytes(32).toString('hex');
+    
+    // Save to database
+    await pool.query(
+      'INSERT INTO sessions (email, magic_token) VALUES ($1, $2) ON CONFLICT (email) DO UPDATE SET magic_token = $2, expires_at = NOW() + INTERVAL \'24 hours\'',
+      [email, magicToken]
+    );
+
+    // Create magic link
+    const magicLink = `https://constructmail.pomar.ai/auth/verify?token=${magicToken}`;
+
+    res.json({ 
+      message: 'Magic link generated',
+      magicLink: magicLink,
+      email: email
+    });
+  } catch (err) {
+    console.error('Magic link error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Verify magic link and create user session
+app.post('/api/auth/verify-token', async (req, res) => {
+  try {
+    const { token } = req.body;
+    
+    if (!token) {
+      return res.status(400).json({ error: 'Token required' });
+    }
+
+    // Check if token exists and hasn't expired
+    const result = await pool.query(
+      'SELECT * FROM sessions WHERE magic_token = $1 AND expires_at > NOW()',
+      [token]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({ error: 'Invalid or expired token' });
+    }
+
+    const session = result.rows[0];
+    const email = session.email;
+
+    // Get or create user
+    let userRes = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+
+    let userId;
+    if (userRes.rows.length === 0) {
+      const newUserRes = await pool.query(
+        "INSERT INTO users (email, name, company) VALUES ($1, $2, $3) RETURNING id",
+        [email, email.split('@')[0], 'Construction Company']
+      );
+      userId = newUserRes.rows[0].id;
+    } else {
+      userId = userRes.rows[0].id;
+    }
+
+    // Update last login
+    await pool.query(
+      'UPDATE users SET last_login = NOW() WHERE id = $1',
+      [userId]
+    );
+
+    // Mark session as verified
+    await pool.query(
+      'UPDATE sessions SET is_verified = TRUE WHERE magic_token = $1',
+      [token]
+    );
+
+    res.json({ 
+      success: true,
+      userId: userId,
+      email: email
+    });
+  } catch (err) {
+    console.error('Verify token error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get current user
+app.get('/api/auth/me', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const result = await pool.query(
+      'SELECT id, email, name, company FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

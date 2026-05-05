@@ -10,28 +10,31 @@ export default function MeetingNotes() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setResult(null);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+  setResult(null);
 
-    try {
-      const response = await axios.post(`${API_BASE_URL}/api/process-meeting`, {
-        notesText,
-        projectId: 1,
-      }, {
-        timeout: 30000,
-      });
-      setResult(response.data);
-      setNotesText('');
-    } catch (err) {
-      const errorMsg = err.response?.data?.error || err.message;
-      setError(errorMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const userId = localStorage.getItem('constructmail_userId');
+    
+    const response = await axios.post(`${API_BASE_URL}/api/process-meeting`, {
+      notesText,
+      projectId: 1,
+      userId: userId
+    }, {
+      timeout: 30000,
+    });
+    setResult(response.data);
+    setNotesText('');
+  } catch (err) {
+    const errorMsg = err.response?.data?.error || err.message || 'Unknown error occurred';
+    setError(errorMsg);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="meeting-notes-container">

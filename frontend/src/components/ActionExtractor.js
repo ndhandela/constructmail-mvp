@@ -10,28 +10,31 @@ export default function ActionExtractor() {
   const [actions, setActions] = useState([]);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setActions([]);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+  setActions([]);
 
-    try {
-      const response = await axios.post(`${API_BASE_URL}/api/extract-actions`, {
-        emailText,
-        projectId: 1,
-      }, {
-        timeout: 30000,
-      });
-      setActions(response.data);
-      setEmailText('');
-    } catch (err) {
-      const errorMsg = err.response?.data?.error || err.message;
-      setError(errorMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const userId = localStorage.getItem('constructmail_userId');
+    
+    const response = await axios.post(`${API_BASE_URL}/api/extract-actions`, {
+      emailText,
+      projectId: 1,
+      userId: userId
+    }, {
+      timeout: 30000,
+    });
+    setActions(response.data);
+    setEmailText('');
+  } catch (err) {
+    const errorMsg = err.response?.data?.error || err.message || 'Unknown error occurred';
+    setError(errorMsg);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const exportCSV = () => {
     const headers = ['Action', 'Assigned To', 'Due Date', 'Status'];
