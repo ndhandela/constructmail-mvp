@@ -16,14 +16,13 @@ function App() {
       <header className="header">
         <div className="header-content">
           <img src="/logos/pomar.png" alt="pomar" className="logo-pomar" />
-          <div className="header-text">
-            <div className="logo-and-title">
-              <img src="/logos/constructmail.png" alt="ConstructMail" className="logo-constructmail" />
-            </div>
+          <div className="header-center">
+            <img src="/logos/constructmail.png" alt="ConstructMail" className="logo-constructmail" />
             <p className="header-subtitle">AI-powered email intelligence for General Contractors</p>
           </div>
         </div>
       </header>
+
 
       <nav className="nav-tabs">
         <button
