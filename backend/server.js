@@ -286,9 +286,27 @@ app.post('/api/detect-signals', async (req, res) => {
   }
 });
 
+app.get('/api/recent-summaries', async (req, res) => {
+  try {
+    const userId = parseInt(req.query.userId); // Convert to number
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const result = await pool.query(
+      'SELECT * FROM email_threads WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1) ORDER BY created_at DESC LIMIT 5',
+      [userId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/open-actions', async (req, res) => {
   try {
-    const { userId } = req.query;
+    const userId = parseInt(req.query.userId); // Convert to number
     
     if (!userId) {
       return res.status(401).json({ error: 'Not authenticated' });
@@ -306,7 +324,7 @@ app.get('/api/open-actions', async (req, res) => {
 
 app.get('/api/recent-signals', async (req, res) => {
   try {
-    const { userId } = req.query;
+    const userId = parseInt(req.query.userId); // Convert to number
     
     if (!userId) {
       return res.status(401).json({ error: 'Not authenticated' });
