@@ -92,8 +92,8 @@ useEffect(() => {
     <div className="App">
       <header className="header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '100px', justifyContent: 'center', position: 'relative', paddingRight: '200px' }}>
-          <img src="/logos/pomar.png" alt="pomar" className="logo-pomar" />
-          <img src="/logos/constructmail.png" alt="ConstructMail" className="logo-constructmail" />
+          <img src="/logos/pomar.png" alt="pomar" style={{ height: '140px', width: 'auto' }} />
+          <img src="/logos/constructmail.png" alt="ConstructMail" style={{ height: '100px', width: 'auto' }} />
         </div>
         
         <p className="header-subtitle">AI-powered email intelligence for General Contractors</p>
