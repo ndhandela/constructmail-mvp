@@ -41,7 +41,8 @@ app.get('/', (req, res) => {
 // Summarize email endpoint
 app.post('/api/summarize', async (req, res) => {
   try {
-    const { emailText, projectId, userId } = req.body;
+    const { emailText, projectId } = req.body;
+    const userId = parseInt(req.body.userId); // Convert to number!
     
     if (!emailText || emailText.trim().length === 0) {
       return res.status(400).json({ error: 'emailText required and cannot be empty' });
@@ -95,7 +96,8 @@ app.post('/api/summarize', async (req, res) => {
 // Placeholder routes (we'll build these on Days 3-4)
 app.post('/api/extract-actions', async (req, res) => {
   try {
-    const { emailText, projectId, userId } = req.body;
+        const { emailText, projectId } = req.body;
+    const userId = parseInt(req.body.userId); // Convert to number!
 
     if (!emailText || emailText.trim().length === 0) {
       return res.status(400).json({ error: 'emailText required' });
@@ -146,7 +148,8 @@ app.post('/api/extract-actions', async (req, res) => {
 
 app.post('/api/process-meeting', async (req, res) => {
   try {
-    const { notesText, projectId, userId } = req.body;
+        const { emailText, projectId } = req.body;
+    const userId = parseInt(req.body.userId); // Convert to number!
 
     if (!notesText || notesText.trim().length === 0) {
       return res.status(400).json({ error: 'notesText required' });
