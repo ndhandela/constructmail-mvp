@@ -294,6 +294,13 @@ app.get('/api/recent-summaries', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
+        // First, get the projects for this user
+    const projectsRes = await pool.query(
+      'SELECT id FROM projects WHERE user_id = $1',
+      [userId]
+    );
+    console.log('Projects found:', projectsRes.rows); // DEBUG
+
     const result = await pool.query(
       'SELECT * FROM email_threads WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1) ORDER BY created_at DESC LIMIT 5',
       [userId]
@@ -312,6 +319,13 @@ app.get('/api/open-actions', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
+        // First, get the projects for this user
+    const projectsRes = await pool.query(
+      'SELECT id FROM projects WHERE user_id = $1',
+      [userId]
+    );
+    console.log('Projects found:', projectsRes.rows); // DEBUG
+
     const result = await pool.query(
       "SELECT * FROM action_items WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1) AND status = 'open' ORDER BY due_date ASC LIMIT 10",
       [userId]
@@ -329,6 +343,13 @@ app.get('/api/recent-signals', async (req, res) => {
     if (!userId) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
+
+    // First, get the projects for this user
+    const projectsRes = await pool.query(
+      'SELECT id FROM projects WHERE user_id = $1',
+      [userId]
+    );
+    console.log('Projects found:', projectsRes.rows); // DEBUG
 
     const result = await pool.query(
       'SELECT * FROM signals WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1) ORDER BY created_at DESC LIMIT 5',
