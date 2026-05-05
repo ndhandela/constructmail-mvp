@@ -5,30 +5,41 @@
 
 .header {
   background-color: var(--white);
-  padding: 40px 60px;
+  padding: 30px 60px;
   border-top: 10px solid var(--primary-color);
   border-bottom: 10px solid var(--primary-color);
-  box-shadow: 0 2px 8px rgba(0, 46, 74, 0.1);
 }
 
-.header-logos {
+.header-content {
+  max-width: 1400px;
+  margin: 0 auto;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 30px;
-  margin-bottom: 24px;
+  gap: 60px;
 }
 
 .logo-pomar {
-  height: 180px;
+  height: 200px;
   width: auto;
-  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-grow: 1;
+}
+
+.logo-and-title {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .logo-constructmail {
-  height: 160px;
+  height: 180px;
   width: auto;
-  object-fit: contain;
 }
 
 .header h1 {
@@ -36,29 +47,31 @@
   margin: 0;
   font-size: 56px;
   font-weight: 700;
-  text-align: center;
 }
 
 .header-subtitle {
   color: #666;
-  margin: 16px 0 0 0;
+  margin: 0;
   font-size: 16px;
-  text-align: center;
 }
 
-/* Mobile responsive */
+/* Mobile */
 @media (max-width: 768px) {
   .header {
     padding: 20px 20px;
   }
 
-  .header-logos {
-    gap: 15px;
-    margin-bottom: 16px;
+  .header-content {
+    flex-direction: column;
+    gap: 20px;
   }
 
   .logo-pomar {
     height: 100px;
+  }
+
+  .logo-and-title {
+    gap: 15px;
   }
 
   .logo-constructmail {
@@ -70,7 +83,7 @@
   }
 
   .header-subtitle {
-    font-size: 13px;
+    font-size: 14px;
   }
 }
 
