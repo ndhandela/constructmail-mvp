@@ -9,15 +9,6 @@
   border-bottom: 6px solid var(--primary-color);
 }
 
-.header-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
 .header-content {
   display: flex;
   align-items: center;
