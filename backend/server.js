@@ -222,7 +222,8 @@ app.post('/api/detect-signals', async (req, res) => {
   console.log('Request body:', req.body); // DEBUG
   
   try {
-    const { emailText, projectId, userId } = req.body;
+    const { emailText, projectId } = req.body;
+    const userId = parseInt(req.body.userId); // Convert to number!
     
     console.log('Extracted userId:', userId); // DEBUG
     console.log('Extracted emailText length:', emailText?.length); // DEBUG
@@ -254,8 +255,10 @@ app.post('/api/detect-signals', async (req, res) => {
           [userId, 'Default Project']
         );
         pId = newProjectRes.rows[0].id;
+        console.log('Created new project:', pId); // DEBUG
       } else {
         pId = projectRes.rows[0].id;
+        console.log('Found existing project:', pId); // DEBUG
       }
     }
 
