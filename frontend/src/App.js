@@ -97,7 +97,7 @@ useEffect(() => {
       
       {/* Center: constructmail logo + subtitle */}
       <div style={{ textAlign: 'center', flex: 1 }}>
-        <img src="/logos/constructmail.png" alt="ConstructMail" style={{ height: '100px', width: 'auto', marginBottom: '8px' }} />
+        <img src="/logos/constructmail.png" alt="ConstructMail" style={{ height: '75px', width: 'auto', marginBottom: '8px' }} />
         <p className="header-subtitle">AI-powered email intelligence for General Contractors</p>
         <p style={{ margin: '0', fontSize: '12px', color: '#999' }}>Logged in as: {user?.email}</p>
       </div>

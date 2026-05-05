@@ -142,11 +142,17 @@ Signal types: RFI, ChangeOrder, Submittal, ScheduleImpact, Claim, Delay, SafetyI
     );
 
     const content = response.data.content[0].text;
+    console.log('Claude response for signals:', content); // DEBUG LOG
     const parsed = parseJSON(content);
     
+    console.log('Parsed signals:', parsed); // DEBUG LOG
+    
     if (!parsed || !Array.isArray(parsed.signals)) {
+      console.log('No signals found or invalid format');
       return { signals: [] };
     }
+
+    console.log('Final signals to return:', parsed.signals); // DEBUG LOG
 
     return parsed;
   } catch (err) {

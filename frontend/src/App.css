@@ -33,7 +33,7 @@
   background-color: var(--white);
   border-bottom: 2px solid var(--border-color);
   padding: 0 20px;
-  margin-top: 10px;
+  margin-top: 0;
 }
 
 .nav-tab {
