@@ -218,19 +218,27 @@ app.post('/api/process-meeting', async (req, res) => {
 });
 
 app.post('/api/detect-signals', async (req, res) => {
+  console.log('=== DETECT SIGNALS ENDPOINT CALLED ==='); // DEBUG - FIRST LINE
+  console.log('Request body:', req.body); // DEBUG
+  
   try {
     const { emailText, projectId, userId } = req.body;
+    
+    console.log('Extracted userId:', userId); // DEBUG
+    console.log('Extracted emailText length:', emailText?.length); // DEBUG
 
     if (!emailText || emailText.trim().length === 0) {
       return res.status(400).json({ error: 'emailText required' });
     }
 
     if (!userId) {
+      console.log('NO USER ID - returning 401'); // DEBUG
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
+    console.log('Calling detectSignals...'); // DEBUG
     const result = await detectSignals(emailText);
-    console.log('detectSignals result:', result); // DEBUG
+    console.log('detectSignals result:', result);  // DEBUG
 
     // Get or create default project for this user
     let pId = projectId;
