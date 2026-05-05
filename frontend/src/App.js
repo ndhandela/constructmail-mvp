@@ -91,17 +91,19 @@ useEffect(() => {
   return (
 <div className="App">
   <header className="header">
-    <div style={{ display: 'flex', alignItems: 'center', gap: '80px', justifyContent: 'center' }}>
-      <img src="/logos/pomar.png" alt="pomar" style={{ height: '140px', width: 'auto' }} />
-      <img src="/logos/constructmail.png" alt="ConstructMail" style={{ height: '100px', width: 'auto' }} />
+    <div style={{ textAlign: 'center', position: 'relative' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '40px', marginBottom: '12px' }}>
+        <img src="/logos/pomar.png" alt="pomar" style={{ height: '120px', width: 'auto' }} />
+        <img src="/logos/constructmail.png" alt="ConstructMail" style={{ height: '100px', width: 'auto' }} />
+      </div>
+      
+      <p className="header-subtitle">AI-powered email intelligence for General Contractors</p>
+      <p style={{ margin: '0', fontSize: '12px', color: '#999' }}>Logged in as: {user?.email}</p>
     </div>
-    
-    <p className="header-subtitle">AI-powered email intelligence for General Contractors</p>
-    <p style={{ margin: '0', fontSize: '12px', color: '#999', textAlign: 'center' }}>Logged in as: {user?.email}</p>
     
     <button onClick={handleLogout} style={{
       position: 'absolute',
-      top: '30px',
+      top: '20px',
       right: '40px',
       padding: '10px 20px',
       background: 'var(--secondary-color)',
