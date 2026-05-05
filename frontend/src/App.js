@@ -19,8 +19,8 @@ function App() {
           <div className="header-text">
             <div className="logo-and-title">
               <img src="/logos/constructmail.png" alt="ConstructMail" className="logo-constructmail" />
-              <p>AI-powered email intelligence for General Contractors</p>
             </div>
+            <p className="header-subtitle">AI-powered email intelligence for General Contractors</p>
           </div>
         </div>
       </header>
