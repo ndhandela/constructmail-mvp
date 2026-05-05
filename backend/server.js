@@ -221,60 +221,68 @@ app.post('/api/process-meeting', async (req, res) => {
 });
 
 app.post('/api/detect-signals', async (req, res) => {
-  console.log('=== DETECT SIGNALS ENDPOINT CALLED ==='); // DEBUG - FIRST LINE
-  console.log('Request body:', req.body); // DEBUG
+  console.log('=== DETECT SIGNALS ENDPOINT CALLED ===');
+  console.log('Request body:', req.body);
   
   try {
     const { emailText, projectId } = req.body;
-    const userId = parseInt(req.body.userId); // Convert to number!
+    const userId = parseInt(req.body.userId);
     
-    console.log('Extracted userId:', userId); // DEBUG
-    console.log('Extracted emailText length:', emailText?.length); // DEBUG
+    console.log('Extracted userId:', userId);
+    console.log('Extracted emailText length:', emailText?.length);
 
     if (!emailText || emailText.trim().length === 0) {
       return res.status(400).json({ error: 'emailText required' });
     }
 
     if (!userId) {
-      console.log('NO USER ID - returning 401'); // DEBUG
+      console.log('NO USER ID - returning 401');
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    console.log('Calling detectSignals...'); // DEBUG
+    console.log('Calling detectSignals...');
     const result = await detectSignals(emailText);
-    console.log('detectSignals result:', result);  // DEBUG
+    console.log('detectSignals result:', result);
 
     // Get or create default project for this user
     let pId = projectId;
     if (!pId) {
+      console.log('No projectId provided, checking for default project...'); // DEBUG
       const projectRes = await pool.query(
         "SELECT id FROM projects WHERE user_id = $1 AND name = $2",
         [userId, 'Default Project']
       );
+      console.log('Existing projects:', projectRes.rows); // DEBUG
       
       if (projectRes.rows.length === 0) {
-        const newProjectRes = await pool.query(
-          "INSERT INTO projects (user_id, name) VALUES ($1, $2) RETURNING id",
-          [userId, 'Default Project']
-        );
-        pId = newProjectRes.rows[0].id;
-        console.log('Created new project:', pId); // DEBUG
+        console.log('No existing project, creating new one...'); // DEBUG
+        try {
+          const newProjectRes = await pool.query(
+            "INSERT INTO projects (user_id, name) VALUES ($1, $2) RETURNING id",
+            [userId, 'Default Project']
+          );
+          pId = newProjectRes.rows[0].id;
+          console.log('✅ Created new project with id:', pId); // DEBUG
+        } catch (projectErr) {
+          console.error('❌ Error creating project:', projectErr); // DEBUG
+          throw projectErr;
+        }
       } else {
         pId = projectRes.rows[0].id;
         console.log('Found existing project:', pId); // DEBUG
       }
     }
 
-    console.log('ProjectId:', pId); // DEBUG
-    console.log('Signals to process:', result.signals); // DEBUG
+    console.log('ProjectId:', pId);
+    console.log('Signals to process:', result.signals);
 
     // Save signals to database
     const savedSignals = [];
     if (result.signals && result.signals.length > 0) {
       for (const signal of result.signals) {
-        console.log('Processing signal:', signal); // DEBUG
+        console.log('Processing signal:', signal);
         if (signal.confidence >= 0.5) {
-          console.log('Saving signal to DB:', signal); // DEBUG
+          console.log('Saving signal to DB:', signal);
           const dbResult = await pool.query(
             'INSERT INTO signals (project_id, raw_text, signal_type, confidence) VALUES ($1, $2, $3, $4) RETURNING *',
             [pId, signal.excerpt, signal.type, signal.confidence]
@@ -284,7 +292,7 @@ app.post('/api/detect-signals', async (req, res) => {
       }
     }
 
-    console.log('Final savedSignals:', savedSignals); // DEBUG
+    console.log('Final savedSignals:', savedSignals);
     res.json(savedSignals);
   } catch (err) {
     console.error('Signal detection error:', err);
