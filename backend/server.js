@@ -230,6 +230,7 @@ app.post('/api/detect-signals', async (req, res) => {
     }
 
     const result = await detectSignals(emailText);
+    console.log('detectSignals result:', result); // DEBUG
 
     // Get or create default project for this user
     let pId = projectId;
@@ -250,11 +251,16 @@ app.post('/api/detect-signals', async (req, res) => {
       }
     }
 
+    console.log('ProjectId:', pId); // DEBUG
+    console.log('Signals to process:', result.signals); // DEBUG
+
     // Save signals to database
     const savedSignals = [];
     if (result.signals && result.signals.length > 0) {
       for (const signal of result.signals) {
+        console.log('Processing signal:', signal); // DEBUG
         if (signal.confidence >= 0.5) {
+          console.log('Saving signal to DB:', signal); // DEBUG
           const dbResult = await pool.query(
             'INSERT INTO signals (project_id, raw_text, signal_type, confidence) VALUES ($1, $2, $3, $4) RETURNING *',
             [pId, signal.excerpt, signal.type, signal.confidence]
@@ -264,30 +270,10 @@ app.post('/api/detect-signals', async (req, res) => {
       }
     }
 
+    console.log('Final savedSignals:', savedSignals); // DEBUG
     res.json(savedSignals);
   } catch (err) {
     console.error('Signal detection error:', err);
-    console.log('Signals to save:', savedSignals);
-    console.log('About to insert signals for projectId:', pId);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Dashboard endpoints
-app.get('/api/recent-summaries', async (req, res) => {
-  try {
-    const { userId } = req.query;
-    
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    const result = await pool.query(
-      'SELECT * FROM email_threads WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1) ORDER BY created_at DESC LIMIT 5',
-      [userId]
-    );
-    res.json(result.rows);
-  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
