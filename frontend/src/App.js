@@ -21,7 +21,7 @@ function App() {
             <p className="header-subtitle">AI-powered email intelligence for General Contractors</p>
           </div>
         </div>
-      </header>
+      </header> 
 
 
       <nav className="nav-tabs">
