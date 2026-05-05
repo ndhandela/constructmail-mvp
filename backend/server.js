@@ -267,6 +267,8 @@ app.post('/api/detect-signals', async (req, res) => {
     res.json(savedSignals);
   } catch (err) {
     console.error('Signal detection error:', err);
+    console.log('Signals to save:', savedSignals);
+    console.log('About to insert signals for projectId:', pId);
     res.status(500).json({ error: err.message });
   }
 });
