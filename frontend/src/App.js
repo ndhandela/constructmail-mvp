@@ -91,31 +91,32 @@ useEffect(() => {
   return (
 <div className="App">
   <header className="header">
-    <div style={{ textAlign: 'center', position: 'relative' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '40px', marginBottom: '12px' }}>
-        <img src="/logos/pomar.png" alt="pomar" style={{ height: '120px', width: 'auto' }} />
-        <img src="/logos/constructmail.png" alt="ConstructMail" style={{ height: '100px', width: 'auto' }} />
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+      {/* Left: pomar logo */}
+      <img src="/logos/pomar.png" alt="pomar" style={{ height: '120px', width: 'auto' }} />
+      
+      {/* Center: constructmail logo + subtitle */}
+      <div style={{ textAlign: 'center', flex: 1 }}>
+        <img src="/logos/constructmail.png" alt="ConstructMail" style={{ height: '100px', width: 'auto', marginBottom: '8px' }} />
+        <p className="header-subtitle">AI-powered email intelligence for General Contractors</p>
+        <p style={{ margin: '0', fontSize: '12px', color: '#999' }}>Logged in as: {user?.email}</p>
       </div>
       
-      <p className="header-subtitle">AI-powered email intelligence for General Contractors</p>
-      <p style={{ margin: '0', fontSize: '12px', color: '#999' }}>Logged in as: {user?.email}</p>
+      {/* Right: logout button */}
+      <button onClick={handleLogout} style={{
+        padding: '10px 20px',
+        background: 'var(--secondary-color)',
+        color: 'white',
+        border: 'none',
+        borderRadius: '6px',
+        cursor: 'pointer',
+        fontSize: '14px',
+        fontWeight: '600',
+        whiteSpace: 'nowrap'
+      }}>
+        🚪 Logout
+      </button>
     </div>
-    
-    <button onClick={handleLogout} style={{
-      position: 'absolute',
-      top: '20px',
-      right: '40px',
-      padding: '10px 20px',
-      background: 'var(--secondary-color)',
-      color: 'white',
-      border: 'none',
-      borderRadius: '6px',
-      cursor: 'pointer',
-      fontSize: '14px',
-      fontWeight: '600'
-    }}>
-      🚪 Logout
-    </button>
   </header>
   
   <nav className="nav-tabs">
