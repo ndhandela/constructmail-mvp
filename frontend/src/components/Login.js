@@ -51,19 +51,19 @@ export default function Login({ onLoginSuccess }) {
         </form>
 
         {message && (
-          <div className="success">
+        <div className="success">
             {message}
             {magicLink && (
-              <div className="magic-link-section">
-                <p className="link-label">Your magic link:</p>
+            <div className="magic-link-section">
+                <p className="link-label">Your ConstructMail link:</p>
                 <a href={magicLink} className="magic-link" target="_blank" rel="noopener noreferrer">
-                  Click here to login
+                Click here to login
                 </a>
                 <p className="link-note">Or copy and paste this link:</p>
                 <div className="link-box">{magicLink}</div>
-              </div>
+            </div>
             )}
-          </div>
+        </div>
         )}
         
         {error && <div className="error">{error}</div>}
