@@ -17,25 +17,8 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Check if user is already logged in (from URL or localStorage)
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-    const savedUserId = localStorage.getItem('constructmail_userId');
-
-    if (token) {
-      // User clicked magic link
-      verifyToken(token);
-    } else if (savedUserId) {
-      // User already logged in
-      setUserId(savedUserId);
-      fetchUser(savedUserId);
-    } else {
-      setLoading(false);
-    }
-  }, []);
-
-  const verifyToken = async (token) => {
+useEffect(() => {
+  const verifyTokenFn = async (token) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/verify-token`, {
         method: 'POST',
@@ -49,7 +32,6 @@ function App() {
         setUserId(data.userId);
         localStorage.setItem('constructmail_userId', data.userId);
         fetchUser(data.userId);
-        // Clean up URL
         window.history.replaceState({}, document.title, window.location.pathname);
       } else {
         alert('Login failed: ' + data.error);
@@ -61,6 +43,23 @@ function App() {
       setLoading(false);
     }
   };
+
+  // Check if user is already logged in (from URL or localStorage)
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  const savedUserId = localStorage.getItem('constructmail_userId');
+
+  if (token) {
+    verifyTokenFn(token);
+  } else if (savedUserId) {
+    setUserId(savedUserId);
+    fetchUser(savedUserId);
+  } else {
+    setLoading(false);
+  }
+}, []);
+
+
 
   const fetchUser = async (uid) => {
     try {
