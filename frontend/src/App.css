@@ -5,7 +5,7 @@
 
 .header {
   background-color: var(--white);
-  padding: 30px 40px;
+  padding: 40px 60px;
   border-top: 8px solid var(--primary-color);
   border-bottom: 8px solid var(--primary-color);
 }
@@ -15,78 +15,35 @@
   margin: 0 auto;
   display: flex;
   align-items: center;
-  gap: 120px;
+  justify-content: flex-start;
+  gap: 150px;
 }
 
 .logo-pomar {
-  height: 250px;
+  height: 280px;
   width: auto;
   flex-shrink: 0;
+  min-width: 280px;
 }
 
 .header-center {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  flex-grow: 1;
+  justify-content: center;
+  gap: 20px;
 }
 
 .logo-constructmail {
-  height: 220px;
+  height: 240px;
   width: auto;
 }
 
 .header-subtitle {
   color: #666;
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
   text-align: center;
-}
-
-@media (max-width: 768px) {
-  .header {
-    padding: 20px 20px;
-  }
-  .header-content {
-    flex-direction: column;
-    gap: 20px;
-  }
-  .logo-pomar {
-    height: 120px;
-  }
-  .logo-constructmail {
-    height: 100px;
-  }
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-  .header {
-    padding: 20px 20px;
-  }
-
-  .header-content {
-    flex-direction: column;
-    gap: 20px;
-    justify-content: center;
-  }
-
-  .logo-pomar {
-    height: 100px;
-  }
-
-  .header-center {
-    gap: 12px;
-  }
-
-  .logo-constructmail {
-    height: 90px;
-  }
-
-  .header-subtitle {
-    font-size: 14px;
-  }
 }
 
 .nav-tabs {
