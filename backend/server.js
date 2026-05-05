@@ -230,7 +230,9 @@ app.post('/api/detect-signals', async (req, res) => {
     const userId = parseInt(req.body.userId);
     
     console.log('Extracted userId:', userId);
-    console.log('Extracted emailText length:', emailText?.length);
+    console.log('Extracted projectId:', projectId); // DEBUG - ADD THIS
+    console.log('projectId is:', projectId, 'type:', typeof projectId); // DEBUG - ADD THIS
+    console.log('!projectId evaluates to:', !projectId); // DEBUG - ADD THIS
 
     if (!emailText || emailText.trim().length === 0) {
       return res.status(400).json({ error: 'emailText required' });
@@ -248,6 +250,7 @@ app.post('/api/detect-signals', async (req, res) => {
     // Get or create default project for this user
     let pId = projectId;
     if (!pId) {
+      console.log('Entering project creation block...'); // DEBUG
       console.log('No projectId provided, checking for default project...'); // DEBUG
       const projectRes = await pool.query(
         "SELECT id FROM projects WHERE user_id = $1 AND name = $2",
@@ -272,6 +275,8 @@ app.post('/api/detect-signals', async (req, res) => {
         pId = projectRes.rows[0].id;
         console.log('Found existing project:', pId); // DEBUG
       }
+       } else {
+      console.log('Using existing pId:', pId); // DEBUG
     }
 
     console.log('ProjectId:', pId);
