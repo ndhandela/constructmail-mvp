@@ -14,7 +14,7 @@
   margin: 0 auto;
   display: flex;
   align-items: center;
-  gap: 380px;
+  gap: 300px;
 }
 
 .logo-pomar {
@@ -30,7 +30,7 @@
 }
 
 .logo-constructmail {
-  height: 120px;
+  height: 80px;
   width: auto;
 }
 
