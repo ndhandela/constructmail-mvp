@@ -1,0 +1,93 @@
+.landing-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #001a2e 100%);
+  padding: 60px 20px;
+}
+
+.landing-header {
+  text-align: center;
+  color: white;
+  margin-bottom: 80px;
+}
+
+.landing-logo {
+  height: 100px;
+  width: auto;
+  margin-bottom: 20px;
+}
+
+.landing-header h1 {
+  font-size: 48px;
+  margin: 20px 0;
+  font-weight: 700;
+}
+
+.landing-subtitle {
+  font-size: 18px;
+  color: rgba(255,255,255,0.8);
+  margin: 0;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.product-card {
+  background: white;
+  border-radius: 12px;
+  padding: 40px 30px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.product-card.active:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  border-color: var(--secondary-color);
+}
+
+.product-icon {
+  font-size: 60px;
+  margin-bottom: 20px;
+}
+
+.product-card h2 {
+  color: var(--primary-color);
+  margin: 0 0 15px 0;
+  font-size: 24px;
+}
+
+.product-card p {
+  color: #666;
+  margin: 0 0 20px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.coming-soon-badge {
+  display: inline-block;
+  background: #ccc;
+  color: #666;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.launch-badge {
+  display: inline-block;
+  background: var(--secondary-color);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 20px;
+}

@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
-import Dashboard from './components/Dashboard';
-import Summarizer from './components/Summarizer';
-import ActionExtractor from './components/ActionExtractor';
-import MeetingNotes from './components/MeetingNotes';
-import SignalDetector from './components/SignalDetector';
+import LandingPage from './pages/LandingPage';
+import ConstructMailApp from './pages/ConstructMailApp';
 import './theme.css';
 import './styles/components.css';
 import './App.css';
@@ -12,55 +9,63 @@ import './App.css';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
   const [userId, setUserId] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentProduct, setCurrentProduct] = useState(null);
 
-useEffect(() => {
-  const verifyTokenFn = async (token) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/verify-token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token })
-      });
+  useEffect(() => {
+    const verifyTokenFn = async (token) => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/verify-token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (data.success) {
-        setUserId(data.userId);
-        localStorage.setItem('constructmail_userId', data.userId);
-        fetchUser(data.userId);
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } else {
-        alert('Login failed: ' + data.error);
+        if (data.success) {
+          setUserId(data.userId);
+          localStorage.setItem('constructmail_userId', data.userId);
+          fetchUser(data.userId);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else {
+          alert('Login failed: ' + data.error);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Token verification error:', err);
+        alert('Login failed: ' + err.message);
         setLoading(false);
       }
-    } catch (err) {
-      console.error('Token verification error:', err);
-      alert('Login failed: ' + err.message);
+    };
+
+    // Check if user is already logged in (from URL or localStorage)
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const savedUserId = localStorage.getItem('constructmail_userId');
+
+    if (token) {
+      verifyTokenFn(token);
+    } else if (savedUserId) {
+      setUserId(savedUserId);
+      fetchUser(savedUserId);
+    } else {
       setLoading(false);
     }
-  };
+  }, []);
 
-  // Check if user is already logged in (from URL or localStorage)
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get('token');
-  const savedUserId = localStorage.getItem('constructmail_userId');
-
-  if (token) {
-    verifyTokenFn(token);
-  } else if (savedUserId) {
-    setUserId(savedUserId);
-    fetchUser(savedUserId);
-  } else {
-    setLoading(false);
-  }
-}, []);
-
-
-
+  // NEW useEffect - Handle URL-based routing
+  useEffect(() => {
+    if (userId) { // Only check path if user is logged in
+      const path = window.location.pathname;
+      if (path.includes('/constructmail')) {
+        setCurrentProduct('constructmail');
+      }
+    }
+  }, [userId]);
+  
   const fetchUser = async (uid) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/me?userId=${uid}`);
@@ -76,8 +81,16 @@ useEffect(() => {
   const handleLogout = () => {
     setUserId(null);
     setUser(null);
+    setCurrentProduct(null);
     localStorage.removeItem('constructmail_userId');
-    setActiveTab('dashboard');
+  };
+
+  const handleProductSelect = (productId) => {
+    setCurrentProduct(productId);
+  };
+
+  const handleBackToProducts = () => {
+    setCurrentProduct(null);
   };
 
   if (loading) {
@@ -88,54 +101,24 @@ useEffect(() => {
     return <Login onLoginSuccess={() => {}} />;
   }
 
-  return (
-<div className="App">
-  <header className="header">
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
-      {/* Left: pomar logo */}
-      <img src="/logos/pomar.png" alt="pomar" style={{ height: '120px', width: 'auto' }} />
-      
-      {/* Center: constructmail logo + subtitle */}
-      <div style={{ textAlign: 'center', flex: 1 }}>
-        <img src="/logos/constructmail.png" alt="ConstructMail" style={{ height: '75px', width: 'auto', marginBottom: '8px' }} />
-        <p className="header-subtitle">AI-powered email intelligence for General Contractors</p>
-        <p style={{ margin: '0', fontSize: '12px', color: '#999' }}>Logged in as: {user?.email}</p>
-      </div>
-      
-      {/* Right: logout button */}
-      <button onClick={handleLogout} style={{
-        padding: '10px 20px',
-        background: 'var(--secondary-color)',
-        color: 'white',
-        border: 'none',
-        borderRadius: '6px',
-        cursor: 'pointer',
-        fontSize: '14px',
-        fontWeight: '600',
-        whiteSpace: 'nowrap'
-      }}>
-        🚪 Logout
-      </button>
-    </div>
-  </header>
-  
-  <nav className="nav-tabs">
-    <button className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>📊 Dashboard</button>
-    <button className={`nav-tab ${activeTab === 'summarizer' ? 'active' : ''}`} onClick={() => setActiveTab('summarizer')}>📋 Summarizer</button>
-    <button className={`nav-tab ${activeTab === 'actions' ? 'active' : ''}`} onClick={() => setActiveTab('actions')}>✓ Actions</button>
-    <button className={`nav-tab ${activeTab === 'meeting' ? 'active' : ''}`} onClick={() => setActiveTab('meeting')}>👥 Meeting Notes</button>
-    <button className={`nav-tab ${activeTab === 'signals' ? 'active' : ''}`} onClick={() => setActiveTab('signals')}>🚨 RFI/Change Orders</button>
-  </nav>
+  // User is logged in
+  if (!currentProduct) {
+    // Show landing page with product cards
+    return <LandingPage onProductSelect={handleProductSelect} />;
+  }
 
-  <div className="tab-content">
-    {activeTab === 'dashboard' && <Dashboard />}
-    {activeTab === 'summarizer' && <Summarizer />}
-    {activeTab === 'actions' && <ActionExtractor />}
-    {activeTab === 'meeting' && <MeetingNotes />}
-    {activeTab === 'signals' && <SignalDetector />}
-  </div>
-</div>
-  );
+  // User selected a product - show that product
+  if (currentProduct === 'constructmail') {
+    return (
+      <ConstructMailApp 
+        user={user} 
+        userId={userId} 
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  return <div>Unknown product</div>;
 }
 
 export default App;
