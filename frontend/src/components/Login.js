@@ -46,7 +46,7 @@ export default function Login({ onLoginSuccess }) {
             disabled={loading}
           />
           <button type="submit" disabled={loading}>
-            {loading ? 'Sending...' : 'Get Magic Link'}
+            {loading ? 'Sending...' : 'Get Access Link'}
           </button>
         </form>
 
