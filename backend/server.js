@@ -402,7 +402,7 @@ app.post('/api/auth/send-magic-link', async (req, res) => {
     );
 
     // Create magic link
-    const magicLink = `https://constructmail.pomar.ai/auth/verify?token=${magicToken}`;
+    const magicLink = `https://constructmail-mvp.vercel.app/auth/verify?token=${magicToken}`;
 
     res.json({ 
       message: 'Magic link generated',
