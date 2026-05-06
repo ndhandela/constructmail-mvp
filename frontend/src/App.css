@@ -1,6 +1,8 @@
 .App {
   min-height: 100vh;
   background-color: var(--white);
+  display: flex;
+  flex-direction: column;
 }
 
 .header {
@@ -11,19 +13,38 @@
   position: relative;
 }
 
+.header > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
 .logo-pomar {
-  height: 140px;
+  height: 120px;
   width: auto;
+  flex-shrink: 0;
+}
+
+.header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 200px;
 }
 
 .logo-constructmail {
-  height: 120px;
+  height: 75px;
   width: auto;
 }
 
 .header-subtitle {
   color: #666;
-  margin: 12px 0 0 0;
+  margin: 0;
   font-size: 14px;
   text-align: center;
 }
@@ -34,6 +55,7 @@
   border-bottom: 2px solid var(--border-color);
   padding: 0 20px;
   margin-top: 0;
+  overflow-x: auto;
 }
 
 .nav-tab {
@@ -46,6 +68,7 @@
   color: var(--dark-gray);
   transition: all 0.3s ease;
   border-bottom: 3px solid transparent;
+  white-space: nowrap;
 }
 
 .nav-tab:hover {
@@ -58,16 +81,89 @@
 }
 
 .tab-content {
+  flex: 1;
+  overflow-y: auto;
   animation: fadeIn 0.3s ease;
+  padding: 20px;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+  }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .header {
+    padding: 15px 20px;
+  }
+
+  .logo-pomar {
+    height: 80px;
+  }
+
+  .logo-constructmail {
+    height: 50px;
+  }
+
+  .header-subtitle {
+    font-size: 12px;
+  }
+
+  .header > div {
+    gap: 10px;
+  }
+
+  .nav-tabs {
+    padding: 0 10px;
+  }
+
+  .nav-tab {
+    padding: 12px 10px;
+    font-size: 12px;
+  }
+
+  .tab-content {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 10px 15px;
+  }
+
+  .header > div {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .logo-pomar {
+    height: 60px;
+  }
+
+  .logo-constructmail {
+    height: 40px;
+  }
+
+  .header-subtitle {
+    font-size: 11px;
+  }
+
+  .nav-tabs {
+    padding: 0 5px;
+  }
+
+  .nav-tab {
+    padding: 10px 8px;
+    font-size: 11px;
+  }
+
+  .tab-content {
+    padding: 10px;
   }
 }

@@ -162,3 +162,89 @@ tr:hover {
 .copy-btn:hover {
   background: #e55a00;
 }
+
+/* Mobile Responsiveness for Components */
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 15px;
+  }
+
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .stat-card {
+    padding: 20px;
+  }
+
+  .stat-number {
+    font-size: 32px;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .dashboard-card {
+    padding: 15px;
+  }
+
+  .dashboard-card h3 {
+    font-size: 16px;
+  }
+
+  .dashboard-card p {
+    font-size: 12px;
+  }
+
+  /* Form inputs */
+  textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  button {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-stats {
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 15px;
+  }
+
+  .stat-number {
+    font-size: 24px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+  }
+
+  .dashboard-grid {
+    gap: 10px;
+  }
+
+  .dashboard-card {
+    padding: 12px;
+  }
+
+  .dashboard-card h3 {
+    font-size: 14px;
+  }
+
+  .list {
+    font-size: 11px;
+  }
+
+  button {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+}
