@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Dashboard from '../components/Dashboard';
 import Summarizer from '../components/Summarizer';
 import ActionExtractor from '../components/ActionExtractor';
@@ -6,8 +6,6 @@ import MeetingNotes from '../components/MeetingNotes';
 import SignalDetector from '../components/SignalDetector';
 import '../theme.css';
 import '../styles/components.css';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export default function ConstructMailApp({ user, userId, onLogout }) {
   const [activeTab, setActiveTab] = useState('dashboard');

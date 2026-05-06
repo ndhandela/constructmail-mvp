@@ -65,7 +65,7 @@ function App() {
       }
     }
   }, [userId]);
-  
+
   const fetchUser = async (uid) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/me?userId=${uid}`);
@@ -88,11 +88,7 @@ function App() {
   const handleProductSelect = (productId) => {
     setCurrentProduct(productId);
   };
-
-  const handleBackToProducts = () => {
-    setCurrentProduct(null);
-  };
-
+  
   if (loading) {
     return <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>;
   }
