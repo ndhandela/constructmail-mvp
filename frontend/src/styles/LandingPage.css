@@ -92,3 +92,77 @@
   font-weight: 600;
   margin-top: 20px;
 }
+
+/* Add this at the end for mobile responsiveness */
+
+@media (max-width: 768px) {
+  .landing-page {
+    padding: 40px 15px;
+  }
+
+  .landing-header {
+    margin-bottom: 50px;
+  }
+
+  .landing-logo {
+    height: 70px;
+  }
+
+  .landing-header h1 {
+    font-size: 32px;
+    margin: 15px 0;
+  }
+
+  .landing-subtitle {
+    font-size: 16px;
+  }
+
+  .products-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .product-card {
+    padding: 30px 20px;
+  }
+
+  .product-card h2 {
+    font-size: 20px;
+  }
+
+  .product-card p {
+    font-size: 13px;
+  }
+
+  .product-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+  }
+
+  .launch-badge {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-page {
+    padding: 30px 10px;
+  }
+
+  .landing-logo {
+    height: 60px;
+  }
+
+  .landing-header h1 {
+    font-size: 24px;
+  }
+
+  .product-card {
+    padding: 20px 15px;
+  }
+
+  .product-icon {
+    font-size: 40px;
+  }
+}
