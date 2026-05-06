@@ -16,7 +16,11 @@ export default function LandingPage({ onProductSelect }) {
           <div 
             key={product.id} 
             className={`product-card ${product.status}`}
-            onClick={() => product.status === 'active' && onProductSelect(product.id)}
+            onClick={() => {
+            if (product.status === 'active') {
+                window.location.href = '/constructmail';
+            }
+            }}
             style={{
               cursor: product.status === 'active' ? 'pointer' : 'default',
               opacity: product.status === 'active' ? 1 : 0.6
