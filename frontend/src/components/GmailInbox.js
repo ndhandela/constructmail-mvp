@@ -10,8 +10,9 @@ export default function GmailInbox({ userId, onEmailSelect }) {
   const [error, setError] = useState('');
   const [selectedEmail, setSelectedEmail] = useState(null);
 
-  useEffect(() => {
+useEffect(() => {
     fetchEmails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const fetchEmails = async () => {
