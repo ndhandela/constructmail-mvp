@@ -1,0 +1,87 @@
+.gmail-connect {
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.gmail-card {
+  background: white;
+  border: 2px solid var(--border-light);
+  border-radius: 12px;
+  padding: 40px;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.gmail-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.gmail-card h2 {
+  color: var(--primary-color);
+  margin: 0 0 10px 0;
+  font-size: 24px;
+}
+
+.gmail-card p {
+  color: var(--text-dark);
+  margin: 0 0 30px 0;
+  font-size: 14px;
+}
+
+.gmail-button {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #004d7a 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.3s;
+  margin-bottom: 20px;
+}
+
+.gmail-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 46, 74, 0.3);
+  background: linear-gradient(135deg, var(--secondary-color) 0%, #cc5200 100%);
+}
+
+.gmail-button:disabled {
+  background: var(--border-light);
+  cursor: not-allowed;
+}
+
+.connected {
+  padding: 20px;
+  background: #f0f4f7;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border-light);
+}
+
+.success-badge {
+  background: var(--primary-color);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.connected-text {
+  color: var(--primary-color);
+  font-size: 14px;
+  margin: 0;
+}
+
+.info-text {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 20px;
+}

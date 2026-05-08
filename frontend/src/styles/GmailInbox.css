@@ -1,0 +1,113 @@
+.gmail-inbox {
+  padding: 20px;
+  background: var(--background);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border-light);
+}
+
+.inbox-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid var(--border-light);
+}
+
+.inbox-header h3 {
+  margin: 0;
+  color: var(--primary-color);
+  font-size: 18px;
+}
+
+.refresh-btn {
+  padding: 8px 16px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.refresh-btn:hover {
+  background: var(--secondary-color);
+  transform: scale(1.05);
+}
+
+.email-list {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.email-item {
+  padding: 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.email-item:hover {
+  background: #f5f8fa;
+  border-color: var(--primary-color);
+}
+
+.email-item.selected {
+  background: #e8f0f5;
+  border-color: var(--primary-color);
+  border-left: 4px solid var(--secondary-color);
+}
+
+.email-from {
+  font-weight: 600;
+  color: var(--primary-color);
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.email-subject {
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.email-preview {
+  color: var(--text-light);
+  font-size: 12px;
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.email-date {
+  color: var(--text-light);
+  font-size: 11px;
+}
+
+.gmail-loading {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-light);
+}
+
+.empty-inbox {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-light);
+}
+
+.error-message {
+  background: #fff0f0;
+  color: #cc0000;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  font-size: 13px;
+  border-left: 4px solid var(--secondary-color);
+}

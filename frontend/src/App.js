@@ -15,6 +15,24 @@ function App() {
   const [currentProduct, setCurrentProduct] = useState(null);
 
   useEffect(() => {
+
+    // Handle Gmail OAuth callback
+      if (window.location.pathname === '/auth/gmail/callback') {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const error = params.get('error');
+    
+      if (window.opener && !window._gmailCallbackSent) {
+        window._gmailCallbackSent = true;
+        window.opener.postMessage(
+          { type: 'GMAIL_CALLBACK', code, error },
+          window.location.origin
+        );
+        setTimeout(() => window.close(), 500);
+      }
+    return;
+    }
+
     const verifyTokenFn = async (token) => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/auth/verify-token`, {

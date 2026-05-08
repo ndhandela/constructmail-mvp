@@ -1,39 +1,44 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import GmailConnect from './GmailConnect';
+import GmailInbox from './GmailInbox';
 import '../styles/Summarizer.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export default function Summarizer() {
+  const userId = localStorage.getItem('constructmail_userId');
+  const [gmailConnected, setGmailConnected] = useState(false);
   const [emailText, setEmailText] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError('');
-  setResult(null);
+  const handleEmailSelect = (thread) => {
+    setEmailText(thread);
+  };
 
-  try {
-    const userId = localStorage.getItem('constructmail_userId');
-    
-    const response = await axios.post(`${API_BASE_URL}/api/summarize`, {
-      emailText,
-      userId: userId
-    }, {
-      timeout: 30000,
-    });
-    setResult(response.data);
-    setEmailText('');
-  } catch (err) {
-    const errorMsg = err.response?.data?.error || err.message || 'Unknown error occurred';
-    setError(errorMsg);
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setResult(null);
+
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/summarize`, {
+        emailText,
+        userId: userId
+      }, {
+        timeout: 30000,
+      });
+      setResult(response.data);
+    } catch (err) {
+      const errorMsg = err.response?.data?.error || err.message || 'Unknown error occurred';
+      setError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
@@ -43,11 +48,23 @@ const handleSubmit = async (e) => {
   return (
     <div className="summarizer-container">
       <h2>Email Thread Summarizer</h2>
-      <p className="subtitle">Paste an email thread. Get a summary, decisions, and action items instantly.</p>
-      
+      <p className="subtitle">Connect Gmail or paste an email thread. Get a summary, decisions, and action items instantly.</p>
+
+      {!gmailConnected ? (
+        <GmailConnect
+          userId={userId}
+          onConnect={() => setGmailConnected(true)}
+        />
+      ) : (
+        <GmailInbox
+          userId={userId}
+          onEmailSelect={handleEmailSelect}
+        />
+      )}
+
       <form onSubmit={handleSubmit}>
         <textarea
-          placeholder="Paste email thread here..."
+          placeholder={gmailConnected ? "Or paste email thread here..." : "Paste email thread here..."}
           value={emailText}
           onChange={(e) => setEmailText(e.target.value)}
           rows={10}
