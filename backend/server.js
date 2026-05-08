@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 require('dotenv').config();
 const { pool, initDb } = require('./db');
 const { summarizeEmailThread, extractActionItems, detectSignals, processMeetingNotes } = require('./ai-helpers');
+const gmailHelpers = require('./gmail-helpers');
 
 const app = express();
 
@@ -518,6 +519,74 @@ app.get('/api/debug/user-data/:userId', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// 1. Get Google Auth URL
+app.get('/api/auth/gmail-url', (req, res) => {
+  try {
+    const authUrl = gmailHelpers.getGoogleAuthUrl();
+    res.json({ authUrl });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to generate auth URL' });
+  }
+});
+
+// 2. Handle Gmail OAuth callback
+app.post('/api/auth/gmail-callback', async (req, res) => {
+  const { code, userId } = req.body;
+  try {
+    const tokens = await gmailHelpers.getAccessToken(code);
+    await pool.query(
+      'UPDATE users SET gmail_access_token = $1, gmail_refresh_token = $2 WHERE id = $3',
+      [tokens.access_token, tokens.refresh_token || null, userId]
+    );
+    res.json({ success: true, message: 'Gmail connected successfully' });
+  } catch (err) {
+    console.error('Gmail callback error:', err);
+    res.status(500).json({ error: 'Failed to connect Gmail' });
+  }
+});
+
+// 3. Fetch user's Gmail emails
+app.get('/api/gmail/emails', async (req, res) => {
+  const { userId } = req.query;
+  try {
+    const userResult = await pool.query(
+      'SELECT gmail_access_token FROM users WHERE id = $1',
+      [userId]
+    );
+    if (!userResult.rows[0] || !userResult.rows[0].gmail_access_token) {
+      return res.status(401).json({ error: 'Gmail not connected' });
+    }
+    const accessToken = userResult.rows[0].gmail_access_token;
+    const emails = await gmailHelpers.getGmailEmails(accessToken, 15);
+    res.json(emails);
+  } catch (err) {
+    console.error('Error fetching emails:', err);
+    res.status(500).json({ error: 'Failed to fetch emails' });
+  }
+});
+
+// 4. Get full email thread
+app.get('/api/gmail/thread/:threadId', async (req, res) => {
+  const { threadId } = req.params;
+  const { userId } = req.query;
+  try {
+    const userResult = await pool.query(
+      'SELECT gmail_access_token FROM users WHERE id = $1',
+      [userId]
+    );
+    if (!userResult.rows[0] || !userResult.rows[0].gmail_access_token) {
+      return res.status(401).json({ error: 'Gmail not connected' });
+    }
+    const accessToken = userResult.rows[0].gmail_access_token;
+    const thread = await gmailHelpers.getGmailThread(accessToken, threadId);
+    res.json(thread);
+  } catch (err) {
+    console.error('Error fetching thread:', err);
+    res.status(500).json({ error: 'Failed to fetch thread' });
+  }
+});
+
 
 // Start server
 const PORT = process.env.PORT || 3001;
