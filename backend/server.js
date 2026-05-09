@@ -150,7 +150,7 @@ app.post('/api/extract-actions', async (req, res) => {
 
 app.post('/api/process-meeting', async (req, res) => {
   try {
-        const { emailText, projectId } = req.body;
+    const { notesText, projectId } = req.body;
     const userId = parseInt(req.body.userId); // Convert to number!
 
     if (!notesText || notesText.trim().length === 0) {
