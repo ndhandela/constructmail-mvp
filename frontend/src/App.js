@@ -3,6 +3,7 @@ import Login from './components/Login';
 import LandingPage from './pages/LandingPage';
 import ConstructMailApp from './pages/ConstructMailApp';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import Header from './components/Header';
 import Footer from './components/Footer';
 import './theme.css';
 import './styles/components.css';
@@ -123,36 +124,39 @@ function App() {
     return <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>;
   }
 
-  if (!userId) {
-    return (
-      <>
-        <Login onLoginSuccess={() => {}} />
-        <Footer />
-      </>
-    );
-  }
+if (!userId) {
+  return (
+    <>
+      <Header userId={null} onLogout={null} />
+      <Login onLoginSuccess={() => {}} />
+      <Footer />
+    </>
+  );
+}
 
-  if (!currentProduct) {
-    return (
-      <>
-        <LandingPage onProductSelect={handleProductSelect} />
-        <Footer />
-      </>
-    );
-  }
+if (!currentProduct) {
+  return (
+    <>
+      <Header userId={userId} onLogout={handleLogout} />
+      <LandingPage onProductSelect={handleProductSelect} />
+      <Footer />
+    </>
+  );
+}
 
-  if (currentProduct === 'constructmail') {
-    return (
-      <>
-        <ConstructMailApp
-          user={user}
-          userId={userId}
-          onLogout={handleLogout}
-        />
-        <Footer />
-      </>
-    );
-  }
+if (currentProduct === 'constructmail') {
+  return (
+    <>
+      <Header userId={userId} onLogout={handleLogout} />
+      <ConstructMailApp
+        user={user}
+        userId={userId}
+        onLogout={handleLogout}
+      />
+      <Footer />
+    </>
+  );
+}
 
   return <div>Unknown product</div>;
 }
