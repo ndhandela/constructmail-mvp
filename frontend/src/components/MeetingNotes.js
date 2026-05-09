@@ -10,12 +10,13 @@ export default function MeetingNotes() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
-    useEffect(() => {
+useEffect(() => {
     if (selectedEmailText) {
       setNotesText(selectedEmailText);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEmailText]);
-  
+
 const handleSubmit = async (e) => {
   e.preventDefault();
   setLoading(true);

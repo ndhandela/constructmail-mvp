@@ -10,12 +10,13 @@ export default function ActionExtractor() {
   const [actions, setActions] = useState([]);
   const [error, setError] = useState('');
 
-    useEffect(() => {
+useEffect(() => {
     if (selectedEmailText) {
       setEmailText(selectedEmailText);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEmailText]);
-  
+
 const handleSubmit = async (e) => {
   e.preventDefault();
   setLoading(true);
