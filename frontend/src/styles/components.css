@@ -263,7 +263,7 @@ tr:hover {
 }
 
 .left-panel {
-  width: 320px;
+  width: 600px;
   min-width: 320px;
   border-right: 2px solid var(--border-color);
   overflow-y: auto;
