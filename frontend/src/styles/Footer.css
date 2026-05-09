@@ -1,10 +1,14 @@
 .footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   background: var(--primary-color);
   color: #999;
   text-align: center;
   padding: 12px;
   font-size: 13px;
-  flex-shrink: 0;
+  z-index: 100;
 }
 
 .footer a {
