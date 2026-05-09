@@ -5,9 +5,11 @@ import ConstructMailApp from './pages/ConstructMailApp';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import AboutUs from './pages/AboutUs';
 import './theme.css';
 import './styles/components.css';
 import './App.css';
+
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
@@ -119,6 +121,16 @@ function App() {
       </>
     );
   }
+
+  if (window.location.pathname === '/about') {
+  return (
+    <>
+      <Header userId={userId} onLogout={handleLogout} />
+      <AboutUs />
+      <Footer />
+    </>
+  );
+}
 
   if (loading) {
     return <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>;

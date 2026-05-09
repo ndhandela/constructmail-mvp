@@ -17,8 +17,8 @@
 }
 
 .header-logo {
-  height: 60px;
-  width: auto;
+  height: 70px;
+  width: 200px;
 }
 
 .header-right-section {
@@ -55,7 +55,7 @@
 .header-cta {
   padding: 8px 20px;
   background: transparent;
-  color: white;
+  color: var(--primary-color);
   border: 2px solid var(--secondary-color);
   border-radius: 50px;
   font-size: 14px;
