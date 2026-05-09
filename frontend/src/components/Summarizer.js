@@ -1,22 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import GmailConnect from './GmailConnect';
-import GmailInbox from './GmailInbox';
 import '../styles/Summarizer.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-export default function Summarizer() {
-  const userId = localStorage.getItem('constructmail_userId');
-  const [gmailConnected, setGmailConnected] = useState(false);
+export default function Summarizer({ userId, selectedEmailText }) {
   const [emailText, setEmailText] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
-  const handleEmailSelect = (thread) => {
-    setEmailText(thread);
-  };
+  useEffect(() => {
+    if (selectedEmailText) {
+      setEmailText(selectedEmailText);
+    }
+  }, [selectedEmailText]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,23 +46,11 @@ export default function Summarizer() {
   return (
     <div className="summarizer-container">
       <h2>Email Thread Summarizer</h2>
-      <p className="subtitle">Connect Gmail or paste an email thread. Get a summary, decisions, and action items instantly.</p>
-
-      {!gmailConnected ? (
-        <GmailConnect
-          userId={userId}
-          onConnect={() => setGmailConnected(true)}
-        />
-      ) : (
-        <GmailInbox
-          userId={userId}
-          onEmailSelect={handleEmailSelect}
-        />
-      )}
+      <p className="subtitle">Select an email from your inbox above, or paste an email thread below.</p>
 
       <form onSubmit={handleSubmit}>
         <textarea
-          placeholder={gmailConnected ? "Or paste email thread here..." : "Paste email thread here..."}
+          placeholder="Paste email thread here..."
           value={emailText}
           onChange={(e) => setEmailText(e.target.value)}
           rows={10}

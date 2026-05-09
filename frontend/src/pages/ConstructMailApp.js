@@ -4,27 +4,30 @@ import Summarizer from '../components/Summarizer';
 import ActionExtractor from '../components/ActionExtractor';
 import MeetingNotes from '../components/MeetingNotes';
 import SignalDetector from '../components/SignalDetector';
+import GmailConnect from '../components/GmailConnect';
+import GmailInbox from '../components/GmailInbox';
 import '../theme.css';
 import '../styles/components.css';
 
 export default function ConstructMailApp({ user, userId, onLogout }) {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [gmailConnected, setGmailConnected] = useState(false);
+  const [selectedEmailText, setSelectedEmailText] = useState('');
+
+  const handleEmailSelect = (thread) => {
+    setSelectedEmailText(thread);
+  };
 
   return (
     <div className="App">
       <header className="header">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
-          {/* Left: pomar logo */}
           <img src="/logos/pomar.png" alt="pomar" style={{ height: '120px', width: 'auto' }} />
-          
-          {/* Center: constructmail logo + subtitle */}
           <div style={{ textAlign: 'center', flex: 1 }}>
             <img src="/logos/constructmail.png" alt="ConstructMail" style={{ height: '75px', width: 'auto', marginBottom: '8px' }} />
             <p className="header-subtitle">AI-powered email intelligence for General Contractors</p>
             <p style={{ margin: '0', fontSize: '12px', color: '#999' }}>Logged in as: {user?.email}</p>
           </div>
-          
-          {/* Right: logout button */}
           <button onClick={onLogout} style={{
             padding: '10px 20px',
             background: 'var(--secondary-color)',
@@ -40,7 +43,7 @@ export default function ConstructMailApp({ user, userId, onLogout }) {
           </button>
         </div>
       </header>
-      
+
       <nav className="nav-tabs">
         <button className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>📊 Dashboard</button>
         <button className={`nav-tab ${activeTab === 'summarizer' ? 'active' : ''}`} onClick={() => setActiveTab('summarizer')}>📋 Summarizer</button>
@@ -49,12 +52,29 @@ export default function ConstructMailApp({ user, userId, onLogout }) {
         <button className={`nav-tab ${activeTab === 'signals' ? 'active' : ''}`} onClick={() => setActiveTab('signals')}>🚨 RFI/Change Orders</button>
       </nav>
 
+      {/* Gmail Panel - shows on all tabs except dashboard */}
+      {activeTab !== 'dashboard' && (
+        <div style={{ padding: '0 20px' }}>
+          {!gmailConnected ? (
+            <GmailConnect
+              userId={userId}
+              onConnect={() => setGmailConnected(true)}
+            />
+          ) : (
+            <GmailInbox
+              userId={userId}
+              onEmailSelect={handleEmailSelect}
+            />
+          )}
+        </div>
+      )}
+
       <div className="tab-content">
         {activeTab === 'dashboard' && <Dashboard userId={userId} />}
-        {activeTab === 'summarizer' && <Summarizer userId={userId} />}
-        {activeTab === 'actions' && <ActionExtractor userId={userId} />}
-        {activeTab === 'meeting' && <MeetingNotes userId={userId} />}
-        {activeTab === 'signals' && <SignalDetector userId={userId} />}
+        {activeTab === 'summarizer' && <Summarizer userId={userId} selectedEmailText={selectedEmailText} />}
+        {activeTab === 'actions' && <ActionExtractor userId={userId} selectedEmailText={selectedEmailText} />}
+        {activeTab === 'meeting' && <MeetingNotes userId={userId} selectedEmailText={selectedEmailText} />}
+        {activeTab === 'signals' && <SignalDetector userId={userId} selectedEmailText={selectedEmailText} />}
       </div>
     </div>
   );

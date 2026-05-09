@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../styles/SignalDetector.css';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export default function SignalDetector() {
   const [emailText, setEmailText] = useState('');
@@ -10,6 +10,12 @@ export default function SignalDetector() {
   const [signals, setSignals] = useState([]);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (selectedEmailText) {
+      setEmailText(selectedEmailText);
+    }
+  }, [selectedEmailText]);
+  
 const handleSubmit = async (e) => {
   e.preventDefault();
   setLoading(true);

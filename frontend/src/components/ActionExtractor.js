@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../styles/ActionExtractor.css';
 
@@ -10,6 +10,12 @@ export default function ActionExtractor() {
   const [actions, setActions] = useState([]);
   const [error, setError] = useState('');
 
+    useEffect(() => {
+    if (selectedEmailText) {
+      setEmailText(selectedEmailText);
+    }
+  }, [selectedEmailText]);
+  
 const handleSubmit = async (e) => {
   e.preventDefault();
   setLoading(true);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../styles/MeetingNotes.css';
 
@@ -10,6 +10,12 @@ export default function MeetingNotes() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
+    useEffect(() => {
+    if (selectedEmailText) {
+      setNotesText(selectedEmailText);
+    }
+  }, [selectedEmailText]);
+  
 const handleSubmit = async (e) => {
   e.preventDefault();
   setLoading(true);
