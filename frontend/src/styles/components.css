@@ -247,4 +247,82 @@ tr:hover {
     padding: 10px 12px;
     font-size: 12px;
   }
+
+  /* Two-column app layout */
+.app-body {
+  display: flex;
+  gap: 0;
+  height: calc(100vh - 160px);
+  overflow: hidden;
+}
+
+.left-panel {
+  width: 320px;
+  min-width: 320px;
+  border-right: 2px solid var(--border-color);
+  overflow-y: auto;
+  background: #f8f9fa;
+  padding: 16px;
+}
+
+.right-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.right-panel.full-width {
+  width: 100%;
+}
+
+/* Adjust Gmail inbox for left panel */
+.left-panel .gmail-inbox {
+  margin-bottom: 0;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.left-panel .inbox-header h3 {
+  font-size: 15px;
+}
+
+.left-panel .email-list {
+  max-height: calc(100vh - 280px);
+}
+
+.left-panel .email-item {
+  padding: 10px;
+  margin-bottom: 8px;
+}
+
+.left-panel .gmail-connect {
+  padding: 0;
+}
+
+.left-panel .gmail-card {
+  padding: 20px;
+  max-width: 100%;
+}
+
+/* Mobile - stack vertically */
+@media (max-width: 768px) {
+  .app-body {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  .left-panel {
+    width: 100%;
+    min-width: unset;
+    border-right: none;
+    border-bottom: 2px solid var(--border-color);
+    max-height: 300px;
+  }
+
+  .right-panel {
+    padding: 16px;
+  }
+}
 }

@@ -52,29 +52,32 @@ export default function ConstructMailApp({ user, userId, onLogout }) {
         <button className={`nav-tab ${activeTab === 'signals' ? 'active' : ''}`} onClick={() => setActiveTab('signals')}>🚨 RFI/Change Orders</button>
       </nav>
 
-      {/* Gmail Panel - shows on all tabs except dashboard */}
-      {activeTab !== 'dashboard' && (
-        <div style={{ padding: '0 20px' }}>
-          {!gmailConnected ? (
-            <GmailConnect
-              userId={userId}
-              onConnect={() => setGmailConnected(true)}
-            />
-          ) : (
-            <GmailInbox
-              userId={userId}
-              onEmailSelect={handleEmailSelect}
-            />
-          )}
-        </div>
-      )}
+      <div className="app-body">
+        {/* Left Panel - Gmail Inbox */}
+        {activeTab !== 'dashboard' && (
+          <div className="left-panel">
+            {!gmailConnected ? (
+              <GmailConnect
+                userId={userId}
+                onConnect={() => setGmailConnected(true)}
+              />
+            ) : (
+              <GmailInbox
+                userId={userId}
+                onEmailSelect={handleEmailSelect}
+              />
+            )}
+          </div>
+        )}
 
-      <div className="tab-content">
-        {activeTab === 'dashboard' && <Dashboard userId={userId} />}
-        {activeTab === 'summarizer' && <Summarizer userId={userId} selectedEmailText={selectedEmailText} />}
-        {activeTab === 'actions' && <ActionExtractor userId={userId} selectedEmailText={selectedEmailText} />}
-        {activeTab === 'meeting' && <MeetingNotes userId={userId} selectedEmailText={selectedEmailText} />}
-        {activeTab === 'signals' && <SignalDetector userId={userId} selectedEmailText={selectedEmailText} />}
+        {/* Right Panel - Main Content */}
+        <div className={`right-panel ${activeTab === 'dashboard' ? 'full-width' : ''}`}>
+          {activeTab === 'dashboard' && <Dashboard userId={userId} />}
+          {activeTab === 'summarizer' && <Summarizer userId={userId} selectedEmailText={selectedEmailText} />}
+          {activeTab === 'actions' && <ActionExtractor userId={userId} selectedEmailText={selectedEmailText} />}
+          {activeTab === 'meeting' && <MeetingNotes userId={userId} selectedEmailText={selectedEmailText} />}
+          {activeTab === 'signals' && <SignalDetector userId={userId} selectedEmailText={selectedEmailText} />}
+        </div>
       </div>
     </div>
   );
