@@ -608,7 +608,7 @@ app.post('/api/contact', async (req, res) => {
   try {
     await transporter.sendMail({
       from: process.env.GMAIL_USER,
-      to: 'ndhandela@techdensolutions.com',
+      to: 'connect@techdensolutions.com',
       subject: `New Consultation Request - ${company || 'No Company'} - ${name}`,
       html: `
         <h2>New Consultation Request</h2>

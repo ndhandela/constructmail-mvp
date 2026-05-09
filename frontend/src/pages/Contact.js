@@ -54,7 +54,7 @@ export default function Contact() {
             </div>
             <div className="contact-detail">
               <span className="contact-icon">📧</span>
-              <span>ndhandela@techdensolutions.com</span>
+              <span>connect@techdensolutions.com</span>
             </div>
             <div className="contact-detail">
               <span className="contact-icon">⏱️</span>
