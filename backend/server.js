@@ -590,7 +590,6 @@ app.get('/api/gmail/thread/:threadId', async (req, res) => {
   }
 });
 
-const emailService = require('./email-service');
 
 // Contact form endpoint
 app.post('/api/contact', async (req, res) => {
