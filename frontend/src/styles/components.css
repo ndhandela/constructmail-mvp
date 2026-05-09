@@ -247,12 +247,18 @@ tr:hover {
     padding: 10px 12px;
     font-size: 12px;
   }
+}
 
-  /* Two-column app layout */
+/* ===== Two-column app layout ===== */
+.App {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
 .app-body {
   display: flex;
-  gap: 0;
-  height: calc(100vh - 160px);
+  flex: 1;
   overflow: hidden;
 }
 
@@ -275,7 +281,6 @@ tr:hover {
   width: 100%;
 }
 
-/* Adjust Gmail inbox for left panel */
 .left-panel .gmail-inbox {
   margin-bottom: 0;
   border: none;
@@ -305,7 +310,6 @@ tr:hover {
   max-width: 100%;
 }
 
-/* Mobile - stack vertically */
 @media (max-width: 768px) {
   .app-body {
     flex-direction: column;
@@ -324,16 +328,4 @@ tr:hover {
   .right-panel {
     padding: 16px;
   }
-}
-.App {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-
-.app-body {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
 }
