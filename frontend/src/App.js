@@ -31,7 +31,7 @@ function App() {
         window._gmailCallbackSent = true;
         window.opener.postMessage(
           { type: 'GMAIL_CALLBACK', code, error },
-          window.location.origin
+          '*'
         );
         setTimeout(() => window.close(), 500);
       }
