@@ -6,8 +6,18 @@ require('dotenv').config();
 const { pool, initDb } = require('./db');
 const { summarizeEmailThread, extractActionItems, detectSignals, processMeetingNotes } = require('./ai-helpers');
 const gmailHelpers = require('./gmail-helpers');
+const nodemailer = require('nodemailer');
 
 const app = express();
+
+// Email transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD
+  }
+});
 
 // Middleware
 app.use(cors());
@@ -584,6 +594,50 @@ app.get('/api/gmail/thread/:threadId', async (req, res) => {
   } catch (err) {
     console.error('Error fetching thread:', err);
     res.status(500).json({ error: 'Failed to fetch thread' });
+  }
+});
+
+// Contact form endpoint
+app.post('/api/contact', async (req, res) => {
+  const { name, email, company, message } = req.body;
+
+  if (!name || !email || !message) {
+    return res.status(400).json({ error: 'Name, email and message are required' });
+  }
+
+  try {
+    await transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: 'ndhandela@techdensolutions.com',
+      subject: `New Consultation Request - ${company || 'No Company'} - ${name}`,
+      html: `
+        <h2>New Consultation Request</h2>
+        <table style="border-collapse: collapse; width: 100%;">
+          <tr>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Name</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">${name}</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Email</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">${email}</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Company</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">${company || '-'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Message</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">${message}</td>
+          </tr>
+        </table>
+        <p style="color: #999; margin-top: 20px;">Sent from pomar.ai contact form</p>
+      `
+    });
+
+    res.json({ success: true, message: 'Message sent successfully' });
+  } catch (err) {
+    console.error('Email error:', err);
+    res.status(500).json({ error: 'Failed to send message' });
   }
 });
 
