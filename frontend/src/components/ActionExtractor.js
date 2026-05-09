@@ -4,7 +4,7 @@ import '../styles/ActionExtractor.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-export default function ActionExtractor() {
+export default function ActionExtractor({ userId, selectedEmailText })  {
   const [emailText, setEmailText] = useState('');
   const [loading, setLoading] = useState(false);
   const [actions, setActions] = useState([]);

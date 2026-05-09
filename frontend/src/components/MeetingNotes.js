@@ -4,7 +4,7 @@ import '../styles/MeetingNotes.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-export default function MeetingNotes() {
+export default function MeetingNotes({ userId, selectedEmailText }) {
   const [notesText, setNotesText] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
