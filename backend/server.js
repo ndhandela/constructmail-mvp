@@ -6,20 +6,11 @@ require('dotenv').config();
 const { pool, initDb } = require('./db');
 const { summarizeEmailThread, extractActionItems, detectSignals, processMeetingNotes } = require('./ai-helpers');
 const gmailHelpers = require('./gmail-helpers');
-const nodemailer = require('nodemailer');
+const emailService = require('./email-service');
 
 const app = express();
 
-// Email transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD
-  }
-});
+
 
 // Middleware
 app.use(cors());
@@ -599,6 +590,8 @@ app.get('/api/gmail/thread/:threadId', async (req, res) => {
   }
 });
 
+const emailService = require('./email-service');
+
 // Contact form endpoint
 app.post('/api/contact', async (req, res) => {
   const { name, email, company, message } = req.body;
@@ -608,31 +601,30 @@ app.post('/api/contact', async (req, res) => {
   }
 
   try {
-    await transporter.sendMail({
-      from: process.env.GMAIL_USER,
+    await emailService.sendEmail({
       to: 'connect@techdensolutions.com',
       subject: `New Consultation Request - ${company || 'No Company'} - ${name}`,
       html: `
-        <h2>New Consultation Request</h2>
-        <table style="border-collapse: collapse; width: 100%;">
+        <h2 style="color: #002e4a;">New Consultation Request</h2>
+        <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
           <tr>
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Name</td>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; background: #f5f5f5;">Name</td>
             <td style="padding: 12px; border: 1px solid #ddd;">${name}</td>
           </tr>
           <tr>
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Email</td>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; background: #f5f5f5;">Email</td>
             <td style="padding: 12px; border: 1px solid #ddd;">${email}</td>
           </tr>
           <tr>
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Company</td>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; background: #f5f5f5;">Company</td>
             <td style="padding: 12px; border: 1px solid #ddd;">${company || '-'}</td>
           </tr>
           <tr>
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Message</td>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; background: #f5f5f5;">Message</td>
             <td style="padding: 12px; border: 1px solid #ddd;">${message}</td>
           </tr>
         </table>
-        <p style="color: #999; margin-top: 20px;">Sent from pomar.ai contact form</p>
+        <p style="color: #999; margin-top: 20px; font-size: 12px;">Sent from pomar.ai contact form</p>
       `
     });
 
