@@ -58,7 +58,7 @@ export default function AboutUs() {
         <div className="about-content">
           <h2>Ready to modernize your project communications?</h2>
           <p>Let's talk about how ConstructMail Intelligence can work for your team.</p>
-          <a href="mailto:info@techdensolutions.com" className="about-cta-btn">
+          <a href="/contact" className="about-cta-btn">
             Book a Free Consultation
           </a>
         </div>

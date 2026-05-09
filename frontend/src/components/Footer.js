@@ -8,7 +8,7 @@ export default function Footer() {
         © 2025 TechDen Solutions &nbsp;|&nbsp;
         <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
         &nbsp;|&nbsp;
-        <a href="mailto:info@techdensolutions.com">Contact</a>
+        <a href="/contact">Contact</a>
       </p>
     </footer>
   );
