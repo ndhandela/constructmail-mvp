@@ -325,4 +325,15 @@ tr:hover {
     padding: 16px;
   }
 }
+.App {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
 }
