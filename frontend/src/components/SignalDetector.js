@@ -12,7 +12,7 @@ export default function SignalDetector({ userId, selectedEmailText }) {
 
 useEffect(() => {
     if (selectedEmailText) {
-      setNotesText(selectedEmailText);
+      setEmailText(selectedEmailText);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEmailText]);
