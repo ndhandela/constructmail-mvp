@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import LandingPage from './pages/LandingPage';
 import ConstructMailApp from './pages/ConstructMailApp';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import Footer from './components/Footer';
 import './theme.css';
 import './styles/components.css';
 import './App.css';
@@ -15,13 +17,11 @@ function App() {
   const [currentProduct, setCurrentProduct] = useState(null);
 
   useEffect(() => {
-
     // Handle Gmail OAuth callback
-      if (window.location.pathname === '/auth/gmail/callback') {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const error = params.get('error');
-    
+    if (window.location.pathname === '/auth/gmail/callback') {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const error = params.get('error');
       if (window.opener && !window._gmailCallbackSent) {
         window._gmailCallbackSent = true;
         window.opener.postMessage(
@@ -30,7 +30,13 @@ function App() {
         );
         setTimeout(() => window.close(), 500);
       }
-    return;
+      return;
+    }
+
+    // Handle Privacy Policy route
+    if (window.location.pathname === '/privacy') {
+      setLoading(false);
+      return;
     }
 
     const verifyTokenFn = async (token) => {
@@ -40,9 +46,7 @@ function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token })
         });
-
         const data = await response.json();
-
         if (data.success) {
           setUserId(data.userId);
           localStorage.setItem('constructmail_userId', data.userId);
@@ -59,7 +63,6 @@ function App() {
       }
     };
 
-    // Check if user is already logged in (from URL or localStorage)
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token');
     const savedUserId = localStorage.getItem('constructmail_userId');
@@ -74,9 +77,8 @@ function App() {
     }
   }, []);
 
-  // NEW useEffect - Handle URL-based routing
   useEffect(() => {
-    if (userId) { // Only check path if user is logged in
+    if (userId) {
       const path = window.location.pathname;
       if (path.includes('/constructmail')) {
         setCurrentProduct('constructmail');
@@ -106,29 +108,49 @@ function App() {
   const handleProductSelect = (productId) => {
     setCurrentProduct(productId);
   };
-  
+
+  // Privacy Policy route - no auth required
+  if (window.location.pathname === '/privacy') {
+    return (
+      <>
+        <PrivacyPolicy />
+        <Footer />
+      </>
+    );
+  }
+
   if (loading) {
     return <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>;
   }
 
   if (!userId) {
-    return <Login onLoginSuccess={() => {}} />;
+    return (
+      <>
+        <Login onLoginSuccess={() => {}} />
+        <Footer />
+      </>
+    );
   }
 
-  // User is logged in
   if (!currentProduct) {
-    // Show landing page with product cards
-    return <LandingPage onProductSelect={handleProductSelect} />;
+    return (
+      <>
+        <LandingPage onProductSelect={handleProductSelect} />
+        <Footer />
+      </>
+    );
   }
 
-  // User selected a product - show that product
   if (currentProduct === 'constructmail') {
     return (
-      <ConstructMailApp 
-        user={user} 
-        userId={userId} 
-        onLogout={handleLogout}
-      />
+      <>
+        <ConstructMailApp
+          user={user}
+          userId={userId}
+          onLogout={handleLogout}
+        />
+        <Footer />
+      </>
     );
   }
 
