@@ -2,90 +2,95 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 40px;
+  padding: 0 60px;
   height: 72px;
-  background: var(--white);
-  border-bottom: 3px solid var(--secondary-color);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
   position: sticky;
   top: 0;
   z-index: 1000;
 }
 
-.header-left {
+.header-logo-link {
   display: flex;
   align-items: center;
-}
-
-.header-logo {
-  height: 70px;
-  width: 200px;
-}
-
-.header-right-section {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  text-decoration: none;
 }
 
 .header-nav {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-right: 16px;
+  gap: 8px;
 }
 
 .header-link {
-  color: var(--primary-color);
+  color: var(--inkwell);
   text-decoration: none;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
-  padding: 8px 16px;
-  border-radius: 6px;
-  transition: all 0.2s;
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  transition: all 0.2s ease;
   background: none;
   border: none;
   cursor: pointer;
+  font-family: inherit;
 }
 
 .header-link:hover {
-  color: var(--secondary-color);
-  background: rgba(0,46,74,0.05);
+  background: var(--parchment);
+}
+
+.caret {
+  font-size: 10px;
+  margin-left: 2px;
+  opacity: 0.6;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .header-cta {
-  padding: 8px 20px;
-  background: transparent;
-  color: var(--primary-color);
-  border: 2px solid var(--secondary-color);
-  border-radius: 50px;
+  padding: 10px 22px;
+  background: var(--inkwell);
+  color: var(--parchment);
+  border-radius: var(--radius-pill);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
-  transition: all 0.3s;
-  margin-right: 8px;
+  transition: all 0.2s ease;
+  border: none;
 }
 
 .header-cta:hover {
-  background: var(--secondary-color);
-  color: white;
+  background: var(--inkwell-light);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .header-logout {
-  padding: 8px 16px;
-  background: var(--secondary-color);
-  color: white;
-  border: none;
-  border-radius: 6px;
+  padding: 10px 18px;
+  background: transparent;
+  color: var(--inkwell);
+  border: 1.5px solid var(--inkwell);
+  border-radius: var(--radius-pill);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
-  transition: all 0.3s;
+  transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 .header-logout:hover {
-  background: #e55a00;
+  background: var(--inkwell);
+  color: var(--parchment);
 }
 
 /* Dropdown */
@@ -96,51 +101,72 @@
 .dropdown-trigger {
   display: flex;
   align-items: center;
-  gap: 4px;
 }
 
 .dropdown-menu {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 8px);
   left: 0;
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-  min-width: 240px;
-  padding: 8px 0;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  min-width: 280px;
+  padding: 8px;
   z-index: 1001;
+  border: 1px solid var(--border-light);
 }
 
 .dropdown-item {
-  display: block;
-  padding: 12px 20px;
-  color: var(--primary-color);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  color: var(--inkwell);
   text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background 0.2s;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
 }
 
 .dropdown-item:hover {
-  background: #f5f8fa;
-  color: var(--secondary-color);
+  background: var(--parchment);
+}
+
+.dropdown-item-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: var(--saffron);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.dropdown-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.dropdown-item-sub {
+  font-size: 12px;
+  color: var(--text-light);
 }
 
 /* Mobile */
 @media (max-width: 768px) {
   .main-header {
     padding: 0 16px;
+    height: 60px;
   }
 
   .header-nav {
     display: none;
   }
 
-  .header-cta {
+  .header-logout {
     display: none;
-  }
-
-  .header-logo {
-    height: 30px;
   }
 }
