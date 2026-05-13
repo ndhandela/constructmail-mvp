@@ -6,12 +6,15 @@ import MeetingNotes from '../components/MeetingNotes';
 import SignalDetector from '../components/SignalDetector';
 import GmailConnect from '../components/GmailConnect';
 import GmailInbox from '../components/GmailInbox';
+import OutlookConnect from '../components/OutlookConnect'; 
+import OutlookInbox from '../components/OutlookInbox'; 
 import '../theme.css';
 import '../styles/components.css';
 
 export default function ConstructMailApp({ user, userId, onLogout }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [gmailConnected, setGmailConnected] = useState(false);
+  const [outlookConnected, setOutlookConnected] = useState(false); 
   const [selectedEmailText, setSelectedEmailText] = useState('');
 
   const handleEmailSelect = (thread) => {
@@ -31,19 +34,33 @@ export default function ConstructMailApp({ user, userId, onLogout }) {
 
       <div className="app-body">
         {/* Left Panel - Gmail Inbox */}
-        {activeTab !== 'dashboard' && (
+{activeTab !== 'dashboard' && (
           <div className="left-panel">
-            {!gmailConnected ? (
-              <GmailConnect
-                userId={userId}
-                onConnect={() => setGmailConnected(true)}
-              />
-            ) : (
-              <GmailInbox
-                userId={userId}
-                onEmailSelect={handleEmailSelect}
-              />
-            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {!gmailConnected ? (
+                <GmailConnect
+                  userId={userId}
+                  onConnect={() => setGmailConnected(true)}
+                />
+              ) : (
+                <GmailInbox
+                  userId={userId}
+                  onEmailSelect={handleEmailSelect}
+                />
+              )}
+              
+              {!outlookConnected ? (
+                <OutlookConnect
+                  userId={userId}
+                  onConnect={() => setOutlookConnected(true)}
+                />
+              ) : (
+                <OutlookInbox
+                  userId={userId}
+                  onEmailSelect={handleEmailSelect}
+                />
+              )}
+            </div>
           </div>
         )}
 

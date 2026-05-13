@@ -1,0 +1,109 @@
+.outlook-inbox {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  overflow: hidden;
+}
+
+.inbox-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: #f9f9f9;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.inbox-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.refresh-btn {
+  background: #0078d4;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.refresh-btn:hover {
+  background: #0063b1;
+}
+
+.outlook-loading {
+  padding: 40px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+.email-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.email-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.email-item:hover {
+  background: #f5f5f5;
+}
+
+.email-item.selected {
+  background: #e3f2fd;
+  border-left: 4px solid #0078d4;
+}
+
+.email-from {
+  font-weight: 600;
+  color: #333;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.email-subject {
+  color: #000;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.email-preview {
+  color: #666;
+  font-size: 12px;
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.email-date {
+  color: #999;
+  font-size: 11px;
+}
+
+.empty-inbox {
+  padding: 40px;
+  text-align: center;
+  color: #999;
+}
+
+.error-message {
+  padding: 12px 16px;
+  background: #ffebee;
+  color: #c62828;
+  font-size: 13px;
+  border-bottom: 1px solid #f0f0f0;
+}

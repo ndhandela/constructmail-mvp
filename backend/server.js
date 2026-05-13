@@ -7,6 +7,7 @@ const { pool, initDb } = require('./db');
 const { summarizeEmailThread, extractActionItems, detectSignals, processMeetingNotes } = require('./ai-helpers');
 const gmailHelpers = require('./gmail-helpers');
 const emailService = require('./email-service');
+const outlookHelpers = require('./outlook-helpers');
 
 const app = express();
 
@@ -634,6 +635,149 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
+// 1. Get Microsoft Auth URL
+app.get('/api/auth/outlook-url', (req, res) => {
+  try {
+    const authUrl = outlookHelpers.getMicrosoftAuthUrl();
+    res.json({ authUrl });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to generate auth URL' });
+  }
+});
+
+// 2. Handle Outlook OAuth callback
+app.post('/api/auth/outlook-callback', async (req, res) => {
+  const { code, userId } = req.body;
+  try {
+    const tokens = await outlookHelpers.getAccessToken(code);
+    await pool.query(
+      'UPDATE users SET outlook_access_token = $1, outlook_refresh_token = $2, outlook_token_expires = $3 WHERE id = $4',
+      [tokens.access_token, tokens.refresh_token || null, tokens.expires_at, userId]
+    );
+    res.json({ success: true, message: 'Outlook connected successfully' });
+  } catch (err) {
+    console.error('Outlook callback error:', err);
+    res.status(500).json({ error: 'Failed to connect Outlook' });
+  }
+});
+
+// 3. Fetch user's Outlook emails
+app.get('/api/outlook/emails', async (req, res) => {
+  const { userId } = req.query;
+  try {
+    const userResult = await pool.query(
+      'SELECT outlook_access_token, outlook_refresh_token, outlook_token_expires FROM users WHERE id = $1',
+      [userId]
+    );
+    
+    if (!userResult.rows[0] || !userResult.rows[0].outlook_access_token) {
+      return res.status(401).json({ error: 'Outlook not connected' });
+    }
+
+    let accessToken = userResult.rows[0].outlook_access_token;
+    const refreshToken = userResult.rows[0].outlook_refresh_token;
+    const expiresAt = userResult.rows[0].outlook_token_expires;
+
+    // Check if token is expired and refresh if needed
+    if (new Date(expiresAt) < new Date()) {
+      try {
+        const newTokens = await outlookHelpers.refreshAccessToken(refreshToken);
+        accessToken = newTokens.access_token;
+        
+        await pool.query(
+          'UPDATE users SET outlook_access_token = $1, outlook_refresh_token = $2, outlook_token_expires = $3 WHERE id = $4',
+          [newTokens.access_token, newTokens.refresh_token, newTokens.expires_at, userId]
+        );
+      } catch (err) {
+        console.error('Token refresh failed:', err);
+        return res.status(401).json({ error: 'Failed to refresh Outlook token' });
+      }
+    }
+
+    const emails = await outlookHelpers.getOutlookEmails(accessToken, 15);
+    res.json(emails);
+  } catch (err) {
+    console.error('Error fetching Outlook emails:', err);
+    res.status(500).json({ error: 'Failed to fetch emails' });
+  }
+});
+
+// 4. Get full email conversation
+app.get('/api/outlook/thread/:conversationId', async (req, res) => {
+  const { conversationId } = req.params;
+  const { userId } = req.query;
+  try {
+    const userResult = await pool.query(
+      'SELECT outlook_access_token, outlook_refresh_token, outlook_token_expires FROM users WHERE id = $1',
+      [userId]
+    );
+    
+    if (!userResult.rows[0] || !userResult.rows[0].outlook_access_token) {
+      return res.status(401).json({ error: 'Outlook not connected' });
+    }
+
+    let accessToken = userResult.rows[0].outlook_access_token;
+    const refreshToken = userResult.rows[0].outlook_refresh_token;
+    const expiresAt = userResult.rows[0].outlook_token_expires;
+
+    // Check if token is expired and refresh if needed
+    if (new Date(expiresAt) < new Date()) {
+      try {
+        const newTokens = await outlookHelpers.refreshAccessToken(refreshToken);
+        accessToken = newTokens.access_token;
+        
+        await pool.query(
+          'UPDATE users SET outlook_access_token = $1, outlook_refresh_token = $2, outlook_token_expires = $3 WHERE id = $4',
+          [newTokens.access_token, newTokens.refresh_token, newTokens.expires_at, userId]
+        );
+      } catch (err) {
+        console.error('Token refresh failed:', err);
+        return res.status(401).json({ error: 'Failed to refresh Outlook token' });
+      }
+    }
+
+    const thread = await outlookHelpers.getOutlookThread(accessToken, conversationId);
+    res.json(thread);
+  } catch (err) {
+    console.error('Error fetching Outlook thread:', err);
+    res.status(500).json({ error: 'Failed to fetch thread' });
+  }
+});
+
+// Handle Outlook OAuth callback from Microsoft
+app.get('/api/auth/outlook-callback', (req, res) => {
+  const { code, error, error_description } = req.query;
+
+  if (error) {
+    return res.send(`
+      <html>
+        <body>
+          <p>Error: ${error_description}</p>
+          <script>
+            window.opener.postMessage({ type: 'OUTLOOK_CALLBACK', error: '${error_description}' }, '*');
+            window.close();
+          </script>
+        </body>
+      </html>
+    `);
+  }
+
+  if (code) {
+    return res.send(`
+      <html>
+        <body>
+          <p>Connecting to Outlook...</p>
+          <script>
+            window.opener.postMessage({ type: 'OUTLOOK_CALLBACK', code: '${code}' }, '*');
+            window.close();
+          </script>
+        </body>
+      </html>
+    `);
+  }
+
+  res.status(400).send('No authorization code received');
+});
 
 // Start server
 const PORT = process.env.PORT || 3001;
