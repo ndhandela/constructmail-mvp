@@ -7,7 +7,7 @@ import Contact from './pages/Contact';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import AboutUs from './pages/AboutUs';
-import './theme.css';
+import './styles/theme.css';
 import './styles/components.css';
 import './App.css';
 
@@ -114,15 +114,16 @@ function App() {
     setCurrentProduct(productId);
   };
 
-  // Privacy Policy route - no auth required
-  if (window.location.pathname === '/privacy') {
-    return (
-      <>
-        <PrivacyPolicy />
-        <Footer />
-      </>
-    );
-  }
+// Privacy Policy route - no auth required
+if (window.location.pathname === '/privacy') {
+  return (
+    <>
+      <Header userId={userId} onLogout={handleLogout} />
+      <PrivacyPolicy />
+      <Footer />
+    </>
+  );
+}
 
   if (window.location.pathname === '/about') {
   return (
@@ -148,16 +149,21 @@ if (window.location.pathname === '/contact') {
     return <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>;
   }
 
-if (!userId) {
+// /login route - show Login page
+if (window.location.pathname === '/login') {
   return (
     <>
       <Header userId={null} onLogout={null} />
-      <Login onLoginSuccess={() => {}} />
+      <Login onLoginSuccess={(uid) => {
+        setUserId(uid);
+        window.location.href = '/constructmail';
+      }} />
       <Footer />
     </>
   );
 }
 
+// Default - landing page (public, no auth required)
 if (!currentProduct) {
   return (
     <>
@@ -166,6 +172,12 @@ if (!currentProduct) {
       <Footer />
     </>
   );
+}
+
+// If trying to access product but not logged in, redirect to login
+if (!userId && currentProduct) {
+  window.location.href = '/login';
+  return null;
 }
 
 if (currentProduct === 'constructmail') {

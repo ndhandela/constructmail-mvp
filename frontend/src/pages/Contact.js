@@ -23,7 +23,6 @@ export default function Contact() {
     e.preventDefault();
     setLoading(true);
     setError('');
-
     try {
       await axios.post(`${API_BASE_URL}/api/contact`, formData);
       setSuccess(true);
@@ -37,100 +36,94 @@ export default function Contact() {
 
   return (
     <div className="contact-container">
-      <div className="contact-hero">
-        <h1>Book a Free Consultation</h1>
-        <p>Tell us about your project. We'll get back to you within 24 hours.</p>
-      </div>
+      <section className="contact-hero">
+        <div className="contact-eyebrow">Get in Touch</div>
+        <h1>
+          Book a <em>Free Consultation.</em>
+        </h1>
+        <p className="contact-hero-sub">
+          Tell us about your project. We'll get back to you within 24 hours.
+        </p>
+      </section>
 
-      <div className="contact-body">
-        <div className="contact-info">
-          <h2>Let's Talk</h2>
-          <p>Whether you're looking to streamline your project communications, implement construction technology, or just want to see a demo of ConstructMail Intelligence — we'd love to hear from you.</p>
+      <section className="contact-body-wrap">
+        <div className="contact-body">
+          <div className="contact-info">
+            <div className="contact-section-eyebrow">Let's Talk</div>
+            <h2>We listen first.</h2>
+            <p>
+              Whether you're looking to streamline your project communications, implement
+              construction technology, or just want to see a demo of POMAR Mail — we'd love to
+              hear from you.
+            </p>
 
-          <div className="contact-details">
-            <div className="contact-detail">
-              <span className="contact-icon">📍</span>
-              <span>Prosper, TX — serving GCs across DFW and beyond</span>
-            </div>
-            <div className="contact-detail">
-              <span className="contact-icon">📧</span>
-              <span>connect@techdensolutions.com</span>
-            </div>
-            <div className="contact-detail">
-              <span className="contact-icon">⏱️</span>
-              <span>Response within 24 hours</span>
+            <div className="contact-details">
+              <div className="contact-detail">
+                <span className="contact-icon-pill">DFW</span>
+                <span>Prosper, TX — serving GCs across the Dallas-Fort Worth area and beyond</span>
+              </div>
+              <div className="contact-detail">
+                <span className="contact-icon-pill">@</span>
+                <span>connect@techdensolutions.com</span>
+              </div>
+              <div className="contact-detail">
+                <span className="contact-icon-pill">24h</span>
+                <span>Response within one business day</span>
+              </div>
             </div>
           </div>
+
+          <div className="contact-form-wrapper">
+            {success ? (
+              <div className="contact-success">
+                <div className="success-mark">✓</div>
+                <h3>Message Sent</h3>
+                <p>Thank you for reaching out. We'll get back to you within 24 hours.</p>
+                <button onClick={() => setSuccess(false)} className="contact-btn">
+                  Send Another Message
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="contact-form">
+                <div className="form-group">
+                  <label>Full Name *</label>
+                  <input
+                    type="text" name="name" value={formData.name}
+                    onChange={handleChange} placeholder="John Smith" required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Email Address *</label>
+                  <input
+                    type="email" name="email" value={formData.email}
+                    onChange={handleChange} placeholder="john@yourcompany.com" required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Company</label>
+                  <input
+                    type="text" name="company" value={formData.company}
+                    onChange={handleChange} placeholder="Smith Construction LLC"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Message *</label>
+                  <textarea
+                    name="message" value={formData.message}
+                    onChange={handleChange}
+                    placeholder="Tell us about your project or what you'd like to discuss..."
+                    rows={5} required
+                  />
+                </div>
+                {error && <div className="contact-error">{error}</div>}
+                <button type="submit" disabled={loading} className="contact-btn">
+                  {loading ? 'Sending...' : 'Send Message'}
+                </button>
+              </form>
+            )}
+          </div>
         </div>
-
-        <div className="contact-form-wrapper">
-          {success ? (
-            <div className="contact-success">
-              <div className="success-icon">✅</div>
-              <h3>Message Sent!</h3>
-              <p>Thank you for reaching out. We'll get back to you within 24 hours.</p>
-              <button onClick={() => setSuccess(false)} className="contact-btn">
-                Send Another Message
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="contact-form">
-              <div className="form-group">
-                <label>Full Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="John Smith"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Email Address *</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="john@yourcompany.com"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Company</label>
-                <input
-                  type="text"
-                  name="company"
-                  value={formData.company}
-                  onChange={handleChange}
-                  placeholder="Smith Construction LLC"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Message *</label>
-                <textarea
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  placeholder="Tell us about your project or what you'd like to discuss..."
-                  rows={5}
-                  required
-                />
-              </div>
-
-              {error && <div className="contact-error">{error}</div>}
-
-              <button type="submit" disabled={loading} className="contact-btn">
-                {loading ? 'Sending...' : 'Send Message'}
-              </button>
-            </form>
-          )}
-        </div>
-      </div>
+      </section>
     </div>
   );
 }

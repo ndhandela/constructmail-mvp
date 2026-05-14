@@ -160,7 +160,7 @@ tr:hover {
 
 .export-btn:hover,
 .copy-btn:hover {
-  background: #e55a00;
+  background: var(--saffron-hover);
 }
 
 /* Mobile Responsiveness for Components */

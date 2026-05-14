@@ -8,7 +8,7 @@ import GmailConnect from '../components/GmailConnect';
 import GmailInbox from '../components/GmailInbox';
 import OutlookConnect from '../components/OutlookConnect'; 
 import OutlookInbox from '../components/OutlookInbox'; 
-import '../theme.css';
+import '../styles/theme.css';
 import '../styles/components.css';
 
 export default function ConstructMailApp({ user, userId, onLogout }) {
