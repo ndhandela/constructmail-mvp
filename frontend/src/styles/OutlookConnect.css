@@ -1,19 +1,20 @@
+/* OutlookConnect Component - Updated for POMAR brand */
+
 .outlook-connect {
+  padding: 20px;
   display: flex;
   justify-content: center;
-  padding: 20px;
-  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
-  border-radius: 8px;
 }
 
 .outlook-card {
   background: white;
-  border-radius: 12px;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
   padding: 40px;
-  text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   max-width: 400px;
-  width: 100%;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  border-top: 4px solid var(--saffron);
 }
 
 .outlook-icon {
@@ -22,70 +23,69 @@
 }
 
 .outlook-card h2 {
-  color: #0078d4;
+  color: var(--inkwell);
   margin: 0 0 10px 0;
   font-size: 24px;
   font-weight: 600;
 }
 
 .outlook-card p {
-  color: #666;
-  margin: 10px 0;
+  color: var(--text-light);
+  margin: 0 0 30px 0;
   font-size: 14px;
 }
 
 .outlook-button {
-  background: linear-gradient(135deg, #0078d4 0%, #0063b1 100%);
+  width: 100%;
+  padding: 14px;
+  background: var(--saffron);
   color: white;
   border: none;
-  padding: 12px 24px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: var(--radius-pill);
   cursor: pointer;
-  margin: 20px 0;
+  font-weight: 600;
+  font-size: 16px;
   transition: all 0.3s ease;
-  width: 100%;
+  margin-bottom: 20px;
 }
 
 .outlook-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #0063b1 0%, #00578c 100%);
-  box-shadow: 0 4px 12px rgba(0, 120, 212, 0.4);
+  background: var(--saffron-hover);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
 }
 
 .outlook-button:disabled {
-  opacity: 0.7;
+  background: #ccc;
   cursor: not-allowed;
 }
 
-.connected {
+.outlook-connected {
   padding: 20px;
-  background: #e8f5e9;
-  border-radius: 6px;
-  margin: 20px 0;
+  background: var(--parchment);
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px;
+  border-left: 3px solid var(--saffron);
 }
 
-.success-badge {
-  display: inline-block;
-  background: #4caf50;
+.outlook-success-badge {
+  background: var(--saffron);
   color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
   font-weight: 600;
+  display: inline-block;
   margin-bottom: 10px;
 }
 
-.connected-text {
-  color: #2e7d32;
-  margin: 10px 0 0 0;
+.outlook-connected-text {
+  color: var(--text-dark);
   font-size: 14px;
+  margin: 0;
 }
 
-.info-text {
-  color: #999;
+.outlook-info-text {
   font-size: 12px;
-  margin-top: 15px;
-  font-style: italic;
+  color: var(--text-light);
+  margin-top: 20px;
 }

@@ -34,7 +34,6 @@
   background: var(--parchment);
   color: var(--text-dark);
   transition: border-color 0.2s ease;
-  font-family: inherit;
 }
 
 .signal-input:focus {
@@ -53,7 +52,6 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-family: inherit;
 }
 
 .detect-button:hover:not(:disabled) {

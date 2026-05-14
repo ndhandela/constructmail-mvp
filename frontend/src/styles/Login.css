@@ -127,3 +127,69 @@
 .login-card .login-switch a:hover {
   text-decoration: underline;
 }
+
+/* Magic Link Styling */
+.login-card .success {
+  background: #f0fdf4;
+  color: #166534;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  border-left: 3px solid var(--success);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.magic-link-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(22, 101, 52, 0.2);
+  text-align: center;
+}
+
+.link-label {
+  color: var(--text-dark);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.magic-link {
+  display: inline-block;
+  padding: 12px 20px;
+  background: var(--saffron);
+  color: white;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 14px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.magic-link:hover {
+  background: var(--saffron-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+}
+
+.link-note {
+  color: var(--text-light);
+  font-size: 12px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.link-box {
+  background: white;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 12px;
+  font-family: monospace;
+  word-break: break-all;
+  color: var(--text-dark);
+  margin-top: 8px;
+}
