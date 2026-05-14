@@ -1,6 +1,158 @@
+/* SignalDetector Component - Updated for POMAR brand */
+
 .signal-detector {
-  max-width: 900px;
-  margin: 40px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   padding: 20px;
 }
 
+.signal-section {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 20px;
+  border: 1px solid var(--border-light);
+}
+
+.signal-section h3 {
+  color: var(--inkwell);
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.signal-input {
+  width: 100%;
+  padding: 12px;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: monospace;
+  resize: vertical;
+  min-height: 100px;
+  background: var(--parchment);
+  color: var(--text-dark);
+  transition: border-color 0.2s ease;
+  font-family: inherit;
+}
+
+.signal-input:focus {
+  outline: none;
+  border-color: var(--saffron);
+  background: white;
+}
+
+.detect-button {
+  padding: 12px 24px;
+  background: var(--saffron);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.detect-button:hover:not(:disabled) {
+  background: var(--saffron-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+}
+
+.detect-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.signals-list {
+  background: var(--parchment);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.signal-item {
+  background: white;
+  padding: 14px;
+  border-left: 4px solid var(--saffron);
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.signal-item:last-child {
+  margin-bottom: 0;
+}
+
+.signal-type {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  background: var(--saffron-soft);
+  color: var(--saffron);
+  border-radius: 3px;
+  margin-bottom: 6px;
+}
+
+.signal-content {
+  font-size: 14px;
+  color: var(--text-dark);
+  line-height: 1.5;
+}
+
+.signal-confidence {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 6px;
+}
+
+.signal-label {
+  color: var(--text-light);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.signal-loading {
+  color: var(--saffron);
+  font-size: 14px;
+}
+
+.signal-error {
+  background: #fef2f2;
+  color: var(--error);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-top: 12px;
+  border-left: 3px solid var(--error);
+}
+
+.signal-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .signal-detector {
+    padding: 12px;
+  }
+
+  .signal-section {
+    padding: 16px;
+  }
+
+  .signal-input {
+    min-height: 80px;
+  }
+}

@@ -1,5 +1,139 @@
+/* ActionExtractor Component - Updated for POMAR brand */
+
 .action-extractor {
-  max-width: 900px;
-  margin: 40px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   padding: 20px;
+}
+
+.action-section {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 20px;
+  border: 1px solid var(--border-light);
+}
+
+.action-section h3 {
+  color: var(--inkwell);
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.action-input {
+  width: 100%;
+  padding: 12px;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: monospace;
+  resize: vertical;
+  min-height: 100px;
+  background: var(--parchment);
+  color: var(--text-dark);
+  transition: border-color 0.2s ease;
+  font-family: inherit;
+}
+
+.action-input:focus {
+  outline: none;
+  border-color: var(--saffron);
+  background: white;
+}
+
+.extract-button {
+  padding: 12px 24px;
+  background: var(--saffron);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.extract-button:hover:not(:disabled) {
+  background: var(--saffron-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+}
+
+.extract-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.actions-list {
+  background: var(--parchment);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.action-item {
+  background: white;
+  padding: 12px;
+  border-left: 3px solid var(--saffron);
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+.action-item:last-child {
+  margin-bottom: 0;
+}
+
+.action-priority {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  background: var(--saffron-soft);
+  color: var(--saffron);
+  border-radius: 3px;
+  margin-right: 8px;
+}
+
+.action-label {
+  color: var(--text-light);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.loading {
+  color: var(--saffron);
+  font-size: 14px;
+}
+
+.error {
+  background: #fef2f2;
+  color: var(--error);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-top: 12px;
+  border-left: 3px solid var(--error);
+}
+
+@media (max-width: 768px) {
+  .action-extractor {
+    padding: 12px;
+  }
+
+  .action-section {
+    padding: 16px;
+  }
+
+  .action-input {
+    min-height: 80px;
+  }
 }

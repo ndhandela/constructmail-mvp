@@ -1,9 +1,141 @@
+/* Summarizer Component - Updated for POMAR brand */
+
 .summarizer-container {
-  max-width: 900px;
-  margin: 40px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   padding: 20px;
 }
 
-.result {
-  margin-top: 30px;
+.summarizer-section {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 20px;
+  border: 1px solid var(--border-light);
+}
+
+.summarizer-section h3 {
+  color: var(--inkwell);
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.email-input {
+  width: 100%;
+  padding: 12px;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: monospace;
+  resize: vertical;
+  min-height: 100px;
+  background: var(--parchment);
+  color: var(--text-dark);
+  transition: border-color 0.2s ease;
+}
+
+.email-input:focus {
+  outline: none;
+  border-color: var(--saffron);
+  background: white;
+}
+
+.summarize-btn,
+.extract-btn,
+.detect-btn,
+.process-btn {
+  padding: 12px 24px;
+  background: var(--saffron);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.summarize-btn:hover:not(:disabled),
+.extract-btn:hover:not(:disabled),
+.detect-btn:hover:not(:disabled),
+.process-btn:hover:not(:disabled) {
+  background: var(--saffron-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+}
+
+.summarize-btn:disabled,
+.extract-btn:disabled,
+.detect-btn:disabled,
+.process-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.output-section {
+  background: var(--parchment);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.output-label {
+  color: var(--text-light);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.output-text {
+  color: var(--text-dark);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.loading-spinner {
+  color: var(--saffron);
+  font-size: 14px;
+}
+
+.error-message {
+  background: #fef2f2;
+  color: var(--error);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-top: 12px;
+  border-left: 3px solid var(--error);
+}
+
+.success-message {
+  background: #f0fdf4;
+  color: var(--success);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-top: 12px;
+  border-left: 3px solid var(--success);
+}
+
+@media (max-width: 768px) {
+  .summarizer-container {
+    padding: 12px;
+  }
+
+  .summarizer-section {
+    padding: 16px;
+  }
+
+  .email-input {
+    min-height: 80px;
+  }
 }
