@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import PomarLogo from './PomarLogo';
 import '../styles/Header.css';
 
-export default function Header({ userId, onLogout }) {
+export default function Header() {
   const [platformOpen, setPlatformOpen] = useState(false);
+  const closeTimer = useRef(null);
+
+  const handleMouseEnter = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setPlatformOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    closeTimer.current = setTimeout(() => setPlatformOpen(false), 200);
+  };
 
   return (
     <header className="main-header">
@@ -18,8 +28,8 @@ export default function Header({ userId, onLogout }) {
 
         <div
           className="header-dropdown"
-          onMouseEnter={() => setPlatformOpen(true)}
-          onMouseLeave={() => setPlatformOpen(false)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           <button className="header-link dropdown-trigger">
             Platform <span className="caret">▾</span>
@@ -41,12 +51,8 @@ export default function Header({ userId, onLogout }) {
       </nav>
 
       <div className="header-right">
-        <a href="/contact" className="header-cta">Book a Demo</a>
-        {userId ? (
-          <button onClick={onLogout} className="header-logout">Logout</button>
-        ) : (
-          <a href="/login" className="header-logout">Login</a>
-        )}
+        <a href="/login" className="header-btn-login">Login</a>
+        <a href="/" className="header-btn-book">Book a Demo</a>
       </div>
     </header>
   );
