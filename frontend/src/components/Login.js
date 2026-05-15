@@ -33,7 +33,14 @@ export default function Login({ onLoginSuccess }) {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h2>📧 ConstructMail</h2>
+        <h2>
+          <svg width="28" height="28" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{display: 'inline-block', marginRight: '8px', verticalAlign: 'middle'}}>
+            <circle cx="50" cy="50" r="32" fill="none" stroke="#0E1B2C" strokeWidth="7"/>
+            <circle cx="50" cy="50" r="18" fill="none" stroke="#D97706" strokeWidth="3"/>
+            <circle cx="50" cy="50" r="5" fill="#D97706"/>
+          </svg>
+          ConstructMail
+        </h2>
         <p>AI-powered email intelligence for General Contractors</p>
         
         <form onSubmit={handleSubmit}>

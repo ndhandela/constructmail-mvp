@@ -69,7 +69,13 @@ const handleConnectGmail = async () => {
   return (
     <div className="gmail-connect">
       <div className="gmail-card">
-        <div className="gmail-icon">📧</div>
+        <div className="gmail-icon">
+            <svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="32" fill="none" stroke="#0E1B2C" strokeWidth="7"/>
+                <circle cx="50" cy="50" r="18" fill="none" stroke="#D97706" strokeWidth="3"/>
+                <circle cx="50" cy="50" r="5" fill="#D97706"/>
+            </svg>
+        </div>
         <h2>Connect Your Gmail</h2>
         <p>Auto-load emails from your inbox into ConstructMail</p>
 

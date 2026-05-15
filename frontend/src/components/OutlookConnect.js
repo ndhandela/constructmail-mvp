@@ -69,7 +69,13 @@ const handleConnectOutlook = async () => {
   return (
     <div className="outlook-connect">
       <div className="outlook-card">
-        <div className="outlook-icon">📧</div>
+        <div className="outlook-icon">
+            <svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="32" fill="none" stroke="#0E1B2C" strokeWidth="7"/>
+                <circle cx="50" cy="50" r="18" fill="none" stroke="#D97706" strokeWidth="3"/>
+                <circle cx="50" cy="50" r="5" fill="#D97706"/>
+            </svg>
+        </div>
         <h2>Connect Your Outlook</h2>
         <p>Auto-load emails from your inbox into ConstructMail</p>
 
