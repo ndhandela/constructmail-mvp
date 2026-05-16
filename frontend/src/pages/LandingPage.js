@@ -21,8 +21,11 @@ export default function LandingPage({ onProductSelect }) {
           <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('constructmail')}>
             Try POMAR Mail — Free
           </button>
+          <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('clash')}>
+            Try POMAR Clash — Free
+          </button>
           <a href="/contact" className="btn-ghost">Book a Demo</a>
-      </div>
+        </div>
       </section>
 
       {/* === TRUST === */}
@@ -30,7 +33,6 @@ export default function LandingPage({ onProductSelect }) {
         <div className="trust-label">Built with DFW General Contractors</div>
         <div className="trust-logos">
           <div className="trust-placeholder">GC Partner</div>
-          {/* <div className="trust-placeholder">UTA Civil Eng</div> */}
           <div className="trust-placeholder">DFW Builder</div>
           <div className="trust-placeholder">VDC Team</div>
           <div className="trust-placeholder">Industry Advisor</div>
@@ -101,17 +103,17 @@ export default function LandingPage({ onProductSelect }) {
             <div className="product-card live" onClick={() => onProductSelect && onProductSelect('constructmail')}>
               <span className="product-badge badge-live">Live Now</span>
               <h3>POMAR Mail</h3>
-              <div className="product-tagline">POMAR Mail</div>
-              <p>AI triage for project email. Summarize threads, extract action items, detect RFI and change order signals — straight from your Gmail inbox.</p>
+              <div className="product-tagline">Email Intelligence</div>
+              <p>AI triage for project email. Summarize threads, extract action items, detect RFI and change order signals — straight from your Gmail or Outlook inbox.</p>
               <span className="product-link">Try it free →</span>
             </div>
 
-            <div className="product-card beta">
-              <span className="product-badge badge-beta">In Beta</span>
+            <div className="product-card live" onClick={() => onProductSelect && onProductSelect('clash')}>
+              <span className="product-badge badge-live">Live Now</span>
               <h3>POMAR Clash</h3>
-              <div className="product-tagline">Clash Report Intelligence</div>
-              <p>Upload a Navisworks clash report. Get back 50 clashes that block the schedule, not 2,000 that don't. Built with academic partners.</p>
-              <span className="product-link">Join the waitlist →</span>
+              <div className="product-tagline">BIM Clash Intelligence</div>
+              <p>Upload a Navisworks clash report. Get severity scoring, top clashing element pairs, and AI-drafted RFIs ready to paste into Procore or Kahua — in seconds.</p>
+              <span className="product-link">Try it free →</span>
             </div>
 
             <div className="product-card soon">
@@ -187,12 +189,15 @@ export default function LandingPage({ onProductSelect }) {
           <em>Build the layer over time.</em>
         </h2>
         <p className="section-body centered">
-          POMAR Mail is free. No credit card, no commitment. See what your inbox looks like
-          when it stops fighting you.
+          Both tools are free. No credit card, no commitment. Pick the one that solves
+          your biggest problem today.
         </p>
         <div className="hero-cta">
           <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('constructmail')}>
             Try POMAR Mail — Free
+          </button>
+          <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('clash')}>
+            Try POMAR Clash — Free
           </button>
           <a href="/contact" className="btn-ghost">Talk to the Founder</a>
         </div>
