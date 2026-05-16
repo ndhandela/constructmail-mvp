@@ -56,6 +56,7 @@ function App() {
           setUserId(data.userId);
           localStorage.setItem('constructmail_userId', data.userId);
           fetchUser(data.userId);
+          setCurrentProduct('constructmail');
           window.history.replaceState({}, document.title, window.location.pathname);
         } else {
           alert('Login failed: ' + data.error);
