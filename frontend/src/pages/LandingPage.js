@@ -18,9 +18,11 @@ export default function LandingPage({ onProductSelect }) {
           decisions general contractors can act on — without changing how their teams work.
         </p>
         <div className="hero-cta">
-          <a href="/constructmail" className="btn-primary">Try ConstructMail — Free</a>
+          <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('constructmail')}>
+            Try ConstructMail — Free
+          </button>
           <a href="/contact" className="btn-ghost">Book a Demo</a>
-        </div>
+      </div>
       </section>
 
       {/* === TRUST === */}
@@ -189,7 +191,9 @@ export default function LandingPage({ onProductSelect }) {
           when it stops fighting you.
         </p>
         <div className="hero-cta">
-          <a href="/constructmail" className="btn-primary">Try ConstructMail — Free</a>
+          <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('constructmail')}>
+            Try ConstructMail — Free
+          </button>
           <a href="/contact" className="btn-ghost">Talk to the Founder</a>
         </div>
       </section>

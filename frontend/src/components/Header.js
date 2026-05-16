@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import PomarLogo from './PomarLogo';
 import '../styles/Header.css';
 
-export default function Header() {
+export default function Header({ userId, onLogout }) {
   const [platformOpen, setPlatformOpen] = useState(false);
   const closeTimer = useRef(null);
 
@@ -13,6 +13,12 @@ export default function Header() {
 
   const handleMouseLeave = () => {
     closeTimer.current = setTimeout(() => setPlatformOpen(false), 200);
+  };
+
+  const handleLogoutClick = (e) => {
+    e.preventDefault();
+    if (onLogout) onLogout();
+    window.location.href = '/';
   };
 
   return (
@@ -51,8 +57,12 @@ export default function Header() {
       </nav>
 
       <div className="header-right">
-        <a href="/login" className="header-btn-login">Login</a>
-        <a href="/" className="header-btn-book">Book a Demo</a>
+        {userId ? (
+          <a href="/" className="header-btn-login" onClick={handleLogoutClick}>Logout</a>
+        ) : (
+          <a href="/login" className="header-btn-login">Login</a>
+        )}
+        <a href="/contact" className="header-btn-book">Book a Demo</a>
       </div>
     </header>
   );

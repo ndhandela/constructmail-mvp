@@ -717,6 +717,8 @@ app.get('/api/outlook/thread/:conversationId', async (req, res) => {
     }
 
     let accessToken = userResult.rows[0].outlook_access_token;
+    console.log('Access token retrieved:', accessToken ? 'EXISTS' : 'MISSING');
+    console.log('Token length:', accessToken?.length || 0);
     const refreshToken = userResult.rows[0].outlook_refresh_token;
     const expiresAt = userResult.rows[0].outlook_token_expires;
 
