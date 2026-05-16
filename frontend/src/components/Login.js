@@ -4,12 +4,20 @@ import '../styles/Login.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
+const PRODUCT_NAMES = {
+  '/clash':        'POMAR Clash — BIM Clash Analyzer',
+  '/constructmail': 'POMAR Mail — Email Intelligence',
+};
+
 export default function Login({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [magicLink, setMagicLink] = useState('');
+
+  const postLoginPath = sessionStorage.getItem('postLoginPath') || '';
+  const productName = PRODUCT_NAMES[postLoginPath] || null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,12 +49,23 @@ export default function Login({ onLoginSuccess }) {
           </svg>
           POMAR
         </h2>
-        <p>AI-powered construction intelligence platform</p>
+
+        {productName ? (
+          <div className="login-context-banner">
+            <span className="login-context-icon">🔒</span>
+            <div>
+              <p className="login-context-title">Sign in to access</p>
+              <p className="login-context-product">{productName}</p>
+            </div>
+          </div>
+        ) : (
+          <p>AI-powered construction intelligence platform</p>
+        )}
 
         <form onSubmit={handleSubmit}>
           <input
             type="email"
-            placeholder="Enter your email"
+            placeholder="Enter your work email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -76,7 +95,7 @@ export default function Login({ onLoginSuccess }) {
         {error && <div className="error">{error}</div>}
 
         <p className="info">
-          We'll send you a magic link to login. No password needed.
+          No password needed — we'll send you a magic link instantly.
         </p>
       </div>
     </div>

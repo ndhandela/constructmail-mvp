@@ -193,3 +193,32 @@
   color: var(--text-dark);
   margin-top: 8px;
 }
+.login-context-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--saffron-soft);
+  border: 1px solid rgba(217, 119, 6, 0.2);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.login-context-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.login-context-title {
+  font-size: 12px;
+  color: var(--slate);
+  margin: 0 0 2px;
+}
+
+.login-context-product {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--inkwell);
+  margin: 0;
+}

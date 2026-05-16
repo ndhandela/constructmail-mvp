@@ -45,14 +45,14 @@ export default function Header({ userId, onLogout }) {
               <a href="/constructmail" className="dropdown-item">
                 <span className="dropdown-item-tag">Live</span>
                 <div>
-                  <div className="dropdown-item-title">POMAR Mail</div>
+                  <div className="dropdown-item-title">POMAR Mail <span className="dropdown-item-lock">🔒</span></div>
                   <div className="dropdown-item-sub">POMAR Mail</div>
                 </div>
               </a>
               <a href="/clash" className="dropdown-item">
                 <span className="dropdown-item-tag">Live</span>
                 <div>
-                  <div className="dropdown-item-title">POMAR Clash</div>
+                  <div className="dropdown-item-title">POMAR Clash <span className="dropdown-item-lock">🔒</span></div>
                   <div className="dropdown-item-sub">BIM Clash Report Analyzer</div>
                 </div>
               </a>
