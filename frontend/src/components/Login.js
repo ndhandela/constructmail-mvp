@@ -39,10 +39,10 @@ export default function Login({ onLoginSuccess }) {
             <circle cx="50" cy="50" r="18" fill="none" stroke="#D97706" strokeWidth="3"/>
             <circle cx="50" cy="50" r="5" fill="#D97706"/>
           </svg>
-          ConstructMail
+          POMAR
         </h2>
-        <p>AI-powered email intelligence for General Contractors</p>
-        
+        <p>AI-powered construction intelligence platform</p>
+
         <form onSubmit={handleSubmit}>
           <input
             type="email"
@@ -58,21 +58,21 @@ export default function Login({ onLoginSuccess }) {
         </form>
 
         {message && (
-        <div className="success">
+          <div className="success">
             {message}
             {magicLink && (
-            <div className="magic-link-section">
-                <p className="link-label">Your ConstructMail link:</p>
+              <div className="magic-link-section">
+                <p className="link-label">Your POMAR access link:</p>
                 <a href={magicLink} className="magic-link" target="_blank" rel="noopener noreferrer">
-                Click here to login
+                  Click here to login
                 </a>
                 <p className="link-note">Or copy and paste this link:</p>
                 <div className="link-box">{magicLink}</div>
-            </div>
+              </div>
             )}
-        </div>
+          </div>
         )}
-        
+
         {error && <div className="error">{error}</div>}
 
         <p className="info">
