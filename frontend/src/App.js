@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import LandingPage from './pages/LandingPage';
-import ConstructMailApp from './pages/ConstructMailApp';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Contact from './pages/Contact';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import AboutUs from './pages/AboutUs';
+
+// Modules
+import ConstructMailApp from './modules/constructmail/pages/ConstructMailApp';
+import ClashAnalyzer from './modules/clash/pages/ClashAnalyzer';
+
 import './styles/theme.css';
 import './styles/components.css';
 import './App.css';
-
-
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
@@ -21,25 +23,22 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [currentProduct, setCurrentProduct] = useState(null);
 
+  const path = window.location.pathname;
+
   useEffect(() => {
-    // Handle Gmail OAuth callback
-    if (window.location.pathname === '/auth/gmail/callback') {
+    if (path === '/auth/gmail/callback') {
       const params = new URLSearchParams(window.location.search);
       const code = params.get('code');
       const error = params.get('error');
       if (window.opener && !window._gmailCallbackSent) {
         window._gmailCallbackSent = true;
-        window.opener.postMessage(
-          { type: 'GMAIL_CALLBACK', code, error },
-          '*'
-        );
+        window.opener.postMessage({ type: 'GMAIL_CALLBACK', code, error }, '*');
         setTimeout(() => window.close(), 500);
       }
       return;
     }
 
-    // Handle Privacy Policy route
-    if (window.location.pathname === '/privacy') {
+    if (['/privacy', '/about', '/contact', '/clash'].includes(path)) {
       setLoading(false);
       return;
     }
@@ -85,10 +84,8 @@ function App() {
 
   useEffect(() => {
     if (userId) {
-      const path = window.location.pathname;
-      if (path.includes('/constructmail')) {
-        setCurrentProduct('constructmail');
-      }
+      if (path.includes('/constructmail')) setCurrentProduct('constructmail');
+      if (path.includes('/clash')) setCurrentProduct('clash');
     }
   }, [userId]);
 
@@ -115,85 +112,87 @@ function App() {
     setCurrentProduct(productId);
   };
 
-// Privacy Policy route - no auth required
-if (window.location.pathname === '/privacy') {
-  return (
-    <>
-      <Header userId={userId} onLogout={handleLogout} />
-      <PrivacyPolicy />
-      <Footer />
-    </>
-  );
-}
+  if (path === '/privacy') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} />
+        <PrivacyPolicy />
+        <Footer />
+      </>
+    );
+  }
 
-  if (window.location.pathname === '/about') {
-  return (
-    <>
-      <Header userId={userId} onLogout={handleLogout} />
-      <AboutUs />
-      <Footer />
-    </>
-  );
-  
-}
+  if (path === '/about') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} />
+        <AboutUs />
+        <Footer />
+      </>
+    );
+  }
 
-if (window.location.pathname === '/contact') {
-  return (
-    <>
-      <Header userId={userId} onLogout={handleLogout} />
-      <Contact />
-      <Footer />
-    </>
-  );
-}
+  if (path === '/contact') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} />
+        <Contact />
+        <Footer />
+      </>
+    );
+  }
+
+  if (path === '/clash') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} />
+        <ClashAnalyzer />
+        <Footer />
+      </>
+    );
+  }
+
   if (loading) {
     return <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>;
   }
 
-// /login route - show Login page
-if (window.location.pathname === '/login') {
-  return (
-    <>
-      <Header userId={null} onLogout={null} />
-      <Login onLoginSuccess={(uid) => {
-        setUserId(uid);
-        window.location.href = '/constructmail';
-      }} />
-      <Footer />
-    </>
-  );
-}
+  if (path === '/login') {
+    return (
+      <>
+        <Header userId={null} onLogout={null} />
+        <Login onLoginSuccess={(uid) => {
+          setUserId(uid);
+          window.location.href = '/constructmail';
+        }} />
+        <Footer />
+      </>
+    );
+  }
 
-// Default - landing page (public, no auth required)
-if (!currentProduct) {
-  return (
-    <>
-      <Header userId={userId} onLogout={handleLogout} />
-      <LandingPage onProductSelect={handleProductSelect} />
-      <Footer />
-    </>
-  );
-}
+  if (!currentProduct) {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} />
+        <LandingPage onProductSelect={handleProductSelect} />
+        <Footer />
+      </>
+    );
+  }
 
-// If trying to access product but not logged in, redirect to login
-if (!userId && currentProduct) {
-  window.location.href = '/login';
-  return null;
-}
+  if (!userId && currentProduct) {
+    window.location.href = '/login';
+    return null;
+  }
 
-if (currentProduct === 'constructmail') {
-  return (
-    <>
-      <Header userId={userId} onLogout={handleLogout} />
-      <ConstructMailApp
-        user={user}
-        userId={userId}
-        onLogout={handleLogout}
-      />
-      <Footer />
-    </>
-  );
-}
+  if (currentProduct === 'constructmail') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} />
+        <ConstructMailApp user={user} userId={userId} onLogout={handleLogout} />
+        <Footer />
+      </>
+    );
+  }
 
   return <div>Unknown product</div>;
 }

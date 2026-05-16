@@ -4,7 +4,8 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 const { pool, initDb } = require('./db');
-const { summarizeEmailThread, extractActionItems, detectSignals, processMeetingNotes } = require('./ai-helpers');
+const { summarizeEmailThread, extractActionItems, detectSignals, processMeetingNotes } = require("./ai-helpers");
+const { analyzeClashReport, draftClashRFI } = require("./clash-helpers");
 const gmailHelpers = require('./gmail-helpers');
 const emailService = require('./email-service');
 const outlookHelpers = require('./outlook-helpers');
@@ -785,4 +786,27 @@ app.get('/api/auth/outlook-callback', (req, res) => {
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`✓ Server running on port ${PORT}`);
+});
+// ── POMAR Clash endpoints ──────────────────────────────────────────────────
+
+app.post('/api/clash/analyze', async (req, res) => {
+  try {
+    const { summary, topClashes, testName } = req.body;
+    const analysis = await analyzeClashReport({ summary, topClashes, testName });
+    res.json({ analysis });
+  } catch (err) {
+    console.error('Clash analyze error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/clash/draft-rfi', async (req, res) => {
+  try {
+    const { clashName, status, distance, item1, item2, clashPoint, discipline, priority } = req.body;
+    const draft = await draftClashRFI({ clashName, status, distance, item1, item2, clashPoint, discipline, priority });
+    res.json(draft);
+  } catch (err) {
+    console.error('Draft RFI error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });

@@ -1,0 +1,195 @@
+/* ============================================
+   Login page · POMAR brand refresh
+   This restyles the existing Login.js — no JS changes needed.
+   Replace your existing Login.css with this file.
+   ============================================ */
+
+.login-container {
+  min-height: calc(100vh - 72px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, white 0%, var(--parchment) 100%);
+  padding: 40px 24px;
+}
+
+.login-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 48px 44px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: var(--shadow-lg);
+  border-top: 4px solid var(--saffron);
+}
+
+.login-card h1, .login-card h2 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  color: var(--inkwell);
+  font-size: 32px;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+  text-align: center;
+}
+
+.login-card .login-sub,
+.login-card p {
+  color: var(--text-light);
+  text-align: center;
+  margin-bottom: 32px;
+  font-size: 15px;
+}
+
+.login-card input,
+.login-card .form-group input {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-family: inherit;
+  background: var(--parchment);
+  color: var(--inkwell);
+  margin-bottom: 16px;
+  transition: border-color 0.2s ease;
+}
+
+.login-card input:focus {
+  outline: none;
+  border-color: var(--saffron);
+  background: white;
+}
+
+.login-card button,
+.login-card .login-btn,
+.login-card button[type="submit"] {
+  width: 100%;
+  padding: 13px;
+  background: var(--saffron);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.login-card button:hover:not(:disabled),
+.login-card .login-btn:hover:not(:disabled) {
+  background: var(--saffron-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(217, 119, 6, 0.3);
+}
+
+.login-card button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.login-card .error,
+.login-card .login-error {
+  background: #fef2f2;
+  color: var(--error);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-bottom: 16px;
+  border-left: 3px solid var(--error);
+}
+
+.login-card .switch,
+.login-card .login-switch {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+.login-card .switch a,
+.login-card .login-switch a,
+.login-card .switch button,
+.login-card .login-switch button {
+  color: var(--saffron);
+  background: none;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  width: auto;
+  padding: 0;
+  font-size: inherit;
+}
+
+.login-card .switch a:hover,
+.login-card .login-switch a:hover {
+  text-decoration: underline;
+}
+
+/* Magic Link Styling */
+.login-card .success {
+  background: #f0fdf4;
+  color: #166534;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  border-left: 3px solid var(--success);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.magic-link-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(22, 101, 52, 0.2);
+  text-align: center;
+}
+
+.link-label {
+  color: var(--text-dark);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.magic-link {
+  display: inline-block;
+  padding: 12px 20px;
+  background: var(--saffron);
+  color: white;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 14px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.magic-link:hover {
+  background: var(--saffron-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+}
+
+.link-note {
+  color: var(--text-light);
+  font-size: 12px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.link-box {
+  background: white;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 12px;
+  font-family: monospace;
+  word-break: break-all;
+  color: var(--text-dark);
+  margin-top: 8px;
+}
