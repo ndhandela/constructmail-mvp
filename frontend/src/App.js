@@ -80,7 +80,7 @@ function App() {
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [path]);
 
   useEffect(() => {
     if (userId) {
