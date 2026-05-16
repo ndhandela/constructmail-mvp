@@ -19,7 +19,7 @@ export default function LandingPage({ onProductSelect }) {
         </p>
         <div className="hero-cta">
           <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('constructmail')}>
-            Try ConstructMail — Free
+            Try POMAR Mail — Free
           </button>
           <a href="/contact" className="btn-ghost">Book a Demo</a>
       </div>
@@ -101,7 +101,7 @@ export default function LandingPage({ onProductSelect }) {
             <div className="product-card live" onClick={() => onProductSelect && onProductSelect('constructmail')}>
               <span className="product-badge badge-live">Live Now</span>
               <h3>POMAR Mail</h3>
-              <div className="product-tagline">ConstructMail Intelligence</div>
+              <div className="product-tagline">POMAR Mail</div>
               <p>AI triage for project email. Summarize threads, extract action items, detect RFI and change order signals — straight from your Gmail inbox.</p>
               <span className="product-link">Try it free →</span>
             </div>
@@ -187,12 +187,12 @@ export default function LandingPage({ onProductSelect }) {
           <em>Build the layer over time.</em>
         </h2>
         <p className="section-body centered">
-          ConstructMail is free. No credit card, no commitment. See what your inbox looks like
+          POMAR Mail is free. No credit card, no commitment. See what your inbox looks like
           when it stops fighting you.
         </p>
         <div className="hero-cta">
           <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('constructmail')}>
-            Try ConstructMail — Free
+            Try POMAR Mail — Free
           </button>
           <a href="/contact" className="btn-ghost">Talk to the Founder</a>
         </div>

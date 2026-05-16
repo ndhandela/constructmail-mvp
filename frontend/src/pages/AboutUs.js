@@ -31,7 +31,7 @@ export default function AboutUs() {
           </p>
           <p>
             So we built POMAR — an intelligence layer that surfaces what matters from the noise GCs
-            already have. Our first product, ConstructMail Intelligence, does in three seconds what
+            already have. Our first product, POMAR Mail, does in three seconds what
             used to take thirty minutes.
           </p>
           <p>

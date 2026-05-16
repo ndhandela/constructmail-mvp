@@ -46,7 +46,7 @@ export default function Header({ userId, onLogout }) {
                 <span className="dropdown-item-tag">Live</span>
                 <div>
                   <div className="dropdown-item-title">POMAR Mail</div>
-                  <div className="dropdown-item-sub">ConstructMail Intelligence</div>
+                  <div className="dropdown-item-sub">POMAR Mail</div>
                 </div>
               </a>
               <a href="/clash" className="dropdown-item">

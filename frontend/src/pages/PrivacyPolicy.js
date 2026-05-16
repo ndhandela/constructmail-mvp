@@ -14,7 +14,7 @@ export default function PrivacyPolicy() {
         <div className="privacy-content">
           <section>
             <h2>1. Introduction</h2>
-            <p>TechDen Solutions ("we", "our", or "us") operates POMAR Mail (ConstructMail Intelligence) at pomar.ai. This Privacy Policy explains how we collect, use, and protect your information when you use our service.</p>
+            <p>TechDen Solutions ("we", "our", or "us") operates POMAR Mail at pomar.ai. This Privacy Policy explains how we collect, use, and protect your information when you use our service.</p>
           </section>
 
           <section>
