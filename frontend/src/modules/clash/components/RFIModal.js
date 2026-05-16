@@ -95,6 +95,7 @@ export default function RFIModal({ clash, onClose }) {
   const [aiError, setAiError]     = useState('');
   const [copied, setCopied]       = useState(false);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { generateRFI(); }, []);
 
   useEffect(() => {

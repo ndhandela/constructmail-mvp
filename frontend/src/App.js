@@ -87,6 +87,7 @@ function App() {
       if (path.includes('/constructmail')) setCurrentProduct('constructmail');
       if (path.includes('/clash')) setCurrentProduct('clash');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const fetchUser = async (uid) => {
