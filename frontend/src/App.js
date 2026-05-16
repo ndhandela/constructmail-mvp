@@ -38,7 +38,7 @@ function App() {
       return;
     }
 
-    if (['/privacy', '/about', '/contact', '/clash'].includes(path)) {
+    if (['/privacy', '/about', '/contact'].includes(path)) {
       setLoading(false);
       return;
     }
@@ -55,7 +55,8 @@ function App() {
           setUserId(data.userId);
           localStorage.setItem('constructmail_userId', data.userId);
           fetchUser(data.userId);
-          setCurrentProduct('constructmail');
+          if (path === '/clash') setCurrentProduct('clash');
+          else setCurrentProduct('constructmail');
           window.history.replaceState({}, document.title, window.location.pathname);
         } else {
           alert('Login failed: ' + data.error);
@@ -80,12 +81,13 @@ function App() {
     } else {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path]);
 
   useEffect(() => {
     if (userId) {
       if (path.includes('/constructmail')) setCurrentProduct('constructmail');
-      if (path.includes('/clash')) setCurrentProduct('clash');
+      if (path === '/clash') setCurrentProduct('clash');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
@@ -113,6 +115,7 @@ function App() {
     setCurrentProduct(productId);
   };
 
+  // ── Static no-auth routes ────────────────────────────────────────────────
   if (path === '/privacy') {
     return (
       <>
@@ -143,33 +146,28 @@ function App() {
     );
   }
 
-  if (path === '/clash') {
-    return (
-      <>
-        <Header userId={userId} onLogout={handleLogout} />
-        <ClashAnalyzer />
-        <Footer />
-      </>
-    );
-  }
-
+  // ── Auth loading ─────────────────────────────────────────────────────────
   if (loading) {
     return <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>;
   }
 
+  // ── Login route ──────────────────────────────────────────────────────────
   if (path === '/login') {
     return (
       <>
         <Header userId={null} onLogout={null} />
         <Login onLoginSuccess={(uid) => {
           setUserId(uid);
-          window.location.href = '/constructmail';
+          const dest = sessionStorage.getItem('postLoginPath') || '/constructmail';
+          sessionStorage.removeItem('postLoginPath');
+          window.location.href = dest;
         }} />
         <Footer />
       </>
     );
   }
 
+  // ── Landing page ─────────────────────────────────────────────────────────
   if (!currentProduct) {
     return (
       <>
@@ -180,16 +178,30 @@ function App() {
     );
   }
 
+  // ── Auth gate ────────────────────────────────────────────────────────────
   if (!userId && currentProduct) {
+    sessionStorage.setItem('postLoginPath', path);
     window.location.href = '/login';
     return null;
   }
 
+  // ── ConstructMail ────────────────────────────────────────────────────────
   if (currentProduct === 'constructmail') {
     return (
       <>
         <Header userId={userId} onLogout={handleLogout} />
         <ConstructMailApp user={user} userId={userId} onLogout={handleLogout} />
+        <Footer />
+      </>
+    );
+  }
+
+  // ── POMAR Clash (auth required) ──────────────────────────────────────────
+  if (currentProduct === 'clash') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} />
+        <ClashAnalyzer />
         <Footer />
       </>
     );
