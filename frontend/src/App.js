@@ -16,6 +16,7 @@ import './styles/components.css';
 import './App.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const PRODUCT_PATHS = ['/clash', '/constructmail'];
 
 function App() {
   const [userId, setUserId] = useState(null);
@@ -167,6 +168,13 @@ function App() {
     );
   }
 
+  // ── Logged-out user hitting a product route — redirect to login ──────────
+  if (!userId && PRODUCT_PATHS.includes(path)) {
+    sessionStorage.setItem('postLoginPath', path);
+    window.location.href = '/login';
+    return null;
+  }
+
   // ── Landing page ─────────────────────────────────────────────────────────
   if (!currentProduct) {
     return (
@@ -178,14 +186,14 @@ function App() {
     );
   }
 
-  // ── Auth gate ────────────────────────────────────────────────────────────
+  // ── Auth gate for product state set without direct URL ───────────────────
   if (!userId && currentProduct) {
     sessionStorage.setItem('postLoginPath', path);
     window.location.href = '/login';
     return null;
   }
 
-  // ── ConstructMail ────────────────────────────────────────────────────────
+  // ── POMAR Mail ───────────────────────────────────────────────────────────
   if (currentProduct === 'constructmail') {
     return (
       <>
@@ -196,7 +204,7 @@ function App() {
     );
   }
 
-  // ── POMAR Clash (auth required) ──────────────────────────────────────────
+  // ── POMAR Clash ──────────────────────────────────────────────────────────
   if (currentProduct === 'clash') {
     return (
       <>
