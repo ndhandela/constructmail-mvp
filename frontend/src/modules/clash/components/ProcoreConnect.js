@@ -3,32 +3,13 @@ import React, { useState, useEffect } from 'react';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export default function ProcoreConnect({ userId, onConnected, onRFISent, rfiData }) {
-  const [connected, setConnected]     = useState(false);
-  const [projects, setProjects]       = useState([]);
-  const [projectId, setProjectId]     = useState('');
-  const [sending, setSending]         = useState(false);
-  const [sent, setSent]               = useState(null);
-  const [error, setError]             = useState('');
-  const [checking, setChecking]       = useState(true);
-
-  // Check connection status on mount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    checkStatus();
-  }, [userId]);
-
-  // Listen for OAuth popup callback
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    const handler = (e) => {
-      if (e.data?.type === 'PROCORE_CONNECTED') {
-        checkStatus();
-        if (onConnected) onConnected();
-      }
-    };
-    window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
-  }, []);
+  const [connected, setConnected] = useState(false);
+  const [projects, setProjects]   = useState([]);
+  const [projectId, setProjectId] = useState('');
+  const [sending, setSending]     = useState(false);
+  const [sent, setSent]           = useState(null);
+  const [error, setError]         = useState('');
+  const [checking, setChecking]   = useState(true);
 
   const checkStatus = async () => {
     if (!userId) { setChecking(false); return; }
@@ -54,6 +35,21 @@ export default function ProcoreConnect({ userId, onConnected, onRFISent, rfiData
       setError('Could not load Procore projects.');
     }
   };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { checkStatus(); }, [userId]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.data?.type === 'PROCORE_CONNECTED') {
+        checkStatus();
+        if (onConnected) onConnected();
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleConnect = async () => {
     try {
