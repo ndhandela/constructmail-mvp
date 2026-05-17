@@ -12,11 +12,13 @@ export default function ProcoreConnect({ userId, onConnected, onRFISent, rfiData
   const [checking, setChecking]       = useState(true);
 
   // Check connection status on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     checkStatus();
   }, [userId]);
 
   // Listen for OAuth popup callback
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const handler = (e) => {
       if (e.data?.type === 'PROCORE_CONNECTED') {
