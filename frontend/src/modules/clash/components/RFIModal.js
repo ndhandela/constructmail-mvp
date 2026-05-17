@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getSeverity } from './ClashParser';
+import { getSeverity } from "./ClashParser";
+import ProcoreConnect from "./ProcoreConnect";
 import '../styles/ClashAnalyzer.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
@@ -268,6 +269,16 @@ export default function RFIModal({ clash, onClose }) {
         </div>
 
         <div className="rfi-modal-footer">
+          <ProcoreConnect
+            userId={window.localStorage.getItem("constructmail_userId")}
+            rfiData={{
+              title: fields.title,
+              description: aiDraft.description,
+              priority: fields.priority,
+              assigneeId: null,
+              clashName: fields.clashName,
+            }}
+          />
           <p className="rfi-footer-hint">All fields are editable before copying</p>
           <div className="rfi-footer-actions">
             <button className="clash-btn-secondary" onClick={onClose}>Cancel</button>

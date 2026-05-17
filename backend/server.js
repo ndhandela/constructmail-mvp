@@ -810,3 +810,103 @@ app.post('/api/clash/draft-rfi', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ── Procore OAuth + RFI endpoints ─────────────────────────────────────────────
+
+const procoreHelpers = require('./procore-helpers');
+
+// Step 1 — Get Procore OAuth URL
+app.get('/api/auth/procore-url', (req, res) => {
+  try {
+    const { userId } = req.query;
+    const url = procoreHelpers.getAuthUrl(userId || '');
+    res.json({ url });
+  } catch (err) {
+    console.error('Procore URL error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Step 2 — Handle Procore OAuth callback
+app.get('/api/auth/procore/callback', async (req, res) => {
+  try {
+    const { code, state: userId } = req.query;
+    if (!code) return res.status(400).json({ error: 'No code received' });
+
+    const tokens = await procoreHelpers.exchangeCodeForToken(code);
+
+    // Store tokens in DB against userId
+    await pool.query(
+      `INSERT INTO procore_tokens (user_id, access_token, refresh_token, expires_at)
+       VALUES ($1, $2, $3, NOW() + INTERVAL '2 hours')
+       ON CONFLICT (user_id) DO UPDATE
+       SET access_token = $2, refresh_token = $3, expires_at = NOW() + INTERVAL '2 hours'`,
+      [userId, tokens.access_token, tokens.refresh_token]
+    );
+
+    // Close popup and notify parent window
+    res.send(`
+      <script>
+        window.opener && window.opener.postMessage({ type: 'PROCORE_CONNECTED' }, '*');
+        window.close();
+      </script>
+    `);
+  } catch (err) {
+    console.error('Procore callback error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Step 3 — Check if user has Procore connected
+app.get('/api/procore/status', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const result = await pool.query(
+      'SELECT access_token FROM procore_tokens WHERE user_id = $1',
+      [userId]
+    );
+    res.json({ connected: result.rows.length > 0 });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Step 4 — Get user's Procore projects
+app.get('/api/procore/projects', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const result = await pool.query(
+      'SELECT access_token FROM procore_tokens WHERE user_id = $1',
+      [userId]
+    );
+    if (!result.rows.length) return res.status(401).json({ error: 'Procore not connected' });
+
+    const projects = await procoreHelpers.getProjects(result.rows[0].access_token);
+    res.json({ projects });
+  } catch (err) {
+    console.error('Procore projects error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Step 5 — Push RFI to Procore
+app.post('/api/procore/create-rfi', async (req, res) => {
+  try {
+    const { userId, projectId, rfiData } = req.body;
+    const result = await pool.query(
+      'SELECT access_token FROM procore_tokens WHERE user_id = $1',
+      [userId]
+    );
+    if (!result.rows.length) return res.status(401).json({ error: 'Procore not connected' });
+
+    const rfi = await procoreHelpers.createRFI(
+      result.rows[0].access_token,
+      projectId,
+      rfiData
+    );
+    res.json({ success: true, rfi });
+  } catch (err) {
+    console.error('Procore create RFI error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});

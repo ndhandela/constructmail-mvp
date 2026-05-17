@@ -67,3 +67,19 @@ const initDb = async () => {
 };
 
 module.exports = { pool, initDb };
+
+// Procore tokens table
+async function initProcoreTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS procore_tokens (
+      user_id TEXT PRIMARY KEY,
+      access_token TEXT NOT NULL,
+      refresh_token TEXT,
+      expires_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+  console.log('Procore tokens table ready');
+}
+
+initProcoreTable().catch(console.error);
