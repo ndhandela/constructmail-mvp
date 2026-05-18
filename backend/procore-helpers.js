@@ -1,14 +1,10 @@
 const axios = require('axios');
 
 function getConfig() {
-  // Use sandbox credentials if available, fall back to production
   const clientId     = process.env.PROCORE_SANDBOX_CLIENT_ID     || process.env.PROCORE_CLIENT_ID;
   const clientSecret = process.env.PROCORE_SANDBOX_CLIENT_SECRET || process.env.PROCORE_CLIENT_SECRET;
   const redirectUri  = process.env.PROCORE_SANDBOX_REDIRECT_URI  || process.env.PROCORE_REDIRECT_URI;
   const baseUrl      = process.env.PROCORE_BASE_URL               || 'https://sandbox.procore.com';
-
-  console.log('Procore config:', { clientId: clientId ? clientId.substring(0,8)+'...' : 'MISSING', baseUrl });
-
   return { clientId, clientSecret, redirectUri, baseUrl };
 }
 
@@ -58,21 +54,46 @@ function procoreClient(accessToken) {
   });
 }
 
+// Get companies first, then projects
+async function getCompanies(accessToken) {
+  const client = procoreClient(accessToken);
+  const response = await client.get('/companies', { params: { per_page: 100 } });
+  return response.data;
+}
+
 async function getProjects(accessToken) {
   const client = procoreClient(accessToken);
-  const response = await client.get('/projects', { params: { per_page: 100 } });
+
+  // First get companies
+  const companies = await getCompanies(accessToken);
+  if (!companies || companies.length === 0) return [];
+
+  const companyId = companies[0].id;
+
+  // Then get projects for first company
+  const response = await client.get('/projects', {
+    params: { company_id: companyId, per_page: 100 },
+  });
   return response.data;
 }
 
 async function getProjectUsers(accessToken, projectId) {
   const client = procoreClient(accessToken);
-  const response = await client.get(`/projects/${projectId}/users`, { params: { per_page: 100 } });
+  const response = await client.get(`/projects/${projectId}/users`, {
+    params: { per_page: 100 },
+  });
   return response.data;
 }
 
 async function createRFI(accessToken, projectId, rfiData) {
   const client = procoreClient(accessToken);
+
+  // Get company id first
+  const companies = await getCompanies(accessToken);
+  const companyId = companies[0]?.id;
+
   const payload = {
+    project_id: projectId,
     rfi: {
       subject:        rfiData.title,
       description:    rfiData.description,
@@ -83,7 +104,12 @@ async function createRFI(accessToken, projectId, rfiData) {
       reference:      `POMAR Clash — ${rfiData.clashName}`,
     },
   };
-  const response = await client.post(`/projects/${projectId}/rfis`, payload);
+
+  const response = await client.post(
+    `/projects/${projectId}/rfis`,
+    payload,
+    { headers: { 'Procore-Company-Id': companyId } }
+  );
   return response.data;
 }
 
