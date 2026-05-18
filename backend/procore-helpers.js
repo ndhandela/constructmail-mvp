@@ -1,6 +1,7 @@
 const axios = require('axios');
 
 const COMPANY_ID = 4284114;
+const FALLBACK_MANAGER_ID = 99519; // API Support user in sandbox
 
 function getConfig() {
   const clientId     = process.env.PROCORE_SANDBOX_CLIENT_ID     || process.env.PROCORE_CLIENT_ID;
@@ -48,7 +49,7 @@ async function refreshAccessToken(refreshToken) {
 function procoreClient(accessToken) {
   const { baseUrl } = getConfig();
   return axios.create({
-    baseURL: `${baseUrl}/rest/v1.1`,
+    baseURL: `${baseUrl}/rest/v1.0`,
     headers: {
       Authorization:        `Bearer ${accessToken}`,
       'Content-Type':       'application/json',
@@ -73,30 +74,30 @@ async function getProjectUsers(accessToken, projectId) {
   return response.data;
 }
 
-// Sanitize text - remove special/non-ASCII characters
 function sanitize(str) {
   if (!str) return '';
   return str
-    .replace(/\u2014/g, '-')   // em dash
-    .replace(/\u2013/g, '-')   // en dash
-    .replace(/\u2018|\u2019/g, "'") // smart quotes
-    .replace(/\u201C|\u201D/g, '"') // smart double quotes
-    .replace(/[^\x00-\x7F]/g, '') // any remaining non-ASCII
+    .replace(/\u2014/g, '-')
+    .replace(/\u2013/g, '-')
+    .replace(/\u2018|\u2019/g, "'")
+    .replace(/\u201C|\u201D/g, '"')
+    .replace(/[^\x00-\x7F]/g, '')
     .trim();
 }
 
 async function createRFI(accessToken, projectId, rfiData) {
   const client = procoreClient(accessToken);
 
-  // Get a valid manager ID from project users
-  let managerId = rfiData.assigneeId || null;
-  if (!managerId) {
-    try {
-      const users = await getProjectUsers(accessToken, projectId);
-      if (users && users.length > 0) managerId = users[0].id;
-    } catch (e) {
-      console.error('Could not get project users:', e.message);
+  // Always get a valid manager ID
+  let managerId = rfiData.assigneeId || FALLBACK_MANAGER_ID;
+  try {
+    const users = await getProjectUsers(accessToken, projectId);
+    if (users && users.length > 0) {
+      managerId = users[0].id;
+      console.log('Using manager ID from project users:', managerId);
     }
+  } catch (e) {
+    console.log('Using fallback manager ID:', managerId);
   }
 
   const subject  = sanitize(rfiData.title) || 'Clash RFI';
@@ -106,13 +107,13 @@ async function createRFI(accessToken, projectId, rfiData) {
     subject,
     question,
     priority:       mapPriority(rfiData.priority),
-    reference:      sanitize(`POMAR Clash - ${rfiData.clashName}`),
+    reference:      sanitize('POMAR Clash - ' + rfiData.clashName),
     rfi_manager_id: managerId,
   };
 
   if (rfiData.dueDate) rfi.due_date = rfiData.dueDate;
 
-  console.log('Creating Procore RFI:', JSON.stringify(rfi));
+  console.log('Creating Procore RFI payload:', JSON.stringify(rfi));
 
   const response = await client.post(`/projects/${projectId}/rfis`, { rfi });
   return response.data;
