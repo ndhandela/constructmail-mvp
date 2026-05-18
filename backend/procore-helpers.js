@@ -1,5 +1,7 @@
 const axios = require('axios');
 
+const COMPANY_ID = 4284114;
+
 function getConfig() {
   const clientId     = process.env.PROCORE_SANDBOX_CLIENT_ID     || process.env.PROCORE_CLIENT_ID;
   const clientSecret = process.env.PROCORE_SANDBOX_CLIENT_SECRET || process.env.PROCORE_CLIENT_SECRET;
@@ -48,31 +50,26 @@ function procoreClient(accessToken) {
   return axios.create({
     baseURL: `${baseUrl}/rest/v1.0`,
     headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
+      Authorization:       `Bearer ${accessToken}`,
+      'Content-Type':      'application/json',
+      'Procore-Company-Id': String(COMPANY_ID),
     },
   });
 }
 
-// Get companies first, then projects
 async function getCompanies(accessToken) {
-  const client = procoreClient(accessToken);
-  const response = await client.get('/companies', { params: { per_page: 100 } });
+  const { baseUrl } = getConfig();
+  const response = await axios.get(`${baseUrl}/rest/v1.0/companies`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    params: { per_page: 100 },
+  });
   return response.data;
 }
 
 async function getProjects(accessToken) {
   const client = procoreClient(accessToken);
-
-  // First get companies
-  const companies = await getCompanies(accessToken);
-  if (!companies || companies.length === 0) return [];
-
-  const companyId = companies[0].id;
-
-  // Then get projects for first company
   const response = await client.get('/projects', {
-    params: { company_id: companyId, per_page: 100 },
+    params: { company_id: COMPANY_ID, per_page: 100 },
   });
   return response.data;
 }
@@ -88,28 +85,19 @@ async function getProjectUsers(accessToken, projectId) {
 async function createRFI(accessToken, projectId, rfiData) {
   const client = procoreClient(accessToken);
 
-  // Get company id first
-  const companies = await getCompanies(accessToken);
-  const companyId = companies[0]?.id;
-
-  const payload = {
-    project_id: projectId,
-    rfi: {
-      subject:        rfiData.title,
-      description:    rfiData.description,
-      rfi_manager_id: rfiData.assigneeId || null,
-      due_date:       rfiData.dueDate    || null,
-      priority:       mapPriority(rfiData.priority),
-      question:       rfiData.description,
-      reference:      `POMAR Clash — ${rfiData.clashName}`,
-    },
+  // Build RFI payload — only include fields with valid values
+  const rfi = {
+    subject:  rfiData.title       || 'Clash RFI',
+    question: rfiData.description || rfiData.title || 'See clash details',
+    priority: mapPriority(rfiData.priority),
+    reference: `POMAR Clash — ${rfiData.clashName}`,
   };
 
-  const response = await client.post(
-    `/projects/${projectId}/rfis`,
-    payload,
-    { headers: { 'Procore-Company-Id': companyId } }
-  );
+  // Only add optional fields if they have valid values
+  if (rfiData.assigneeId) rfi.rfi_manager_id = rfiData.assigneeId;
+  if (rfiData.dueDate)    rfi.due_date        = rfiData.dueDate;
+
+  const response = await client.post(`/projects/${projectId}/rfis`, { rfi });
   return response.data;
 }
 
