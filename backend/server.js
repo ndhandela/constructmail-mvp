@@ -920,3 +920,31 @@ app.get('/api/debug/procore-config', (req, res) => {
     node_env:           process.env.NODE_ENV                    || 'MISSING',
   });
 });
+
+// Debug Procore projects error
+app.get('/api/debug/procore-projects', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const result = await pool.query(
+      'SELECT access_token FROM procore_tokens WHERE user_id = $1',
+      [userId]
+    );
+    if (!result.rows.length) return res.json({ error: 'No token found' });
+
+    const { baseUrl } = require('./procore-helpers');
+    const axios = require('axios');
+    const token = result.rows[0].access_token;
+
+    // Try companies first
+    const companiesRes = await axios.get(
+      `${process.env.PROCORE_BASE_URL}/rest/v1.0/companies`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { per_page: 10 }
+      }
+    );
+    res.json({ companies: companiesRes.data });
+  } catch (err) {
+    res.json({ error: err.message, details: err.response?.data });
+  }
+});
