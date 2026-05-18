@@ -48,7 +48,7 @@ async function refreshAccessToken(refreshToken) {
 function procoreClient(accessToken) {
   const { baseUrl } = getConfig();
   return axios.create({
-    baseURL: `${baseUrl}/rest/v1.0`,
+    baseURL: `${baseUrl}/rest/v1.1`,
     headers: {
       Authorization:        `Bearer ${accessToken}`,
       'Content-Type':       'application/json',
