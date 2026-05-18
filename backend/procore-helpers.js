@@ -1,60 +1,54 @@
-// procore-helpers.js
-// Procore OAuth + RFI API integration for POMAR Clash
-// TechDen Solutions
-
 const axios = require('axios');
 
-const {
-  PROCORE_CLIENT_ID,
-  PROCORE_CLIENT_SECRET,
-  PROCORE_REDIRECT_URI,
-  PROCORE_SANDBOX_CLIENT_ID,
-  PROCORE_SANDBOX_CLIENT_SECRET,
-  PROCORE_SANDBOX_REDIRECT_URI,
-  PROCORE_BASE_URL = 'https://sandbox.procore.com',
-} = process.env;
-
-const isSandbox = process.env.NODE_ENV !== 'production';
-const CLIENT_ID     = isSandbox ? PROCORE_SANDBOX_CLIENT_ID     : PROCORE_CLIENT_ID;
-const CLIENT_SECRET = isSandbox ? PROCORE_SANDBOX_CLIENT_SECRET : PROCORE_CLIENT_SECRET;
-const REDIRECT_URI  = isSandbox ? PROCORE_SANDBOX_REDIRECT_URI  : PROCORE_REDIRECT_URI;
-const BASE_URL      = PROCORE_BASE_URL;
+function getConfig() {
+  const isSandbox = process.env.NODE_ENV !== 'production';
+  return {
+    clientId:     isSandbox ? process.env.PROCORE_SANDBOX_CLIENT_ID     : process.env.PROCORE_CLIENT_ID,
+    clientSecret: isSandbox ? process.env.PROCORE_SANDBOX_CLIENT_SECRET : process.env.PROCORE_CLIENT_SECRET,
+    redirectUri:  isSandbox ? process.env.PROCORE_SANDBOX_REDIRECT_URI  : process.env.PROCORE_REDIRECT_URI,
+    baseUrl:      process.env.PROCORE_BASE_URL || 'https://sandbox.procore.com',
+  };
+}
 
 function getAuthUrl(state = '') {
+  const { clientId, redirectUri, baseUrl } = getConfig();
   const params = new URLSearchParams({
     response_type: 'code',
-    client_id:     CLIENT_ID,
-    redirect_uri:  REDIRECT_URI,
+    client_id:     clientId,
+    redirect_uri:  redirectUri,
     state,
   });
-  return `${BASE_URL}/oauth/authorize?${params.toString()}`;
+  return `${baseUrl}/oauth/authorize?${params.toString()}`;
 }
 
 async function exchangeCodeForToken(code) {
-  const response = await axios.post(`${BASE_URL}/oauth/token`, {
+  const { clientId, clientSecret, redirectUri, baseUrl } = getConfig();
+  const response = await axios.post(`${baseUrl}/oauth/token`, {
     grant_type:    'authorization_code',
-    client_id:     CLIENT_ID,
-    client_secret: CLIENT_SECRET,
-    redirect_uri:  REDIRECT_URI,
+    client_id:     clientId,
+    client_secret: clientSecret,
+    redirect_uri:  redirectUri,
     code,
   });
   return response.data;
 }
 
 async function refreshAccessToken(refreshToken) {
-  const response = await axios.post(`${BASE_URL}/oauth/token`, {
+  const { clientId, clientSecret, redirectUri, baseUrl } = getConfig();
+  const response = await axios.post(`${baseUrl}/oauth/token`, {
     grant_type:    'refresh_token',
-    client_id:     CLIENT_ID,
-    client_secret: CLIENT_SECRET,
-    redirect_uri:  REDIRECT_URI,
+    client_id:     clientId,
+    client_secret: clientSecret,
+    redirect_uri:  redirectUri,
     refresh_token: refreshToken,
   });
   return response.data;
 }
 
 function procoreClient(accessToken) {
+  const { baseUrl } = getConfig();
   return axios.create({
-    baseURL: `${BASE_URL}/rest/v1.0`,
+    baseURL: `${baseUrl}/rest/v1.0`,
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
@@ -64,17 +58,13 @@ function procoreClient(accessToken) {
 
 async function getProjects(accessToken) {
   const client = procoreClient(accessToken);
-  const response = await client.get('/projects', {
-    params: { per_page: 100 },
-  });
+  const response = await client.get('/projects', { params: { per_page: 100 } });
   return response.data;
 }
 
 async function getProjectUsers(accessToken, projectId) {
   const client = procoreClient(accessToken);
-  const response = await client.get(`/projects/${projectId}/users`, {
-    params: { per_page: 100 },
-  });
+  const response = await client.get(`/projects/${projectId}/users`, { params: { per_page: 100 } });
   return response.data;
 }
 
@@ -100,11 +90,4 @@ function mapPriority(priority) {
   return map[priority] || 'medium';
 }
 
-module.exports = {
-  getAuthUrl,
-  exchangeCodeForToken,
-  refreshAccessToken,
-  getProjects,
-  getProjectUsers,
-  createRFI,
-};
+module.exports = { getAuthUrl, exchangeCodeForToken, refreshAccessToken, getProjects, getProjectUsers, createRFI };
