@@ -1020,3 +1020,41 @@ app.post('/api/debug/procore-rfi', async (req, res) => {
     res.json({ error: err.message, details: err.response?.data });
   }
 });
+
+// Debug Procore RFI v2 - no rfi_manager_id
+app.post('/api/debug/procore-rfi2', async (req, res) => {
+  try {
+    const { userId, projectId } = req.body;
+    const result = await pool.query(
+      'SELECT access_token FROM procore_tokens WHERE user_id = $1',
+      [userId]
+    );
+    if (!result.rows.length) return res.json({ error: 'No token found' });
+
+    const axios = require('axios');
+    const token = result.rows[0].access_token;
+    const baseUrl = process.env.PROCORE_BASE_URL;
+    const companyId = 4284114;
+
+    const response = await axios.post(
+      `${baseUrl}/rest/v1.0/projects/${projectId}/rfis`,
+      {
+        rfi: {
+          subject:  'Test RFI from POMAR Clash',
+          question: 'Rectangular Duct clashes with Steel Beam on Level 6',
+          priority: 'high',
+        }
+      },
+      {
+        headers: {
+          Authorization:        `Bearer ${token}`,
+          'Procore-Company-Id': String(companyId),
+          'Content-Type':       'application/json',
+        },
+      }
+    );
+    res.json({ success: true, rfi: response.data });
+  } catch (err) {
+    res.json({ error: err.message, details: err.response?.data });
+  }
+});
