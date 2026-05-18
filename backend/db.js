@@ -83,3 +83,14 @@ async function initProcoreTable() {
 }
 
 initProcoreTable().catch(console.error);
+
+// Add registration columns if missing
+async function migrateUserColumns() {
+  await pool.query(`
+    ALTER TABLE users 
+    ADD COLUMN IF NOT EXISTS full_name TEXT,
+    ADD COLUMN IF NOT EXISTS role TEXT
+  `);
+}
+
+migrateUserColumns().catch(console.error);

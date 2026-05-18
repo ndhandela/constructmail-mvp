@@ -1088,3 +1088,39 @@ app.get('/api/debug/procore-users', async (req, res) => {
     res.json({ error: err.message, details: err.response?.data });
   }
 });
+
+// ── POMAR Registration ────────────────────────────────────────────────────────
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { fullName, email, company, role } = req.body;
+    if (!fullName || !email || !company || !role) {
+      return res.status(400).json({ error: 'All fields are required.' });
+    }
+
+    // Check if user already exists
+    const existing = await pool.query(
+      'SELECT id FROM users WHERE email = $1',
+      [email.toLowerCase().trim()]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.status(400).json({
+        error: 'An account with this email already exists. Please sign in instead.'
+      });
+    }
+
+    // Create new user
+    const result = await pool.query(
+    `INSERT INTO users (email, name, full_name, company, role, created_at)
+    VALUES ($1, $2, $3, $4, $5, NOW())
+    RETURNING id`,
+    [email.toLowerCase().trim(), fullName.trim(), fullName.trim(), company.trim(), role]
+    );
+
+    const userId = result.rows[0].id;
+    res.json({ success: true, userId });
+  } catch (err) {
+    console.error('Registration error:', err);
+    res.status(500).json({ error: 'Registration failed. Please try again.' });
+  }
+});

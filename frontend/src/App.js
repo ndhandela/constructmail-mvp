@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Login from './components/Login';
+import Auth from './modules/shared/auth/Auth';
 import LandingPage from './pages/LandingPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Contact from './pages/Contact';
@@ -157,7 +157,7 @@ function App() {
     return (
       <>
         <Header userId={null} onLogout={null} />
-        <Login onLoginSuccess={(uid) => {
+        <Auth onLoginSuccess={(uid) => {
           setUserId(uid);
           const dest = sessionStorage.getItem('postLoginPath') || '/constructmail';
           sessionStorage.removeItem('postLoginPath');
