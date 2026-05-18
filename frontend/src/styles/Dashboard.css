@@ -1,0 +1,132 @@
+/* ============================================================
+   POMAR Product Dashboard
+   ============================================================ */
+
+.pd-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+.pd-welcome {
+  margin-bottom: 40px;
+}
+
+.pd-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--inkwell);
+  margin: 0 0 6px;
+}
+
+.pd-meta {
+  font-size: 14px;
+  color: var(--slate);
+  margin: 0;
+}
+
+.pd-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--slate);
+  margin-bottom: 14px;
+}
+
+.pd-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.pd-card {
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-left: 4px solid var(--product-color, var(--saffron));
+  position: relative;
+}
+
+.pd-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.pd-card-soon {
+  cursor: default;
+  opacity: 0.6;
+  border-left-color: var(--border-color);
+}
+
+.pd-card-soon:hover {
+  box-shadow: none;
+  transform: none;
+}
+
+.pd-card-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  background: var(--parchment);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pd-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.pd-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--inkwell);
+  margin: 0 0 4px;
+}
+
+.pd-card-desc {
+  font-size: 13px;
+  color: var(--slate);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.pd-card-arrow {
+  font-size: 18px;
+  color: var(--slate);
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+
+.pd-card:hover .pd-card-arrow {
+  transform: translateX(4px);
+  color: var(--inkwell);
+}
+
+.pd-card-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--slate);
+  background: var(--parchment);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+
+@media (max-width: 600px) {
+  .pd-grid { grid-template-columns: 1fr; }
+}

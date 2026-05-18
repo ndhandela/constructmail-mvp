@@ -10,13 +10,14 @@ import AboutUs from './pages/AboutUs';
 // Modules
 import ConstructMailApp from './modules/constructmail/pages/ConstructMailApp';
 import ClashAnalyzer from './modules/clash/pages/ClashAnalyzer';
+import ProductDashboard from './pages/Dashboard';
 
 import './styles/theme.css';
 import './styles/components.css';
 import './App.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-const PRODUCT_PATHS = ['/clash', '/constructmail'];
+const PRODUCT_PATHS = ['/clash', '/constructmail', '/dashboard'];
 
 function App() {
   const [userId, setUserId] = useState(null);
@@ -39,7 +40,7 @@ function App() {
       return;
     }
 
-    if (['/privacy', '/about', '/contact'].includes(path)) {
+    if (['/privacy', '/about', '/contact', '/dashboard'].includes(path)) {
       setLoading(false);
       return;
     }
@@ -159,7 +160,7 @@ function App() {
         <Header userId={null} onLogout={null} />
         <Auth onLoginSuccess={(uid) => {
           setUserId(uid);
-          const dest = sessionStorage.getItem('postLoginPath') || '/constructmail';
+          const dest = sessionStorage.getItem('postLoginPath') || '/dashboard';
           sessionStorage.removeItem('postLoginPath');
           window.location.href = dest;
         }} />
@@ -210,6 +211,16 @@ function App() {
       <>
         <Header userId={userId} onLogout={handleLogout} />
         <ClashAnalyzer />
+        <Footer />
+      </>
+    );
+  }
+
+if (currentProduct === 'dashboard' || path === '/dashboard') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} />
+        <ProductDashboard user={user} userId={userId} onProductSelect={handleProductSelect} />
         <Footer />
       </>
     );

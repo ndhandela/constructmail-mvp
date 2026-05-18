@@ -218,6 +218,7 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
               {magicLink && (
                 <div className="auth-magic-box">
                   <p className="auth-magic-label">Your access link is ready:</p>
+                  <a
                   
                     href={magicLink}
                     className="auth-magic-link"
