@@ -1,13 +1,15 @@
 const axios = require('axios');
 
 function getConfig() {
-  const isSandbox = process.env.NODE_ENV !== 'production';
-  return {
-    clientId:     isSandbox ? process.env.PROCORE_SANDBOX_CLIENT_ID     : process.env.PROCORE_CLIENT_ID,
-    clientSecret: isSandbox ? process.env.PROCORE_SANDBOX_CLIENT_SECRET : process.env.PROCORE_CLIENT_SECRET,
-    redirectUri:  isSandbox ? process.env.PROCORE_SANDBOX_REDIRECT_URI  : process.env.PROCORE_REDIRECT_URI,
-    baseUrl:      process.env.PROCORE_BASE_URL || 'https://sandbox.procore.com',
-  };
+  // Use sandbox credentials if available, fall back to production
+  const clientId     = process.env.PROCORE_SANDBOX_CLIENT_ID     || process.env.PROCORE_CLIENT_ID;
+  const clientSecret = process.env.PROCORE_SANDBOX_CLIENT_SECRET || process.env.PROCORE_CLIENT_SECRET;
+  const redirectUri  = process.env.PROCORE_SANDBOX_REDIRECT_URI  || process.env.PROCORE_REDIRECT_URI;
+  const baseUrl      = process.env.PROCORE_BASE_URL               || 'https://sandbox.procore.com';
+
+  console.log('Procore config:', { clientId: clientId ? clientId.substring(0,8)+'...' : 'MISSING', baseUrl });
+
+  return { clientId, clientSecret, redirectUri, baseUrl };
 }
 
 function getAuthUrl(state = '') {

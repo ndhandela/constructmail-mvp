@@ -910,3 +910,13 @@ app.post('/api/procore/create-rfi', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Debug — verify Procore env vars on Render (remove after testing)
+app.get('/api/debug/procore-config', (req, res) => {
+  res.json({
+    sandbox_client_id:  process.env.PROCORE_SANDBOX_CLIENT_ID  ? process.env.PROCORE_SANDBOX_CLIENT_ID.substring(0,8)+'...'  : 'MISSING',
+    prod_client_id:     process.env.PROCORE_CLIENT_ID          ? process.env.PROCORE_CLIENT_ID.substring(0,8)+'...'          : 'MISSING',
+    base_url:           process.env.PROCORE_BASE_URL            || 'MISSING',
+    node_env:           process.env.NODE_ENV                    || 'MISSING',
+  });
+});
