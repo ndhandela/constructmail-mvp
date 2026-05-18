@@ -50,20 +50,11 @@ function procoreClient(accessToken) {
   return axios.create({
     baseURL: `${baseUrl}/rest/v1.0`,
     headers: {
-      Authorization:       `Bearer ${accessToken}`,
-      'Content-Type':      'application/json',
+      Authorization:        `Bearer ${accessToken}`,
+      'Content-Type':       'application/json',
       'Procore-Company-Id': String(COMPANY_ID),
     },
   });
-}
-
-async function getCompanies(accessToken) {
-  const { baseUrl } = getConfig();
-  const response = await axios.get(`${baseUrl}/rest/v1.0/companies`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-    params: { per_page: 100 },
-  });
-  return response.data;
 }
 
 async function getProjects(accessToken) {
@@ -85,17 +76,26 @@ async function getProjectUsers(accessToken, projectId) {
 async function createRFI(accessToken, projectId, rfiData) {
   const client = procoreClient(accessToken);
 
-  // Build RFI payload — only include fields with valid values
+  // Get project users to find a valid rfi_manager_id
+  let managerId = rfiData.assigneeId || null;
+  if (!managerId) {
+    try {
+      const users = await getProjectUsers(accessToken, projectId);
+      if (users && users.length > 0) managerId = users[0].id;
+    } catch (e) {
+      console.error('Could not get project users:', e.message);
+    }
+  }
+
   const rfi = {
-    subject:  rfiData.title       || 'Clash RFI',
-    question: rfiData.description || rfiData.title || 'See clash details',
-    priority: mapPriority(rfiData.priority),
-    reference: `POMAR Clash — ${rfiData.clashName}`,
+    subject:        rfiData.title       || 'Clash RFI',
+    question:       rfiData.description || rfiData.title || 'See clash details',
+    priority:       mapPriority(rfiData.priority),
+    reference:      `POMAR Clash — ${rfiData.clashName}`,
+    rfi_manager_id: managerId,
   };
 
-  // Only add optional fields if they have valid values
-  if (rfiData.assigneeId) rfi.rfi_manager_id = rfiData.assigneeId;
-  if (rfiData.dueDate)    rfi.due_date        = rfiData.dueDate;
+  if (rfiData.dueDate) rfi.due_date = rfiData.dueDate;
 
   const response = await client.post(`/projects/${projectId}/rfis`, { rfi });
   return response.data;
