@@ -948,3 +948,34 @@ app.get('/api/debug/procore-projects', async (req, res) => {
     res.json({ error: err.message, details: err.response?.data });
   }
 });
+
+// Debug Procore projects with company header
+app.get('/api/debug/procore-projects2', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const result = await pool.query(
+      'SELECT access_token FROM procore_tokens WHERE user_id = $1',
+      [userId]
+    );
+    if (!result.rows.length) return res.json({ error: 'No token found' });
+
+    const axios = require('axios');
+    const token = result.rows[0].access_token;
+    const baseUrl = process.env.PROCORE_BASE_URL;
+    const companyId = 4284114;
+
+    const projectsRes = await axios.get(
+      `${baseUrl}/rest/v1.0/projects`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Procore-Company-Id': companyId,
+        },
+        params: { company_id: companyId, per_page: 100 }
+      }
+    );
+    res.json({ projects: projectsRes.data });
+  } catch (err) {
+    res.json({ error: err.message, details: err.response?.data });
+  }
+});
