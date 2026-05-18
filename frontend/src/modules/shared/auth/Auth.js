@@ -10,7 +10,7 @@ const PRODUCT_NAMES = {
 };
 
 const ROLES = [
-  { value: '',              label: 'Select your role…' },
+  { value: '',              label: 'Select your role...' },
   { value: 'GC',            label: 'General Contractor' },
   { value: 'Subcontractor', label: 'Subcontractor' },
   { value: 'Owner',         label: 'Owner / Owner Rep' },
@@ -19,18 +19,14 @@ const ROLES = [
 ];
 
 export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
-  const [mode, setMode]           = useState(defaultMode); // 'register' | 'login'
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState('');
-  const [success, setSuccess]     = useState('');
-
-  // Register fields
-  const [fullName, setFullName]   = useState('');
-  const [email, setEmail]         = useState('');
-  const [company, setCompany]     = useState('');
-  const [role, setRole]           = useState('');
-
-  // Login field
+  const [mode, setMode]             = useState(defaultMode);
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState('');
+  const [success, setSuccess]       = useState('');
+  const [fullName, setFullName]     = useState('');
+  const [email, setEmail]           = useState('');
+  const [company, setCompany]       = useState('');
+  const [role, setRole]             = useState('');
   const [loginEmail, setLoginEmail] = useState('');
   const [magicLink, setMagicLink]   = useState('');
 
@@ -48,20 +44,18 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
     setMode(newMode);
   };
 
-  // ── Register ────────────────────────────────────────────────────────────
   const handleRegister = async (e) => {
     e.preventDefault();
     if (!role) { setError('Please select your role.'); return; }
     setLoading(true);
     setError('');
-    setSuccess('');
     try {
       const res = await axios.post(`${API_BASE_URL}/api/auth/register`, {
         fullName, email, company, role,
       });
       if (res.data.success) {
         if (onLoginSuccess) onLoginSuccess(res.data.userId);
-        const dest = sessionStorage.getItem('postLoginPath') || '/constructmail';
+        const dest = sessionStorage.getItem('postLoginPath') || '/dashboard';
         sessionStorage.removeItem('postLoginPath');
         window.location.href = dest;
       } else {
@@ -74,7 +68,6 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
     }
   };
 
-  // ── Login (magic link) ──────────────────────────────────────────────────
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -99,7 +92,6 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
     <div className="auth-container">
       <div className="auth-card">
 
-        {/* Logo */}
         <div className="auth-logo">
           <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
             <circle cx="50" cy="50" r="32" fill="none" stroke="#0E1B2C" strokeWidth="7"/>
@@ -109,7 +101,6 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
           <span className="auth-logo-name">POMAR</span>
         </div>
 
-        {/* Context banner */}
         {productName && (
           <div className="auth-context-banner">
             <span>🔒</span>
@@ -120,7 +111,6 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
           </div>
         )}
 
-        {/* Mode toggle */}
         <div className="auth-toggle">
           <button
             className={`auth-toggle-btn ${mode === 'register' ? 'active' : ''}`}
@@ -138,12 +128,10 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
           </button>
         </div>
 
-        {/* ── REGISTER FORM ── */}
         {mode === 'register' && (
-          <>
+          <div>
             <p className="auth-sub">Free access — no credit card needed.</p>
             <form onSubmit={handleRegister} className="auth-form">
-
               <div className="auth-field">
                 <label className="auth-label">Full Name</label>
                 <input
@@ -156,7 +144,6 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
                   disabled={loading}
                 />
               </div>
-
               <div className="auth-field">
                 <label className="auth-label">Work Email</label>
                 <input
@@ -169,7 +156,6 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
                   disabled={loading}
                 />
               </div>
-
               <div className="auth-field">
                 <label className="auth-label">Company Name</label>
                 <input
@@ -182,14 +168,12 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
                   disabled={loading}
                 />
               </div>
-
               <div className="auth-field">
                 <label className="auth-label">Your Role</label>
                 <select
                   className="auth-input auth-select"
                   value={role}
                   onChange={e => setRole(e.target.value)}
-                  required
                   disabled={loading}
                 >
                   {ROLES.map(r => (
@@ -199,28 +183,22 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
                   ))}
                 </select>
               </div>
-
-              {error   && <div className="auth-error">{error}</div>}
-
+              {error && <div className="auth-error">{error}</div>}
               <button type="submit" className="auth-submit" disabled={loading}>
-                {loading ? 'Creating account…' : 'Get Free Access →'}
+                {loading ? 'Creating account...' : 'Get Free Access'}
               </button>
-
             </form>
-
             <p className="auth-switch">
               Already have an account?{' '}
               <button type="button" onClick={() => switchMode('login')}>Sign in</button>
             </p>
-          </>
+          </div>
         )}
 
-        {/* ── LOGIN FORM ── */}
         {mode === 'login' && (
-          <>
+          <div>
             <p className="auth-sub">Enter your email and we'll send you an instant access link.</p>
             <form onSubmit={handleLogin} className="auth-form">
-
               <div className="auth-field">
                 <label className="auth-label">Work Email</label>
                 <input
@@ -233,16 +211,13 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
                   disabled={loading}
                 />
               </div>
-
               {error && <div className="auth-error">{error}</div>}
-
               {success && !magicLink && (
                 <div className="auth-success">{success}</div>
               )}
-
               {magicLink && (
                 <div className="auth-magic-box">
-                  <p className="auth-magic-label">✅ Your access link is ready:</p>
+                  <p className="auth-magic-label">Your access link is ready:</p>
                   
                     href={magicLink}
                     className="auth-magic-link"
@@ -255,18 +230,15 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
                   <div className="auth-magic-url">{magicLink}</div>
                 </div>
               )}
-
               <button type="submit" className="auth-submit" disabled={loading}>
-                {loading ? 'Sending…' : 'Send Access Link'}
+                {loading ? 'Sending...' : 'Send Access Link'}
               </button>
-
             </form>
-
             <p className="auth-switch">
               New to POMAR?{' '}
               <button type="button" onClick={() => switchMode('register')}>Create a free account</button>
             </p>
-          </>
+          </div>
         )}
 
       </div>
