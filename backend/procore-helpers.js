@@ -73,10 +73,22 @@ async function getProjectUsers(accessToken, projectId) {
   return response.data;
 }
 
+// Sanitize text - remove special/non-ASCII characters
+function sanitize(str) {
+  if (!str) return '';
+  return str
+    .replace(/\u2014/g, '-')   // em dash
+    .replace(/\u2013/g, '-')   // en dash
+    .replace(/\u2018|\u2019/g, "'") // smart quotes
+    .replace(/\u201C|\u201D/g, '"') // smart double quotes
+    .replace(/[^\x00-\x7F]/g, '') // any remaining non-ASCII
+    .trim();
+}
+
 async function createRFI(accessToken, projectId, rfiData) {
   const client = procoreClient(accessToken);
 
-  // Get project users to find a valid rfi_manager_id
+  // Get a valid manager ID from project users
   let managerId = rfiData.assigneeId || null;
   if (!managerId) {
     try {
@@ -87,15 +99,20 @@ async function createRFI(accessToken, projectId, rfiData) {
     }
   }
 
+  const subject  = sanitize(rfiData.title) || 'Clash RFI';
+  const question = sanitize(rfiData.description) || subject;
+
   const rfi = {
-    subject:        rfiData.title       || 'Clash RFI',
-    question:       rfiData.description || rfiData.title || 'See clash details',
+    subject,
+    question,
     priority:       mapPriority(rfiData.priority),
-    reference:      `POMAR Clash — ${rfiData.clashName}`,
+    reference:      sanitize(`POMAR Clash - ${rfiData.clashName}`),
     rfi_manager_id: managerId,
   };
 
   if (rfiData.dueDate) rfi.due_date = rfiData.dueDate;
+
+  console.log('Creating Procore RFI:', JSON.stringify(rfi));
 
   const response = await client.post(`/projects/${projectId}/rfis`, { rfi });
   return response.data;
