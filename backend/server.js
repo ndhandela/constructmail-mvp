@@ -1128,7 +1128,6 @@ app.post('/api/auth/register', async (req, res) => {
 // ── Password Auth ─────────────────────────────────────────────────────────────
 
 const bcrypt = require('bcryptjs');
-const emailService = require('./email-service');
 
 // Register with password
 app.post('/api/auth/register', async (req, res) => {
