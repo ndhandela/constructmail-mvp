@@ -912,3 +912,214 @@
   color: var(--slate);
   margin: 0;
 }
+
+/* ============================================================
+   CLASH DELTA
+   ============================================================ */
+
+.clash-delta {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 24px 0;
+}
+
+.clash-delta-upload {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.clash-delta-upload-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.clash-delta-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--saffron);
+  background: var(--saffron-soft);
+  border: 1px solid rgba(217, 119, 6, 0.2);
+  border-radius: var(--radius-pill);
+  padding: 4px 14px;
+  margin-bottom: 12px;
+}
+
+.clash-delta-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--inkwell);
+  margin: 0 0 10px;
+}
+
+.clash-delta-sub {
+  font-size: 14px;
+  color: var(--slate);
+  line-height: 1.6;
+  margin: 0 0 20px;
+}
+
+.clash-delta-current-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--parchment);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  font-size: 13px;
+  margin-bottom: 24px;
+}
+
+.clash-delta-file-label {
+  color: var(--slate);
+  font-weight: 500;
+}
+
+.clash-delta-file-name {
+  color: var(--inkwell);
+  font-weight: 600;
+}
+
+.clash-delta-file-count {
+  color: var(--slate);
+  font-size: 12px;
+}
+
+/* Score cards */
+.clash-delta-score-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  .clash-delta-score-row { grid-template-columns: 1fr 1fr; }
+}
+
+.clash-delta-score-card {
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  text-align: center;
+}
+
+.clash-delta-score-main {
+  border-left: 4px solid var(--saffron);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 20px;
+}
+
+.clash-delta-score-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--slate);
+  margin: 0 0 6px;
+}
+
+.clash-delta-score-val {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+  margin: 0 0 4px;
+}
+
+.clash-delta-score-sub {
+  font-size: 12px;
+  margin: 0;
+}
+
+/* File comparison strip */
+.clash-delta-files-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--parchment);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.clash-delta-file-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+}
+
+.clash-delta-file-prev {
+  background: var(--sandstone);
+  color: var(--inkwell);
+}
+
+.clash-delta-file-curr {
+  background: var(--inkwell);
+  color: white;
+}
+
+.clash-delta-file-chip span { color: inherit; opacity: 0.7; }
+.clash-delta-file-chip strong { font-weight: 600; }
+
+.clash-delta-arrow {
+  font-size: 18px;
+  color: var(--slate);
+}
+
+/* Empty state */
+.clash-delta-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--slate);
+  font-size: 15px;
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+}
+
+/* Module-level tabs */
+.clash-module-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border-light);
+  background: white;
+  padding: 0 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.clash-module-tab {
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--slate);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-sans);
+}
+
+.clash-module-tab:hover {
+  color: var(--inkwell);
+}
+
+.clash-module-tab.active {
+  color: var(--inkwell);
+  font-weight: 600;
+  border-bottom-color: var(--saffron);
+}
