@@ -7,7 +7,7 @@ export const PRODUCTS = [
     path: '/constructmail',
     logo: '/logos/constructmail.png',
     color: '#ff6600',
-    status: 'active'
+    status: 'live'
   },
   // Future products - just add here!
   // {

@@ -3,7 +3,7 @@ import { PRODUCTS } from '../config/products';
 import '../styles/Dashboard.css';
 
 export default function ProductDashboard({ user, userId, onProductSelect }) {
-  const firstName = user?.full_name?.split(' ')[0] || user?.name?.split(' ')[0] || 'there';
+  const firstName = user?.name?.split(' ')[0] || user?.full_name?.split(' ')[0] || 'there';
   const company   = user?.company || '';
   const role      = user?.role    || '';
 
