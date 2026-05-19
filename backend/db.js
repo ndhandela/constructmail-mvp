@@ -94,3 +94,16 @@ async function migrateUserColumns() {
 }
 
 migrateUserColumns().catch(console.error);
+
+// Add password and reset token columns
+async function migrateAuthColumns() {
+  await pool.query(`
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS password_hash TEXT,
+    ADD COLUMN IF NOT EXISTS reset_token TEXT,
+    ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS full_name TEXT,
+    ADD COLUMN IF NOT EXISTS role TEXT
+  `);
+}
+migrateAuthColumns().catch(console.error);

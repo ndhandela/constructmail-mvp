@@ -1124,3 +1124,164 @@ app.post('/api/auth/register', async (req, res) => {
     res.status(500).json({ error: 'Registration failed. Please try again.' });
   }
 });
+
+// ── Password Auth ─────────────────────────────────────────────────────────────
+
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const emailService = require('./email-service');
+
+// Register with password
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { fullName, email, company, role, password } = req.body;
+    if (!fullName || !email || !company || !role || !password) {
+      return res.status(400).json({ error: 'All fields are required.' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+    }
+
+    const existing = await pool.query(
+      'SELECT id FROM users WHERE email = $1',
+      [email.toLowerCase().trim()]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'An account with this email already exists. Please sign in.' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    const result = await pool.query(
+      `INSERT INTO users (email, name, full_name, company, role, password_hash, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id`,
+      [email.toLowerCase().trim(), fullName.trim(), fullName.trim(), company.trim(), role, passwordHash]
+    );
+
+    res.json({ success: true, userId: result.rows[0].id });
+  } catch (err) {
+    console.error('Register error:', err);
+    res.status(500).json({ error: 'Registration failed. Please try again.' });
+  }
+});
+
+// Login with password
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required.' });
+    }
+
+    const result = await pool.query(
+      'SELECT id, password_hash FROM users WHERE email = $1',
+      [email.toLowerCase().trim()]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'No account found with this email.' });
+    }
+
+    const user = result.rows[0];
+
+    if (!user.password_hash) {
+      return res.status(401).json({ error: 'This account uses magic link login. Please use the sign in link option.' });
+    }
+
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: 'Incorrect password.' });
+    }
+
+    res.json({ success: true, userId: user.id });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Login failed. Please try again.' });
+  }
+});
+
+// Forgot password
+app.post('/api/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required.' });
+
+    const result = await pool.query(
+      'SELECT id, full_name, name FROM users WHERE email = $1',
+      [email.toLowerCase().trim()]
+    );
+
+    // Always return success to prevent email enumeration
+    if (result.rows.length === 0) {
+      return res.json({ success: true, message: 'If an account exists, a reset link has been sent.' });
+    }
+
+    const user = result.rows[0];
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await pool.query(
+      'UPDATE users SET reset_token = $1, reset_token_expires = $2 WHERE id = $3',
+      [token, expires, user.id]
+    );
+
+    const resetUrl = `${process.env.FRONTEND_URL || 'https://pomar.ai'}/reset-password?token=${token}`;
+    const firstName = user.full_name?.split(' ')[0] || user.name?.split(' ')[0] || 'there';
+
+    await emailService.sendEmail({
+      to: email,
+      subject: 'Reset your POMAR password',
+      html: `
+        <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+          <h2 style="color: #0E1B2C;">Reset your password</h2>
+          <p>Hi ${firstName},</p>
+          <p>You requested a password reset for your POMAR account. Click the button below to set a new password.</p>
+          <a href="${resetUrl}" style="display:inline-block;padding:12px 24px;background:#D97706;color:white;border-radius:100px;text-decoration:none;font-weight:600;margin:20px 0;">
+            Reset Password
+          </a>
+          <p style="color:#666;font-size:13px;">This link expires in 1 hour. If you didn't request this, you can ignore this email.</p>
+          <p style="color:#666;font-size:12px;">Or copy this link: ${resetUrl}</p>
+        </div>
+      `,
+    });
+
+    res.json({ success: true, message: 'If an account exists, a reset link has been sent.' });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ error: 'Failed to send reset email.' });
+  }
+});
+
+// Reset password
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ error: 'Token and password are required.' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+    }
+
+    const result = await pool.query(
+      'SELECT id FROM users WHERE reset_token = $1 AND reset_token_expires > NOW()',
+      [token]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({ error: 'Invalid or expired reset link. Please request a new one.' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    await pool.query(
+      'UPDATE users SET password_hash = $1, reset_token = NULL, reset_token_expires = NULL WHERE id = $2',
+      [passwordHash, result.rows[0].id]
+    );
+
+    res.json({ success: true, message: 'Password updated successfully.' });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ error: 'Failed to reset password.' });
+  }
+});

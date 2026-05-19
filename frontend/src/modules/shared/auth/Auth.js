@@ -18,40 +18,48 @@ const ROLES = [
   { value: 'Other',         label: 'Other' },
 ];
 
+const DEMO_EMAIL    = 'demo@pomar.ai';
+const DEMO_PASSWORD = 'POMARdemo2024';
+
 export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
-  const [mode, setMode]             = useState(defaultMode);
-  const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState('');
-  const [success, setSuccess]       = useState('');
-  const [fullName, setFullName]     = useState('');
-  const [email, setEmail]           = useState('');
-  const [company, setCompany]       = useState('');
-  const [role, setRole]             = useState('');
-  const [loginEmail, setLoginEmail] = useState('');
-  const [magicLink, setMagicLink]   = useState('');
+  const [mode, setMode]               = useState(defaultMode);
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState('');
+  const [success, setSuccess]         = useState('');
+
+  // Register
+  const [fullName, setFullName]       = useState('');
+  const [email, setEmail]             = useState('');
+  const [company, setCompany]         = useState('');
+  const [role, setRole]               = useState('');
+  const [password, setPassword]       = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Login
+  const [loginEmail, setLoginEmail]   = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+
+  // Forgot password
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSent, setForgotSent]   = useState(false);
 
   const postLoginPath = sessionStorage.getItem('postLoginPath') || '';
   const productName   = PRODUCT_NAMES[postLoginPath] || null;
 
-  const resetForm = () => {
-    setError('');
-    setSuccess('');
-    setMagicLink('');
-  };
-
-  const switchMode = (newMode) => {
-    resetForm();
-    setMode(newMode);
-  };
+  const resetForm = () => { setError(''); setSuccess(''); };
+  const switchMode = (m) => { resetForm(); setMode(m); };
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    if (!role) { setError('Please select your role.'); return; }
-    setLoading(true);
-    setError('');
+    if (!role)                          { setError('Please select your role.'); return; }
+    if (password.length < 8)           { setError('Password must be at least 8 characters.'); return; }
+    if (password !== confirmPassword)  { setError('Passwords do not match.'); return; }
+    setLoading(true); setError('');
     try {
       const res = await axios.post(`${API_BASE_URL}/api/auth/register`, {
-        fullName, email, company, role,
+        fullName, email, company, role, password,
       });
       if (res.data.success) {
         if (onLoginSuccess) onLoginSuccess(res.data.userId);
@@ -70,22 +78,42 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-    setSuccess('');
-    setMagicLink('');
+    setLoading(true); setError('');
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/auth/send-magic-link`, {
-        email: loginEmail,
+      const res = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+        email: loginEmail, password: loginPassword,
       });
-      setSuccess('Access link generated!');
-      setMagicLink(res.data.magicLink);
-      setLoginEmail('');
+      if (res.data.success) {
+        if (onLoginSuccess) onLoginSuccess(res.data.userId);
+        const dest = sessionStorage.getItem('postLoginPath') || '/dashboard';
+        sessionStorage.removeItem('postLoginPath');
+        window.location.href = dest;
+      } else {
+        setError(res.data.error || 'Login failed.');
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'Could not send access link.');
+      setError(err.response?.data?.error || 'Invalid email or password.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setLoading(true); setError('');
+    try {
+      await axios.post(`${API_BASE_URL}/api/auth/forgot-password`, { email: forgotEmail });
+      setForgotSent(true);
+    } catch {
+      setError('Failed to send reset email. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fillDemoAccount = () => {
+    setLoginEmail(DEMO_EMAIL);
+    setLoginPassword(DEMO_PASSWORD);
   };
 
   return (
@@ -111,134 +139,111 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
           </div>
         )}
 
-        <div className="auth-toggle">
-          <button
-            className={`auth-toggle-btn ${mode === 'register' ? 'active' : ''}`}
-            onClick={() => switchMode('register')}
-            type="button"
-          >
-            Create account
-          </button>
-          <button
-            className={`auth-toggle-btn ${mode === 'login' ? 'active' : ''}`}
-            onClick={() => switchMode('login')}
-            type="button"
-          >
-            Sign in
-          </button>
-        </div>
+        {mode !== 'forgot' && (
+          <div className="auth-toggle">
+            <button className={`auth-toggle-btn ${mode === 'register' ? 'active' : ''}`} onClick={() => switchMode('register')} type="button">
+              Create account
+            </button>
+            <button className={`auth-toggle-btn ${mode === 'login' ? 'active' : ''}`} onClick={() => switchMode('login')} type="button">
+              Sign in
+            </button>
+          </div>
+        )}
 
+        {/* ── REGISTER ── */}
         {mode === 'register' && (
           <div>
             <p className="auth-sub">Free access — no credit card needed.</p>
             <form onSubmit={handleRegister} className="auth-form">
               <div className="auth-field">
                 <label className="auth-label">Full Name</label>
-                <input
-                  type="text"
-                  className="auth-input"
-                  placeholder="John Smith"
-                  value={fullName}
-                  onChange={e => setFullName(e.target.value)}
-                  required
-                  disabled={loading}
-                />
+                <input type="text" className="auth-input" placeholder="John Smith" value={fullName} onChange={e => setFullName(e.target.value)} required disabled={loading} />
               </div>
               <div className="auth-field">
                 <label className="auth-label">Work Email</label>
-                <input
-                  type="email"
-                  className="auth-input"
-                  placeholder="john@yourcompany.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                />
+                <input type="email" className="auth-input" placeholder="john@yourcompany.com" value={email} onChange={e => setEmail(e.target.value)} required disabled={loading} />
               </div>
               <div className="auth-field">
                 <label className="auth-label">Company Name</label>
-                <input
-                  type="text"
-                  className="auth-input"
-                  placeholder="Smith Construction Co."
-                  value={company}
-                  onChange={e => setCompany(e.target.value)}
-                  required
-                  disabled={loading}
-                />
+                <input type="text" className="auth-input" placeholder="Smith Construction Co." value={company} onChange={e => setCompany(e.target.value)} required disabled={loading} />
               </div>
               <div className="auth-field">
                 <label className="auth-label">Your Role</label>
-                <select
-                  className="auth-input auth-select"
-                  value={role}
-                  onChange={e => setRole(e.target.value)}
-                  disabled={loading}
-                >
-                  {ROLES.map(r => (
-                    <option key={r.value} value={r.value} disabled={r.value === ''}>
-                      {r.label}
-                    </option>
-                  ))}
+                <select className="auth-input auth-select" value={role} onChange={e => setRole(e.target.value)} disabled={loading}>
+                  {ROLES.map(r => <option key={r.value} value={r.value} disabled={r.value === ''}>{r.label}</option>)}
                 </select>
               </div>
+              <div className="auth-field">
+                <label className="auth-label">Password</label>
+                <div className="auth-password-wrap">
+                  <input type={showPassword ? 'text' : 'password'} className="auth-input" placeholder="Min. 8 characters" value={password} onChange={e => setPassword(e.target.value)} required disabled={loading} />
+                  <button type="button" className="auth-toggle-pw" onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button>
+                </div>
+              </div>
+              <div className="auth-field">
+                <label className="auth-label">Confirm Password</label>
+                <input type={showPassword ? 'text' : 'password'} className="auth-input" placeholder="Repeat password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required disabled={loading} />
+              </div>
               {error && <div className="auth-error">{error}</div>}
-              <button type="submit" className="auth-submit" disabled={loading}>
-                {loading ? 'Creating account...' : 'Get Free Access'}
-              </button>
+              <button type="submit" className="auth-submit" disabled={loading}>{loading ? 'Creating account...' : 'Get Free Access'}</button>
+            </form>
+            <p className="auth-switch">Already have an account? <button type="button" onClick={() => switchMode('login')}>Sign in</button></p>
+          </div>
+        )}
+
+        {/* ── LOGIN ── */}
+        {mode === 'login' && (
+          <div>
+            <div className="auth-demo-banner">
+              <span>🧪</span>
+              <div>
+                <p className="auth-demo-title">Want to try first?</p>
+                <p className="auth-demo-sub">Use our test account — <button type="button" className="auth-demo-fill" onClick={fillDemoAccount}>click to fill credentials</button></p>
+              </div>
+            </div>
+            <form onSubmit={handleLogin} className="auth-form">
+              <div className="auth-field">
+                <label className="auth-label">Work Email</label>
+                <input type="email" className="auth-input" placeholder="john@yourcompany.com" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required disabled={loading} />
+              </div>
+              <div className="auth-field">
+                <label className="auth-label">Password</label>
+                <div className="auth-password-wrap">
+                  <input type={showLoginPassword ? 'text' : 'password'} className="auth-input" placeholder="Your password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} required disabled={loading} />
+                  <button type="button" className="auth-toggle-pw" onClick={() => setShowLoginPassword(!showLoginPassword)}>{showLoginPassword ? 'Hide' : 'Show'}</button>
+                </div>
+              </div>
+              {error && <div className="auth-error">{error}</div>}
+              <button type="submit" className="auth-submit" disabled={loading}>{loading ? 'Signing in...' : 'Sign In'}</button>
             </form>
             <p className="auth-switch">
-              Already have an account?{' '}
-              <button type="button" onClick={() => switchMode('login')}>Sign in</button>
+              <button type="button" onClick={() => switchMode('forgot')}>Forgot password?</button>
+              {' · '}
+              New to POMAR? <button type="button" onClick={() => switchMode('register')}>Create a free account</button>
             </p>
           </div>
         )}
 
-        {mode === 'login' && (
+        {/* ── FORGOT PASSWORD ── */}
+        {mode === 'forgot' && (
           <div>
-            <p className="auth-sub">Enter your email and we'll send you an instant access link.</p>
-            <form onSubmit={handleLogin} className="auth-form">
-              <div className="auth-field">
-                <label className="auth-label">Work Email</label>
-                <input
-                  type="email"
-                  className="auth-input"
-                  placeholder="john@yourcompany.com"
-                  value={loginEmail}
-                  onChange={e => setLoginEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                />
+            <h3 className="auth-forgot-title">Reset your password</h3>
+            <p className="auth-sub">Enter your email and we'll send you a reset link.</p>
+            {forgotSent ? (
+              <div className="auth-success">
+                Check your email — a reset link has been sent if an account exists.
               </div>
-              {error && <div className="auth-error">{error}</div>}
-              {success && !magicLink && (
-                <div className="auth-success">{success}</div>
-              )}
-              {magicLink && (
-                <div className="auth-magic-box">
-                  <p className="auth-magic-label">Your access link is ready:</p>
-                  <a
-                  
-                    href={magicLink}
-                    className="auth-magic-link"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Click here to sign in
-                  </a>
-                  <p className="auth-magic-note">Or copy this link:</p>
-                  <div className="auth-magic-url">{magicLink}</div>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="auth-form">
+                <div className="auth-field">
+                  <label className="auth-label">Work Email</label>
+                  <input type="email" className="auth-input" placeholder="john@yourcompany.com" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} required disabled={loading} />
                 </div>
-              )}
-              <button type="submit" className="auth-submit" disabled={loading}>
-                {loading ? 'Sending...' : 'Send Access Link'}
-              </button>
-            </form>
-            <p className="auth-switch">
-              New to POMAR?{' '}
-              <button type="button" onClick={() => switchMode('register')}>Create a free account</button>
-            </p>
+                {error && <div className="auth-error">{error}</div>}
+                <button type="submit" className="auth-submit" disabled={loading}>{loading ? 'Sending...' : 'Send Reset Link'}</button>
+              </form>
+            )}
+            <p className="auth-switch"><button type="button" onClick={() => switchMode('login')}>← Back to sign in</button></p>
           </div>
         )}
 

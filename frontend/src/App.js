@@ -6,6 +6,7 @@ import Contact from './pages/Contact';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import AboutUs from './pages/AboutUs';
+import ResetPassword from './pages/ResetPassword';
 
 // Modules
 import ConstructMailApp from './modules/constructmail/pages/ConstructMailApp';
@@ -40,7 +41,7 @@ function App() {
       return;
     }
 
-    if (['/privacy', '/about', '/contact'].includes(path)) {
+    if (['/privacy', '/about', '/contact', '/reset-password'].includes(path)) {
       setLoading(false);
       return;
     }
@@ -168,6 +169,16 @@ function App() {
       </>
     );
   }
+
+  if (path === '/reset-password') {
+  return (
+    <>
+      <Header userId={userId} onLogout={handleLogout} />
+      <ResetPassword />
+      <Footer />
+    </>
+  );
+}
 
   // ── Logged-out user hitting a product route — redirect to login ──────────
   if (!userId && PRODUCT_PATHS.includes(path)) {
