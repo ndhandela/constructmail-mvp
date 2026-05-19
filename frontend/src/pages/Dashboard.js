@@ -73,7 +73,7 @@ export default function ProductDashboard({ user, userId, onProductSelect }) {
           <div
             key={product.id}
             className="pd-card"
-            onClick={() => onProductSelect(product.id)}
+            onClick={() => window.location.href = product.path}
             style={{ '--product-color': product.color }}
           >
             <div className="pd-card-icon" style={{ color: product.color }}>
