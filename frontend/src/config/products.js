@@ -1,23 +1,24 @@
 export const PRODUCTS = [
   {
     id: 'constructmail',
-    name: 'ConstructMail',
+    name: 'POMAR Mail',
     description: 'AI-powered email intelligence for General Contractors',
     icon: '📧',
     path: '/constructmail',
     logo: '/logos/constructmail.png',
-    color: '#ff6600',
+    color: '#D97706',
     status: 'live'
   },
-  // Future products - just add here!
-  // {
-  //   id: 'pomar-analytics',
-  //   name: 'POMAR Analytics',
-  //   description: 'Project analytics and reporting',
-  //   icon: '📊',
-  //   path: '/analytics',
-  //   status: 'coming-soon'
-  // }
+  {
+    id: 'clash',
+    name: 'POMAR Clash',
+    description: 'BIM clash report analyzer — Navisworks to actionable insights',
+    icon: '🏗️',
+    path: '/clash',
+    logo: '/logos/pomar.png',
+    color: '#0E1B2C',
+    status: 'live'
+  },
 ];
 
 export const getProductById = (id) => PRODUCTS.find(p => p.id === id);

@@ -493,7 +493,7 @@ app.get('/api/auth/me', async (req, res) => {
     }
 
     const result = await pool.query(
-      'SELECT id, email, name, company FROM users WHERE id = $1',
+      'SELECT id, email, name, full_name, company, role FROM users WHERE id = $1',
       [userId]
     );
 
