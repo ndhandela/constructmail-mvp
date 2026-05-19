@@ -25,7 +25,6 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
   const [mode, setMode]               = useState(defaultMode);
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState('');
-  const [success, setSuccess]         = useState('');
 
   // Register
   const [fullName, setFullName]       = useState('');
@@ -48,7 +47,7 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
   const postLoginPath = sessionStorage.getItem('postLoginPath') || '';
   const productName   = PRODUCT_NAMES[postLoginPath] || null;
 
-  const resetForm = () => { setError(''); setSuccess(''); };
+  const resetForm = () => { setError(''); };
   const switchMode = (m) => { resetForm(); setMode(m); };
 
   const handleRegister = async (e) => {
