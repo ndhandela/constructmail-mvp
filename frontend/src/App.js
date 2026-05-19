@@ -161,6 +161,7 @@ function App() {
         <Header userId={null} onLogout={null} />
         <Auth onLoginSuccess={(uid) => {
           setUserId(uid);
+          localStorage.setItem("constructmail_userId", uid);
           const dest = sessionStorage.getItem('postLoginPath') || '/dashboard';
           sessionStorage.removeItem('postLoginPath');
           window.location.href = dest;
