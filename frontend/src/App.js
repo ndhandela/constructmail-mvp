@@ -91,6 +91,7 @@ function App() {
     if (userId) {
       if (path.includes('/constructmail')) setCurrentProduct('constructmail');
       if (path === '/clash') setCurrentProduct('clash');
+      if (path === '/dashboard') setCurrentProduct('dashboard');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
@@ -187,6 +188,17 @@ function App() {
     window.location.href = '/login';
     return null;
   }
+
+  // ── Detect /dashboard path for logged-in users ──────────────────────────
+if (userId && path === '/dashboard') {
+  return (
+    <>
+      <Header userId={userId} onLogout={handleLogout} />
+      <ProductDashboard user={user} userId={userId} onProductSelect={handleProductSelect} />
+      <Footer />
+    </>
+  );
+}
 
   // ── Landing page ─────────────────────────────────────────────────────────
   if (!currentProduct) {
