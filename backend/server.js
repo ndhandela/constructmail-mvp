@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 // Force redeploy - May 5, 2026 7:10 PM
 const express = require('express');
 const cors = require('cors');
@@ -387,7 +388,6 @@ app.get('/api/recent-signals', async (req, res) => {
   }
 });
 
-const crypto = require('crypto');
 
 // Send magic link
 app.post('/api/auth/send-magic-link', async (req, res) => {
@@ -1128,7 +1128,6 @@ app.post('/api/auth/register', async (req, res) => {
 // ── Password Auth ─────────────────────────────────────────────────────────────
 
 const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
 const emailService = require('./email-service');
 
 // Register with password
