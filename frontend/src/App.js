@@ -40,7 +40,7 @@ function App() {
       return;
     }
 
-    if (['/privacy', '/about', '/contact', '/dashboard'].includes(path)) {
+    if (['/privacy', '/about', '/contact'].includes(path)) {
       setLoading(false);
       return;
     }
@@ -58,7 +58,7 @@ function App() {
           localStorage.setItem('constructmail_userId', data.userId);
           fetchUser(data.userId);
           if (path === '/clash') setCurrentProduct('clash');
-          else setCurrentProduct('constructmail');
+          else setCurrentProduct('dashboard');
           window.history.replaceState({}, document.title, window.location.pathname);
         } else {
           alert('Login failed: ' + data.error);
