@@ -16,7 +16,7 @@ export const PRODUCTS = [
     icon: '🏗️',
     path: '/clash',
     logo: '/logos/pomar.png',
-    color: '#0E1B2C',
+    color: '#D97706',
     status: 'live'
   },
 ];
