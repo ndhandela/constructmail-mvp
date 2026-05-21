@@ -61,6 +61,22 @@ export default function ProcoreConnect({ userId, onConnected, onRFISent, rfiData
     }
   };
 
+  const handleReconnect = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/api/procore/disconnect?userId=${userId}`, {
+        method: 'DELETE',
+      });
+      setConnected(false);
+      setProjects([]);
+      setProjectId('');
+      setSent(null);
+      setError('');
+      handleConnect();
+    } catch {
+      setError('Could not reconnect. Please try again.');
+    }
+  };
+
   const handleSendRFI = async () => {
     if (!projectId) { setError('Please select a project.'); return; }
     setSending(true);
@@ -118,25 +134,35 @@ export default function ProcoreConnect({ userId, onConnected, onRFISent, rfiData
           Connect Procore to send RFI directly
         </button>
       ) : (
-        <div className="procore-send-row">
-          <select
-            className="rfi-select"
-            value={projectId}
-            onChange={e => setProjectId(e.target.value)}
-            style={{ flex: 1 }}
-          >
-            <option value="">Select project…</option>
-            {projects.map(p => (
-              <option key={p.id} value={String(p.id)}>{p.name || p.display_name}</option>
-            ))}
-          </select>
-          <button
-            className="procore-btn-send"
-            onClick={handleSendRFI}
-            disabled={sending || !projectId}
-          >
-            {sending ? 'Sending…' : '🚀 Send to Procore'}
-          </button>
+        <div>
+          <div className="procore-send-row">
+            <select
+              className="rfi-select"
+              value={projectId}
+              onChange={e => setProjectId(e.target.value)}
+              style={{ flex: 1 }}
+            >
+              <option value="">Select project…</option>
+              {projects.map(p => (
+                <option key={p.id} value={String(p.id)}>{p.name || p.display_name}</option>
+              ))}
+            </select>
+            <button
+              className="procore-btn-send"
+              onClick={handleSendRFI}
+              disabled={sending || !projectId}
+            >
+              {sending ? 'Sending…' : '🚀 Send to Procore'}
+            </button>
+          </div>
+          <div className="procore-reconnect-row">
+            <span className="procore-no-projects">
+              {projects.length === 0 ? 'No projects found — try reconnecting.' : ''}
+            </span>
+            <button className="procore-btn-reconnect" onClick={handleReconnect}>
+              ↺ Reconnect Procore
+            </button>
+          </div>
         </div>
       )}
 

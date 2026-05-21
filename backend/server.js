@@ -1283,3 +1283,14 @@ app.post('/api/auth/reset-password', async (req, res) => {
     res.status(500).json({ error: 'Failed to reset password.' });
   }
 });
+
+// Procore disconnect
+app.delete('/api/procore/disconnect', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    await pool.query('DELETE FROM procore_tokens WHERE user_id = $1', [userId]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
