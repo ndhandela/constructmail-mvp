@@ -105,10 +105,11 @@ async function createRFI(accessToken, projectId, rfiData) {
 
   const rfi = {
     subject,
-    question,
+    question:       { body: question },
     priority:       mapPriority(rfiData.priority),
     reference:      sanitize('POMAR Clash - ' + rfiData.clashName),
     rfi_manager_id: managerId,
+    draft:          true,
   };
 
   if (rfiData.dueDate) rfi.due_date = rfiData.dueDate;
