@@ -1199,9 +1199,12 @@ app.post('/api/clash/agenda-pdf', async (req, res) => {
 
     doc.moveDown(4);
 
-    // Group by discipline/assignee
+    // Group by discipline/assignee - deduplicate by clash name
     const groups = {};
+    const seenClashes = new Set();
     (clashes || []).forEach(clash => {
+      if (seenClashes.has(clash.name)) return;
+      seenClashes.add(clash.name);
       const a = assignmentMap[clash.name];
       const group = a?.discipline || a?.assigned_to || 'Unassigned';
       if (!groups[group]) groups[group] = [];
