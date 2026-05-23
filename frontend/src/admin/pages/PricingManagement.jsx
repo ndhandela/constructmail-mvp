@@ -4,26 +4,14 @@ import '../styles/PricingManagement.css';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export default function PricingManagement({ token }) {
-  const modules = [
-    { name: 'mail', label: 'POMAR Mail', description: 'Email intelligence & RFI detection' },
-    { name: 'clash', label: 'POMAR Clash', description: 'BIM clash analysis & coordination' },
-    { name: 'vendors', label: 'POMAR Vendors', description: 'Vendor intelligence network' }
-  ];
-
   const [pricing, setPricing] = useState({});
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    fetchPricing();
-    fetchClients();
-  }, [token]);
-
-  const fetchPricing = async () => {
+  const fetchPricing = useCallback(async () => {
     try {
-      // Since we don't have a GET endpoint yet, we'll initialize with defaults
       const defaultPricing = {
         mail: { price: 0, billing: 'monthly' },
         clash: { price: 0, billing: 'monthly' },
@@ -32,12 +20,10 @@ export default function PricingManagement({ token }) {
       setPricing(defaultPricing);
     } catch (err) {
       console.error('Fetch pricing error:', err);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/clients`, {
         headers: {
@@ -52,8 +38,14 @@ export default function PricingManagement({ token }) {
     } catch (err) {
       console.error('Fetch clients error:', err);
     }
-  };
+  }, [token]);
 
+  useEffect(() => {
+    fetchPricing();
+    fetchClients();
+  }, [fetchPricing, fetchClients]);
+
+  
   const handlePriceChange = (moduleKey, newPrice) => {
     setPricing(prev => ({
       ...prev,

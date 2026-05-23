@@ -78,11 +78,16 @@ export default function FeatureFlagsManagement({ token }) {
 
   const modules = ['mail', 'clash', 'vendors'];
 
-  useEffect(() => {
-    fetchFeatureFlags();
-  }, [token]);
+  export default function FeatureFlagsManagement({ token }) {
+  const [features, setFeatures] = useState(DEFAULT_FEATURES);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+  const [selectedModule, setSelectedModule] = useState('all');
 
-  const fetchFeatureFlags = async () => {
+  const modules = ['mail', 'clash', 'vendors'];
+
+  const fetchFeatureFlags = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/admin/feature-flags`, {
         headers: {
@@ -98,19 +103,14 @@ export default function FeatureFlagsManagement({ token }) {
       }
     } catch (err) {
       console.error('Fetch feature flags error:', err);
-      // Use defaults if fetch fails
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
-  const handleToggleFeature = (featureKey) => {
-    setFeatures(prev =>
-      prev.map(f =>
-        f.key === featureKey ? { ...f, enabled: !f.enabled } : f
-      )
-    );
-  };
+  useEffect(() => {
+    fetchFeatureFlags();
+  }, [fetchFeatureFlags]);
 
   const handleSaveFlags = async () => {
     setSaving(true);

@@ -34,7 +34,7 @@ useEffect(() => {
     };
 
     fetchAdminData();
-  }, [token]);
+  }, [token, onLogout]);
 
   const handleLogout = async () => {
     try {
