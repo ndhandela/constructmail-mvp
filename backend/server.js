@@ -1277,3 +1277,54 @@ app.post('/api/clash/agenda-pdf', async (req, res) => {
     }
   }
 });
+
+// ── Clash Reports History ─────────────────────────────────────────────────────
+
+// Save report metadata after upload
+app.post('/api/clash/reports', async (req, res) => {
+  try {
+    const { userId, testName, fileName, summary, projectKey } = req.body;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+
+    const critical = (summary?.total || 0) > 0
+      ? Math.round((summary?.New || 0) * 0.1)
+      : 0;
+
+    const result = await pool.query(
+      `INSERT INTO clash_reports (user_id, test_name, file_name, total_clashes, new_clashes, active_clashes, reviewed_clashes, critical_clashes, high_clashes, project_key, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+       RETURNING *`,
+      [
+        userId,
+        testName || 'Clash Test',
+        fileName || 'report.html',
+        summary?.total || 0,
+        summary?.New || 0,
+        summary?.Active || 0,
+        summary?.Reviewed || 0,
+        summary?.Critical || 0,
+        summary?.High || 0,
+        projectKey || null,
+      ]
+    );
+    res.json({ report: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get recent reports for a user
+app.get('/api/clash/reports', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+
+    const result = await pool.query(
+      `SELECT * FROM clash_reports WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10`,
+      [userId]
+    );
+    res.json({ reports: result.rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

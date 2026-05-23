@@ -107,3 +107,24 @@ async function migrateAuthColumns() {
   `);
 }
 migrateAuthColumns().catch(console.error);
+
+// Clash reports history table
+async function initClashReports() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clash_reports (
+      id SERIAL PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      test_name TEXT,
+      file_name TEXT,
+      total_clashes INTEGER DEFAULT 0,
+      new_clashes INTEGER DEFAULT 0,
+      active_clashes INTEGER DEFAULT 0,
+      reviewed_clashes INTEGER DEFAULT 0,
+      critical_clashes INTEGER DEFAULT 0,
+      high_clashes INTEGER DEFAULT 0,
+      project_key TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+}
+initClashReports().catch(console.error);

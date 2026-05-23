@@ -1244,3 +1244,246 @@
 .ca-saving {
   opacity: 0.7;
 }
+
+/* ============================================================
+   CLASH HOME
+   ============================================================ */
+
+.clash-home {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+.clash-home-hero {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.clash-home-title {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--inkwell);
+  margin: 12px 0;
+  line-height: 1.2;
+}
+
+.clash-home-sub {
+  font-size: 16px;
+  color: var(--slate);
+  line-height: 1.65;
+  max-width: 580px;
+  margin: 0 auto 28px;
+}
+
+.clash-home-upload-btn {
+  display: inline-block;
+  padding: 14px 32px;
+  background: var(--inkwell);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-sans);
+}
+
+.clash-home-upload-btn:hover {
+  background: var(--inkwell-light);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Steps */
+.clash-home-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 56px;
+  flex-wrap: wrap;
+}
+
+.clash-home-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  min-width: 200px;
+}
+
+.clash-home-step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--inkwell);
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.clash-home-step-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--inkwell);
+  margin: 0 0 2px;
+}
+
+.clash-home-step-sub {
+  font-size: 11px;
+  color: var(--slate);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.clash-home-step-arrow {
+  font-size: 20px;
+  color: var(--slate);
+}
+
+/* Recent reports */
+.clash-home-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--slate);
+  margin: 0 0 16px;
+}
+
+.clash-home-report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.clash-home-report-card {
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.clash-home-report-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--saffron);
+}
+
+.clash-home-report-card.selected {
+  border-color: var(--saffron);
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.15);
+}
+
+.clash-home-report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.clash-home-report-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--inkwell);
+  margin: 0 0 3px;
+}
+
+.clash-home-report-file {
+  font-size: 11px;
+  color: var(--slate);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 160px;
+}
+
+.clash-home-report-date {
+  font-size: 11px;
+  color: var(--slate);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.clash-home-report-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.clash-home-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.clash-home-stat-val {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.clash-home-stat-label {
+  font-size: 10px;
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.clash-home-report-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-light);
+  flex-wrap: wrap;
+}
+
+/* Loading / empty */
+.clash-home-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  padding: 48px;
+  color: var(--slate);
+  font-size: 14px;
+}
+
+.clash-home-empty {
+  text-align: center;
+  padding: 48px 24px;
+  background: white;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+.clash-home-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--inkwell);
+  margin: 0 0 8px;
+}
+
+.clash-home-empty-sub {
+  font-size: 14px;
+  color: var(--slate);
+  margin: 0;
+}
+
+.clash-home-back {
+  max-width: 680px;
+  margin: 24px auto 0;
+  padding: 0 24px;
+}
