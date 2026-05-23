@@ -1265,14 +1265,17 @@ app.post('/api/clash/agenda-pdf', async (req, res) => {
     const range = doc.bufferedPageRange();
     for (let i = 0; i < range.count; i++) {
       doc.switchToPage(i);
-      doc.fontSize(7).fillColor('#475569').font('Helvetica')
-         .text(`POMAR Clash · TechDen Solutions · pomar.ai · Page ${i + 1} of ${range.count}`,
-               50, doc.page.height - 30, { align: 'center', width: doc.page.width - 100 });
+    // Footer on last page only
+    doc.fontSize(7).fillColor('#475569').font('Helvetica')
+      .text('POMAR Clash · TechDen Solutions · pomar.ai',
+            50, doc.page.height - 30, { align: 'center', width: doc.page.width - 100 });
     }
 
     doc.end();
   } catch (err) {
     console.error('PDF generation error:', err);
-    res.status(500).json({ error: err.message });
+    if (!res.headersSent) {
+      res.status(500).json({ error: err.message });
+    }
   }
 });
