@@ -60,7 +60,7 @@ export default function VendorsApp({ user, userId, onLogout }) {
 
   useEffect(() => {
       searchVendors();
-    }, [filters, pagination.offset]);
+    }, [filters, pagination.offset, searchVendors]);
 
   const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
