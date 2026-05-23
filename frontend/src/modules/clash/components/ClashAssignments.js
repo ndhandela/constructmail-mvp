@@ -102,7 +102,7 @@ export default function ClashAssignments({ report, fileName, userId }) {
           projectKey,
           testName:    report.testName,
           fileName,
-          clashes:     report.clashes,
+          clashes:     report.clashes.map(c => ({ name: c.name, distance: c.distance, distanceRaw: c.distanceRaw, item1: { itemName: c.item1.itemName }, item2: { itemName: c.item2.itemName } })),
           assignments: Object.values(assignments),
         }),
       });
