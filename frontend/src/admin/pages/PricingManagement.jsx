@@ -6,7 +6,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 export default function PricingManagement({ token }) {
   const [pricing, setPricing] = useState({});
   const [clients, setClients] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -18,7 +18,7 @@ export default function PricingManagement({ token }) {
 
   const fetchPricing = useCallback(async () => {
     try {
-      const defaultPricing = {
+      const defaultPricing = {  
         mail: { price: 0, billing: 'monthly' },
         clash: { price: 0, billing: 'monthly' },
         vendors: { price: 0, billing: 'monthly' }
