@@ -43,12 +43,10 @@ function VendorSearchComponent({ filters, onFilterChange, loading }) {
   const [expandFilters, setExpandFilters] = useState(false);
   const debounceTimer = useRef(null);
 
-  // Update local state when filters prop changes (from outside)
   useEffect(() => {
     setSearchInput(filters.search);
   }, [filters.search]);
 
-  // Debounce search input
   useEffect(() => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
@@ -85,27 +83,27 @@ function VendorSearchComponent({ filters, onFilterChange, loading }) {
 
   return (
     <div className="vendor-search">
-      <div className="search-bar">
+      <div className="search-bar-compact">
         <input
           type="text"
-          placeholder="Search vendors by name or trade..."
+          placeholder="Search vendors..."
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          className="search-input"
+          className="search-input-compact"
           disabled={loading}
         />
         <button 
-          className="filter-toggle"
+          className="filter-toggle-compact"
           onClick={() => setExpandFilters(!expandFilters)}
         >
-          🔧 Filters
+          🔧 More Filters
         </button>
       </div>
 
       {expandFilters && (
-        <div className="filters-panel">
-          <div className="filters-grid">
-            <div className="filter-group">
+        <div className="filters-panel-compact">
+          <div className="filters-grid-compact">
+            <div className="filter-group-compact">
               <label>Trade</label>
               <select
                 value={filters.trade}
@@ -119,7 +117,7 @@ function VendorSearchComponent({ filters, onFilterChange, loading }) {
               </select>
             </div>
 
-            <div className="filter-group">
+            <div className="filter-group-compact">
               <label>City</label>
               <select
                 value={filters.city}
@@ -132,7 +130,7 @@ function VendorSearchComponent({ filters, onFilterChange, loading }) {
               </select>
             </div>
 
-            <div className="filter-group">
+            <div className="filter-group-compact">
               <label>Insurance</label>
               <select
                 value={filters.insurance_status}
@@ -145,7 +143,7 @@ function VendorSearchComponent({ filters, onFilterChange, loading }) {
               </select>
             </div>
 
-            <div className="filter-group">
+            <div className="filter-group-compact">
               <label>Min Rating</label>
               <select
                 value={filters.min_rating}
@@ -160,7 +158,7 @@ function VendorSearchComponent({ filters, onFilterChange, loading }) {
               </select>
             </div>
 
-            <div className="filter-group">
+            <div className="filter-group-compact">
               <label>Sort By</label>
               <select
                 value={filters.sort}
@@ -176,7 +174,7 @@ function VendorSearchComponent({ filters, onFilterChange, loading }) {
 
           {isFiltered && (
             <button 
-              className="clear-filters-btn"
+              className="clear-filters-btn-compact"
               onClick={handleClearFilters}
               disabled={loading}
             >

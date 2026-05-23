@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import VendorList from '../components/VendorList';
+import VendorListTable from '../components/VendorListTable';
 import VendorSearch from '../components/VendorSearch';
 import AddVendorForm from '../components/AddVendorForm';
+import CSVImport from '../components/CSVImport';
 import '../styles/VendorsApp.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
@@ -9,6 +10,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 export default function VendorsApp({ user, userId, onLogout }) {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showAddSection, setShowAddSection] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     trade: '',
@@ -23,42 +25,42 @@ export default function VendorsApp({ user, userId, onLogout }) {
     total: 0
   });
 
-  const searchVendors = useCallback(async (filtersToUse = filters) => {
-    setLoading(true);
-    try {
-      const queryParams = new URLSearchParams({
-        ...filtersToUse,
-        limit: pagination.limit,
-        offset: pagination.offset
-      });
+  const searchVendors = useCallback(async () => {
+      setLoading(true);
+      try {
+        const queryParams = new URLSearchParams({
+          ...filters,
+          limit: pagination.limit,
+          offset: pagination.offset
+        });
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/vendors?${queryParams}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('admin_token') || ''}`
+        const response = await fetch(
+          `${API_BASE_URL}/api/vendors?${queryParams}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('admin_token') || ''}`
+            }
           }
+        );
+
+        const data = await response.json();
+
+        if (data.success) {
+          setVendors(data.vendors);
+          setPagination(prev => ({ ...prev, total: data.total }));
+        } else {
+          console.error('Search error:', data.error);
         }
-      );
-
-      const data = await response.json();
-
-      if (data.success) {
-        setVendors(data.vendors);
-        setPagination(prev => ({ ...prev, total: data.total }));
-      } else {
-        console.error('Search error:', data.error);
+      } catch (err) {
+        console.error('Fetch vendors error:', err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Fetch vendors error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, pagination.limit, pagination.offset]);
+    }, [filters, pagination.limit, pagination.offset]);
 
   useEffect(() => {
-    searchVendors(filters);
-  }, [filters, pagination.offset, searchVendors]);
+      searchVendors();
+    }, [filters, pagination.offset]);
 
   const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
@@ -79,6 +81,11 @@ export default function VendorsApp({ user, userId, onLogout }) {
     }));
   }, []);
 
+  const handleVendorAdded = () => {
+      setShowAddSection(false);
+      searchVendors();
+    };
+
   return (
     <div className="vendors-app">
       <div className="vendors-hero">
@@ -88,18 +95,50 @@ export default function VendorsApp({ user, userId, onLogout }) {
       </div>
 
       <div className="vendors-container">
-        {/* Search & Filter */}
-        <VendorSearch 
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          loading={loading}
-        />
+        {/* Header with Search and Add Button */}
+        <div className="vendors-top-bar">
+          <div className="vendors-top-left">
+            <VendorSearch 
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              loading={loading}
+            />
+          </div>
+          <div className="vendors-top-right">
+            {!showAddSection && (
+              <button 
+                className="add-vendor-btn"
+                onClick={() => setShowAddSection(true)}
+              >
+                ➕ Add Vendor
+              </button>
+            )}
+          </div>
+        </div>
 
-        {/* Add Vendor Form */}
-        <AddVendorForm onVendorAdded={() => searchVendors(filters)} />
+        {/* Add Vendor Section */}
+        {showAddSection && (
+          <div className="add-vendor-section">
+            <div className="add-vendor-header">
+              <h3>Add Vendors to Your Network</h3>
+              <button 
+                className="close-add-btn"
+                onClick={() => setShowAddSection(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="add-vendor-options">
+              <AddVendorForm onVendorAdded={handleVendorAdded} />
+              <div className="divider">OR</div>
+              <CSVImport userId={userId} onImportComplete={handleVendorAdded} />
+            </div>
+          </div>
+        )}
 
         {/* Vendors List */}
-        <VendorList 
+        <VendorListTable 
           vendors={vendors}
           loading={loading}
           pagination={pagination}

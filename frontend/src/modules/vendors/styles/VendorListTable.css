@@ -1,0 +1,283 @@
+.vendor-list-table-wrapper {
+  margin-bottom: 40px;
+}
+
+.vendor-list-header {
+  margin-bottom: 24px;
+}
+
+.vendor-list-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  color: var(--inkwell);
+  font-weight: 700;
+}
+
+.page-info {
+  margin: 0;
+  font-size: 13px;
+  color: var(--slate);
+}
+
+.vendor-table-container {
+  background-color: white;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+}
+
+.vendor-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.vendor-table thead {
+  background-color: var(--parchment);
+  border-bottom: 2px solid var(--border-light);
+}
+
+.vendor-table th {
+  padding: 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.vendor-table tbody tr {
+  border-bottom: 1px solid var(--border-light);
+  transition: background-color 0.2s;
+}
+
+.vendor-table tbody tr:hover {
+  background-color: #fafaf9;
+}
+
+.vendor-row {
+  height: 70px;
+}
+
+.vendor-table td {
+  padding: 16px;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.vendor-name {
+  font-weight: 600;
+  color: var(--inkwell);
+}
+
+.vendor-trade {
+  color: var(--saffron);
+  font-weight: 500;
+}
+
+.vendor-location {
+  color: var(--slate);
+}
+
+.vendor-contact {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.vendor-contact a {
+  color: var(--saffron);
+  text-decoration: none;
+}
+
+.vendor-contact a:hover {
+  text-decoration: underline;
+}
+
+.vendor-insurance {
+  text-align: center;
+}
+
+.insurance-badge {
+  display: inline-block;
+  color: white;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.vendor-rating {
+  text-align: center;
+}
+
+.rating-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-direction: column;
+}
+
+.stars {
+  font-size: 12px;
+}
+
+.rating-value {
+  font-weight: 700;
+  color: var(--saffron);
+}
+
+.review-count {
+  font-size: 11px;
+  color: var(--slate);
+}
+
+.vendor-action {
+  text-align: center;
+}
+
+.expand-btn {
+  width: 32px;
+  height: 32px;
+  background-color: transparent;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+  color: var(--slate);
+}
+
+.expand-btn:hover {
+  border-color: var(--saffron);
+  color: var(--saffron);
+}
+
+/* Details Row */
+.vendor-details-row {
+  background-color: var(--parchment);
+}
+
+.vendor-details-row td {
+  padding: 20px 16px;
+}
+
+.vendor-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 13px;
+  color: var(--inkwell);
+  word-break: break-word;
+}
+
+.detail-value a {
+  color: var(--saffron);
+  text-decoration: none;
+}
+
+.detail-value a:hover {
+  text-decoration: underline;
+}
+
+/* Loading & Empty */
+.vendor-list-loading,
+.vendor-list-empty {
+  background-color: white;
+  border-radius: var(--radius-md);
+  padding: 60px 40px;
+  text-align: center;
+  color: var(--slate);
+  font-size: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Pagination */
+.vendor-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background-color: white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+}
+
+.pagination-btn {
+  padding: 10px 20px;
+  background-color: var(--inkwell);
+  color: var(--parchment);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: var(--saffron);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 13px;
+  color: var(--slate);
+  font-weight: 600;
+}
+
+@media (max-width: 1024px) {
+  .vendor-table th,
+  .vendor-table td {
+    padding: 12px 8px;
+    font-size: 12px;
+  }
+
+  .vendor-name {
+    max-width: 120px;
+  }
+}
+
+@media (max-width: 768px) {
+  .vendor-table-container {
+    overflow-x: auto;
+  }
+
+  .vendor-table {
+    min-width: 900px;
+  }
+
+  .vendor-pagination {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .pagination-btn {
+    width: 100%;
+  }
+}
