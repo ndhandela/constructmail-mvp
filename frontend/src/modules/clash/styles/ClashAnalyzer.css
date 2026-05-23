@@ -1150,3 +1150,97 @@
 .procore-btn-reconnect:hover {
   color: var(--inkwell);
 }
+
+/* ============================================================
+   CLASH ASSIGNMENTS
+   ============================================================ */
+
+.clash-assignments {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 0;
+}
+
+.clash-assignments-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 48px;
+  justify-content: center;
+  color: var(--slate);
+  font-size: 14px;
+}
+
+.ca-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.ca-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--sandstone);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ca-progress-fill {
+  height: 6px;
+  background: var(--saffron);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.ca-progress-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--slate);
+  white-space: nowrap;
+}
+
+.ca-table th {
+  white-space: nowrap;
+}
+
+.ca-select {
+  font-size: 12px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: white;
+  color: var(--inkwell);
+  outline: none;
+  cursor: pointer;
+  width: 100%;
+  min-width: 120px;
+  font-family: var(--font-sans);
+  transition: border-color 0.12s;
+}
+
+.ca-select:focus {
+  border-color: var(--saffron);
+}
+
+.ca-notes-input {
+  font-size: 12px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: white;
+  color: var(--inkwell);
+  outline: none;
+  width: 100%;
+  min-width: 120px;
+  font-family: var(--font-sans);
+  transition: border-color 0.12s;
+}
+
+.ca-notes-input:focus {
+  border-color: var(--saffron);
+}
+
+.ca-saving {
+  opacity: 0.7;
+}

@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import ClashUploader from '../components/ClashUploader';
 import ClashDashboard from '../components/ClashDashboard';
 import ClashDelta from '../components/ClashDelta';
+import ClashAssignments from '../components/ClashAssignments';
 import { parseNavisworksHTML } from '../components/ClashParser';
 import '../styles/ClashAnalyzer.css';
 
 const TABS = [
-  { key: 'dashboard', label: '📊 Dashboard' },
-  { key: 'delta',     label: '🔄 Delta Report' },
+  { key: 'dashboard',   label: '📊 Dashboard' },
+  { key: 'assignments', label: '📋 Assignments' },
+  { key: 'delta',       label: '🔄 Delta Report' },
 ];
 
 export default function ClashAnalyzer() {
@@ -15,6 +17,8 @@ export default function ClashAnalyzer() {
   const [fileName, setFileName]     = useState('');
   const [parseError, setParseError] = useState('');
   const [activeTab, setActiveTab]   = useState('dashboard');
+
+  const userId = localStorage.getItem('constructmail_userId');
 
   const handleParsed = (htmlString, name) => {
     setParseError('');
@@ -48,7 +52,6 @@ export default function ClashAnalyzer() {
         </>
       ) : (
         <>
-          {/* Tab bar */}
           <div className="clash-module-tabs">
             {TABS.map(tab => (
               <button
@@ -66,6 +69,14 @@ export default function ClashAnalyzer() {
               report={report}
               fileName={fileName}
               onReset={handleReset}
+            />
+          )}
+
+          {activeTab === 'assignments' && (
+            <ClashAssignments
+              report={report}
+              fileName={fileName}
+              userId={userId}
             />
           )}
 
