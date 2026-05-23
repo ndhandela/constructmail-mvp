@@ -31,7 +31,6 @@ export default function ClashAnalyzer() {
   const [fileName, setFileName]     = useState('');
   const [parseError, setParseError] = useState('');
   const [activeTab, setActiveTab]   = useState('dashboard');
-  const [deltaPreload, setDeltaPreload] = useState(null);
 
   const userId = localStorage.getItem('constructmail_userId');
 
@@ -83,12 +82,10 @@ export default function ClashAnalyzer() {
     setParseError('');
     setScreen('home');
     setActiveTab('dashboard');
-    setDeltaPreload(null);
   };
 
   // From home — upload new (optionally with a preloaded previous report for delta)
   const handleUploadNew = (previousReport = null) => {
-    setDeltaPreload(previousReport);
     setScreen('upload');
   };
 

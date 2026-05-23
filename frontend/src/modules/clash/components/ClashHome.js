@@ -3,15 +3,6 @@ import '../styles/ClashAnalyzer.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-function getProjectKey(report) {
-  const str = (report.test_name || '') + (report.total_clashes || '');
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash).toString(36);
-}
 
 export default function ClashHome({ userId, onUploadNew, onLoadReport }) {
   const [reports, setReports]   = useState([]);
@@ -33,13 +24,6 @@ export default function ClashHome({ userId, onUploadNew, onLoadReport }) {
     });
   };
 
-  const getSeverityColor = (critical, high, total) => {
-    if (!total) return 'var(--slate)';
-    const pct = (critical + high) / total;
-    if (pct > 0.5) return '#DC2626';
-    if (pct > 0.2) return '#D97706';
-    return '#166534';
-  };
 
   return (
     <div className="clash-home">
