@@ -1,0 +1,142 @@
+.vendor-card {
+  background-color: white;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  transition: all 0.2s;
+}
+
+.vendor-card:hover {
+  border-color: var(--saffron);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.vendor-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.vendor-card-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--inkwell);
+  font-weight: 700;
+}
+
+.vendor-trade {
+  background-color: var(--saffron-soft);
+  color: var(--saffron);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.vendor-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.stars {
+  font-size: 14px;
+}
+
+.rating-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--saffron);
+}
+
+.review-count {
+  font-size: 12px;
+  color: var(--slate);
+}
+
+.vendor-info {
+  margin-bottom: 16px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.info-label {
+  color: var(--slate);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 11px;
+}
+
+.info-value {
+  color: var(--inkwell);
+  font-weight: 500;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  color: white;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.vendor-card-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.details-btn {
+  flex: 1;
+  padding: 10px;
+  background-color: var(--inkwell);
+  color: var(--parchment);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.details-btn:hover {
+  background-color: var(--saffron);
+}
+
+.vendor-details {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
+}
+
+.vendor-details p {
+  margin: 8px 0;
+  font-size: 13px;
+  color: var(--slate);
+}
+
+.vendor-details a {
+  color: var(--saffron);
+  text-decoration: none;
+}
+
+.vendor-details a:hover {
+  text-decoration: underline;
+}

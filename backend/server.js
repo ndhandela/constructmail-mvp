@@ -10,6 +10,14 @@ const { analyzeClashReport, draftClashRFI } = require("./clash-helpers");
 const gmailHelpers = require('./gmail-helpers');
 const emailService = require('./email-service');
 const outlookHelpers = require('./outlook-helpers');
+const {
+  adminLogin,
+  createAdminUser,
+  verifyAdminToken,
+  requireSuperAdmin,
+  requireClientAdmin,
+  logAdminActivity
+} = require('./admin-auth');
 
 const app = express();
 
@@ -782,11 +790,97 @@ app.get('/api/auth/outlook-callback', (req, res) => {
   res.status(400).send('No authorization code received');
 });
 
+// ── ADMIN AUTHENTICATION ──────────────────────────────────────────────────
+
+// Admin login
+app.post('/api/admin/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password required' });
+    }
+
+    const result = await adminLogin(email, password);
+
+    if (!result.success) {
+      return res.status(401).json({ error: result.error });
+    }
+
+    res.json({ success: true, token: result.token, admin: result.admin });
+  } catch (err) {
+    console.error('Admin login error:', err);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Create admin user (super admin only)
+app.post('/api/admin/users', verifyAdminToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const { email, password, admin_level, client_id } = req.body;
+
+    if (!email || !password || !admin_level) {
+      return res.status(400).json({ error: 'Email, password, and admin_level required' });
+    }
+
+    const result = await createAdminUser(email, password, admin_level, client_id);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    // Log activity
+    await logAdminActivity(
+      req.admin.id,
+      'admin_user_created',
+      'admin_users',
+      result.admin.id,
+      { email: result.admin.email, admin_level: result.admin.admin_level }
+    );
+
+    res.json({ success: true, admin: result.admin });
+  } catch (err) {
+    console.error('Create admin error:', err);
+    res.status(500).json({ error: 'Failed to create admin user' });
+  }
+});
+
+// Get current admin (any authenticated admin)
+app.get('/api/admin/me', verifyAdminToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, email, admin_level, client_id, is_active, created_at, last_login FROM admin_users WHERE id = $1',
+      [req.admin.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Admin not found' });
+    }
+
+    res.json({ success: true, admin: result.rows[0] });
+  } catch (err) {
+    console.error('Get admin error:', err);
+    res.status(500).json({ error: 'Failed to fetch admin info' });
+  }
+});
+
+// Admin logout (optional - just for logging activity)
+app.post('/api/admin/auth/logout', verifyAdminToken, async (req, res) => {
+  try {
+    await logAdminActivity(req.admin.id, 'admin_logout', 'admin_users', req.admin.id, null);
+    res.json({ success: true, message: 'Logged out' });
+  } catch (err) {
+    res.status(500).json({ error: 'Logout failed' });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`✓ Server running on port ${PORT}`);
 });
+
+
 // ── POMAR Clash endpoints ──────────────────────────────────────────────────
 
 app.post('/api/clash/analyze', async (req, res) => {
@@ -1325,6 +1419,319 @@ app.get('/api/clash/reports', async (req, res) => {
     );
     res.json({ reports: result.rows });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── ADMIN PRICING MANAGEMENT ──────────────────────────────────────────
+
+// Save or update module pricing
+app.post('/api/admin/pricing', verifyAdminToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const { module_name, monthly_price, billing_cycle, is_global, client_id } = req.body;
+
+    if (!module_name) {
+      return res.status(400).json({ error: 'module_name required' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO module_pricing (is_global, client_id, module_name, monthly_price, billing_cycle, is_active, updated_by_admin_id)
+       VALUES ($1, $2, $3, $4, $5, true, $6)
+       ON CONFLICT (module_name, is_global) DO UPDATE
+       SET monthly_price = $4, billing_cycle = $5, updated_at = NOW(), updated_by_admin_id = $6
+       RETURNING *`,
+      [is_global || false, client_id || null, module_name, monthly_price || 0, billing_cycle || 'monthly', req.admin.id]
+    );
+
+    // Log activity
+    await logAdminActivity(
+      req.admin.id,
+      'pricing_updated',
+      'module_pricing',
+      result.rows[0].id,
+      { module_name, monthly_price, is_global }
+    );
+
+    res.json({ success: true, pricing: result.rows[0] });
+  } catch (err) {
+    console.error('Pricing save error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get all pricing
+app.get('/api/admin/pricing', verifyAdminToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM module_pricing WHERE is_global = true ORDER BY module_name ASC`
+    );
+
+    res.json({ success: true, pricing: result.rows });
+  } catch (err) {
+    console.error('Fetch pricing error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get clients list
+app.get('/api/clients', verifyAdminToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, email, name, company FROM users ORDER BY created_at DESC LIMIT 50`
+    );
+
+    res.json({ success: true, clients: result.rows });
+  } catch (err) {
+    console.error('Fetch clients error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── ADMIN FEATURE FLAGS ───────────────────────────────────────────────
+
+// Save feature flags
+app.post('/api/admin/feature-flags', verifyAdminToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const { flags } = req.body;
+
+    if (!flags || !Array.isArray(flags)) {
+      return res.status(400).json({ error: 'flags array required' });
+    }
+
+    // Save each flag
+    for (const flag of flags) {
+      await pool.query(
+        `INSERT INTO feature_flags (is_global, feature_key, feature_name, module, is_enabled, updated_by_admin_id)
+         VALUES (true, $1, $2, $3, $4, $5)
+         ON CONFLICT (feature_key, is_global) DO UPDATE
+         SET is_enabled = $4, updated_by_admin_id = $5, updated_at = NOW()`,
+        [flag.key, flag.name, flag.module, flag.enabled, req.admin.id]
+      );
+    }
+
+    // Log activity
+    await logAdminActivity(
+      req.admin.id,
+      'feature_flags_updated',
+      'feature_flags',
+      null,
+      { count: flags.length }
+    );
+
+    res.json({ success: true, message: 'Feature flags updated' });
+  } catch (err) {
+    console.error('Save feature flags error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get feature flags
+app.get('/api/admin/feature-flags', verifyAdminToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT feature_key as key, feature_name as name, module, is_enabled as enabled 
+       FROM feature_flags WHERE is_global = true ORDER BY module, feature_name ASC`
+    );
+
+    res.json({ success: true, flags: result.rows });
+  } catch (err) {
+    console.error('Fetch feature flags error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POMAR VENDORS ────────────────────────────────────────────────────────
+
+const VendorService = require('./vendor-service');
+const multer = require('multer');
+const csv = require('csv-parser');
+
+// Configure multer for CSV uploads
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Create vendor
+app.post('/api/vendors', async (req, res) => {
+  try {
+    const { name, trade, phone, email, address, city, state, zip, website } = req.body;
+
+    if (!name || !trade) {
+      return res.status(400).json({ error: 'Name and trade are required' });
+    }
+
+    const result = await VendorService.createVendor({
+      name, trade, phone, email, address, city, state, zip, website
+    });
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json({ success: true, vendor: result.vendor });
+  } catch (err) {
+    console.error('Create vendor error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get vendor by ID
+app.get('/api/vendors/:vendorId', async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+
+    const result = await VendorService.getVendor(vendorId);
+
+    if (!result.success) {
+      return res.status(404).json({ error: result.error });
+    }
+
+    res.json({ success: true, vendor: result.vendor });
+  } catch (err) {
+    console.error('Get vendor error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Search vendors
+app.get('/api/vendors', async (req, res) => {
+  try {
+    const filters = {
+      search: req.query.search,
+      trade: req.query.trade,
+      city: req.query.city,
+      insurance_status: req.query.insurance_status,
+      min_rating: req.query.min_rating,
+      sort: req.query.sort || 'newest',
+      limit: req.query.limit || 50,
+      offset: req.query.offset || 0
+    };
+
+    const result = await VendorService.searchVendors(filters);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json({ success: true, vendors: result.vendors, total: result.total });
+  } catch (err) {
+    console.error('Search vendors error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update vendor
+app.put('/api/vendors/:vendorId', async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+
+    const result = await VendorService.updateVendor(vendorId, req.body);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json({ success: true, vendor: result.vendor });
+  } catch (err) {
+    console.error('Update vendor error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Add review
+app.post('/api/vendors/:vendorId/reviews', async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const result = await VendorService.addReview(vendorId, userId, req.body);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json({ success: true, review: result.review });
+  } catch (err) {
+    console.error('Add review error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get vendor reviews
+app.get('/api/vendors/:vendorId/reviews', async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = parseInt(req.query.offset) || 0;
+
+    const result = await VendorService.getVendorReviews(vendorId, limit, offset);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json({ success: true, reviews: result.reviews });
+  } catch (err) {
+    console.error('Get reviews error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Bulk import vendors from CSV
+app.post('/api/vendors/bulk-import', upload.single('file'), async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'CSV file required' });
+    }
+
+    const vendors = [];
+    const stream = require('stream');
+
+    // Parse CSV from memory buffer
+    await new Promise((resolve, reject) => {
+      stream.Readable.from([req.file.buffer.toString()])
+        .pipe(csv())
+        .on('data', (row) => vendors.push(row))
+        .on('end', resolve)
+        .on('error', reject);
+    });
+
+    const result = await VendorService.bulkImportVendors(vendors, userId);
+
+    res.json({ success: true, imported: result.imported, failed: result.failed });
+  } catch (err) {
+    console.error('Bulk import error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Claim vendor account
+app.post('/api/vendors/:vendorId/claim', async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password required' });
+    }
+
+    const result = await VendorService.claimVendorAccount(vendorId, email, password);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json({ success: true, account: result.account });
+  } catch (err) {
+    console.error('Claim account error:', err);
     res.status(500).json({ error: err.message });
   }
 });

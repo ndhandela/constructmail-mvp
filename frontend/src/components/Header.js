@@ -56,6 +56,13 @@ export default function Header({ userId, onLogout }) {
                   <div className="dropdown-item-sub">BIM Clash Report Analyzer</div>
                 </div>
               </a>
+              <a href="/vendors" className="dropdown-item">
+                <span className="dropdown-item-tag">Live</span>
+                <div>
+                  <div className="dropdown-item-title">POMAR Vendors <span className="dropdown-item-lock">🔒</span></div>
+                  <div className="dropdown-item-sub">Find trusted contractors</div>
+                </div>
+              </a>
             </div>
           )}
         </div>

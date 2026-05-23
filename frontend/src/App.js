@@ -7,6 +7,8 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import AboutUs from './pages/AboutUs';
 import ResetPassword from './pages/ResetPassword';
+import AdminPortal from './admin/pages/AdminPortal';
+import VendorsApp from './modules/vendors/pages/VendorsApp';
 
 // Modules
 import ConstructMailApp from './modules/constructmail/pages/ConstructMailApp';
@@ -18,7 +20,7 @@ import './styles/components.css';
 import './App.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-const PRODUCT_PATHS = ['/clash', '/constructmail', '/dashboard'];
+const PRODUCT_PATHS = ['/clash', '/constructmail', '/dashboard', '/vendors'];
 
 function App() {
   const [userId, setUserId] = useState(null);
@@ -91,6 +93,7 @@ function App() {
     if (userId) {
       if (path.includes('/constructmail')) setCurrentProduct('constructmail');
       if (path === '/clash') setCurrentProduct('clash');
+      if (path === '/vendors') setCurrentProduct('vendors');
       if (path === '/dashboard') setCurrentProduct('dashboard');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -200,6 +203,12 @@ if (userId && path === '/dashboard') {
   );
 }
 
+// ── Admin Portal ─────────────────────────────────────────────────────
+  if (path.startsWith('/admin')) {
+    return <AdminPortal />;
+  }
+
+  
   // ── Landing page ─────────────────────────────────────────────────────────
   if (!currentProduct) {
     return (
@@ -235,6 +244,17 @@ if (userId && path === '/dashboard') {
       <>
         <Header userId={userId} onLogout={handleLogout} />
         <ClashAnalyzer />
+        <Footer />
+      </>
+    );
+  }
+
+  // ── POMAR Vendors ────────────────────────────────────────────────────
+  if (currentProduct === 'vendors') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} />
+        <VendorsApp user={user} userId={userId} onLogout={handleLogout} />
         <Footer />
       </>
     );
