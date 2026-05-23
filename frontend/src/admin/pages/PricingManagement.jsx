@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import '../styles/PricingManagement.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
@@ -9,6 +9,12 @@ export default function PricingManagement({ token }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+
+  const modules = [
+    { name: 'mail', label: 'POMAR Mail', description: 'Email intelligence & RFI detection' },
+    { name: 'clash', label: 'POMAR Clash', description: 'BIM clash analysis & coordination' },
+    { name: 'vendors', label: 'POMAR Vendors', description: 'Vendor intelligence network' }
+  ];
 
   const fetchPricing = useCallback(async () => {
     try {
@@ -45,7 +51,9 @@ export default function PricingManagement({ token }) {
     fetchClients();
   }, [fetchPricing, fetchClients]);
 
-  
+  // rest of component continues below...
+
+
   const handlePriceChange = (moduleKey, newPrice) => {
     setPricing(prev => ({
       ...prev,
