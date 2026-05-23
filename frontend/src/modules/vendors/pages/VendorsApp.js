@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import VendorList from '../components/VendorList';
 import VendorSearch from '../components/VendorSearch';
 import '../styles/VendorsApp.css';
+import CSVImport from '../components/CSVImport';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
@@ -85,6 +86,16 @@ export default function VendorsApp({ user, userId, onLogout }) {
         <h1>Contractor & Supplier Intelligence</h1>
         <p>Find trusted contractors and suppliers in your network. View ratings, insurance status, and real GC feedback.</p>
       </div>
+
+      <div className="vendors-container">
+        <CSVImport userId={userId} onImportComplete={() => searchVendors()} />
+        
+        <VendorSearch 
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          loading={loading}
+        />
+        </div>
 
       <div className="vendors-container">
         <VendorSearch 
