@@ -1261,14 +1261,10 @@ app.post('/api/clash/agenda-pdf', async (req, res) => {
       doc.moveDown(1.5);
     });
 
-    // Footer
-    const range = doc.bufferedPageRange();
-    for (let i = 0; i < range.count; i++) {
-      doc.switchToPage(i);
+    // Footer on last page
     doc.fontSize(7).fillColor('#475569').font('Helvetica')
        .text('POMAR Clash · TechDen Solutions · pomar.ai',
              50, doc.page.height - 30, { align: 'center', width: doc.page.width - 100 });
-    }
 
     doc.end();
   } catch (err) {
