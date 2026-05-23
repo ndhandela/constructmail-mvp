@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import VendorList from '../components/VendorList';
 import VendorSearch from '../components/VendorSearch';
+import AddVendorForm from '../components/AddVendorForm';
 import '../styles/VendorsApp.css';
-import CSVImport from '../components/CSVImport';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
@@ -23,7 +23,7 @@ export default function VendorsApp({ user, userId, onLogout }) {
     total: 0
   });
 
-  const searchVendors = useCallback(async (filtersToUse) => {
+  const searchVendors = useCallback(async (filtersToUse = filters) => {
     setLoading(true);
     try {
       const queryParams = new URLSearchParams({
@@ -54,7 +54,7 @@ export default function VendorsApp({ user, userId, onLogout }) {
     } finally {
       setLoading(false);
     }
-  }, [pagination.limit, pagination.offset]);
+  }, [filters, pagination.limit, pagination.offset]);
 
   useEffect(() => {
     searchVendors(filters);
@@ -88,22 +88,17 @@ export default function VendorsApp({ user, userId, onLogout }) {
       </div>
 
       <div className="vendors-container">
-        <CSVImport userId={userId} onImportComplete={() => searchVendors()} />
-        
-        <VendorSearch 
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          loading={loading}
-        />
-        </div>
-
-      <div className="vendors-container">
+        {/* Search & Filter */}
         <VendorSearch 
           filters={filters}
           onFilterChange={handleFilterChange}
           loading={loading}
         />
 
+        {/* Add Vendor Form */}
+        <AddVendorForm onVendorAdded={() => searchVendors(filters)} />
+
+        {/* Vendors List */}
         <VendorList 
           vendors={vendors}
           loading={loading}
