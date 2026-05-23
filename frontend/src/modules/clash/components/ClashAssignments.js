@@ -102,7 +102,7 @@ export default function ClashAssignments({ report, fileName, userId }) {
           projectKey,
           testName:    report.testName,
           fileName,
-          clashes:     report.clashes.map(c => ({ name: c.name, distance: c.distance, distanceRaw: c.distanceRaw, item1: { itemName: c.item1.itemName }, item2: { itemName: c.item2.itemName } })),
+          clashes:     report.clashes.filter(c => Math.abs(c.distance) >= 0.2).map(c => ({ name: c.name, distance: c.distance, distanceRaw: c.distanceRaw, item1: { itemName: c.item1.itemName }, item2: { itemName: c.item2.itemName } })),
           assignments: Object.values(assignments),
         }),
       });
@@ -150,7 +150,7 @@ export default function ClashAssignments({ report, fileName, userId }) {
           </p>
         </div>
         <button className="clash-btn-primary" onClick={handleExportPDF} disabled={exporting}>
-          {exporting ? 'Generating PDF…' : '📄 Export Meeting Agenda'}
+          {exporting ? 'Generating PDF…' : '📄 Export Agenda (Critical & High)'}
         </button>
       </div>
 
