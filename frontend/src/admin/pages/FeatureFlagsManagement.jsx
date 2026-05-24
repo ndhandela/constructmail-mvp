@@ -1,119 +1,64 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import '../styles/FeatureFlagsManagement.css';
 
-const DEFAULT_FEATURES = [
-  {
-    key: 'email_auto_discovery',
-    name: 'Email Auto-Discovery',
-    module: 'mail',
-    description: 'Automatically discover and sync emails from Gmail/Outlook',
-    enabled: true
-  },
-  {
-    key: 'email_summarization',
-    name: 'Email Summarization',
-    module: 'mail',
-    description: 'AI-powered email thread summarization',
-    enabled: true
-  },
-  {
-    key: 'action_extraction',
-    name: 'Action Item Extraction',
-    module: 'mail',
-    description: 'Automatic extraction of action items from emails',
-    enabled: true
-  },
-  {
-    key: 'rfi_detection',
-    name: 'RFI/Change Order Detection',
-    module: 'mail',
-    description: 'Detect RFI and change order signals in emails',
-    enabled: true
-  },
-  {
-    key: 'clash_analysis',
-    name: 'Clash Analysis',
-    module: 'clash',
-    description: 'BIM clash detection and severity scoring',
-    enabled: true
-  },
-  {
-    key: 'clash_rfi_draft',
-    name: 'Clash RFI Auto-Draft',
-    module: 'clash',
-    description: 'Automatically draft RFI from clash conflicts',
-    enabled: true
-  },
-  {
-    key: 'vendor_claiming',
-    name: 'Vendor Profile Claiming',
-    module: 'vendors',
-    description: 'Allow vendors to claim and manage their profiles',
-    enabled: true
-  },
-  {
-    key: 'vendor_reviews',
-    name: 'Vendor Anonymous Reviews',
-    module: 'vendors',
-    description: 'GCs can leave anonymous reviews for vendors',
-    enabled: true
-  },
-  {
-    key: 'vendor_csv_import',
-    name: 'CSV Bulk Import',
-    module: 'vendors',
-    description: 'Bulk import vendors via CSV file',
-    enabled: true
-  }
-];
-
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-export default function FeatureFlagsManagement({ token }) {
-  const [features, setFeatures] = useState(DEFAULT_FEATURES);
+export default function FeatureFlagsManagement({ token, onNavigate }) {
+  const [flags, setFlags] = useState([]);
+  const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
-  const [selectedModule, setSelectedModule] = useState('all');
+  const [formData, setFormData] = useState({
+    feature_name: 'mail_intelligence',
+    is_enabled: true,
+    is_global: true,
+    client_id: null
+  });
 
-  const modules = ['mail', 'clash', 'vendors'];
+  useEffect(() => {
+    fetchFlags();
+    fetchClients();
+  }, []);
 
-  const fetchFeatureFlags = useCallback(async () => {
+  const fetchFlags = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/admin/feature-flags`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.flags && data.flags.length > 0) {
-          setFeatures(data.flags);
-        }
+      const data = await response.json();
+      if (data.success) {
+        setFlags(data.flags);
       }
     } catch (err) {
-      console.error('Fetch feature flags error:', err);
+      console.error('Fetch flags error:', err);
     } finally {
       setLoading(false);
     }
   }, [token]);
 
-  useEffect(() => {
-    fetchFeatureFlags();
-  }, [fetchFeatureFlags]);
+  const fetchClients = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/clients?limit=100`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setClients(data.clients);
+      }
+    } catch (err) {
+      console.error('Fetch clients error:', err);
+    }
+  }, [token]);
 
-  const handleToggleFeature = (featureKey) => {
-    setFeatures(prev =>
-      prev.map(f =>
-        f.key === featureKey ? { ...f, enabled: !f.enabled } : f
-      )
-    );
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
 
-  const handleSaveFlags = async () => {
-    setSaving(true);
-    setMessage('');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/admin/feature-flags`, {
@@ -122,43 +67,22 @@ export default function FeatureFlagsManagement({ token }) {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ flags: features })
+        body: JSON.stringify(formData)
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to save feature flags');
+      const data = await response.json();
+      if (data.success) {
+        fetchFlags();
+        setFormData({
+          feature_name: 'mail_intelligence',
+          is_enabled: true,
+          is_global: true,
+          client_id: null
+        });
       }
-
-      setMessage('✅ Feature flags updated successfully');
-      setTimeout(() => setMessage(''), 3000);
     } catch (err) {
-      console.error('Save feature flags error:', err);
-      setMessage('❌ Failed to save feature flags');
-    } finally {
-      setSaving(false);
+      console.error('Submit flags error:', err);
     }
-  };
-
-  const filteredFeatures = selectedModule === 'all'
-    ? features
-    : features.filter(f => f.module === selectedModule);
-
-  const getModuleColor = (module) => {
-    const colors = {
-      mail: '#D97706',
-      clash: '#0E1B2C',
-      vendors: '#475569'
-    };
-    return colors[module] || '#0E1B2C';
-  };
-
-  const getModuleLabel = (module) => {
-    const labels = {
-      mail: 'POMAR Mail',
-      clash: 'POMAR Clash',
-      vendors: 'POMAR Vendors'
-    };
-    return labels[module] || module;
   };
 
   if (loading) {
@@ -168,155 +92,87 @@ export default function FeatureFlagsManagement({ token }) {
   return (
     <div className="feature-flags-management">
       <div className="flags-header">
-        <h2>Feature Flags Management</h2>
-        <p>Enable or disable features globally for all clients</p>
+        <div className="flags-header-content">
+          <div>
+            <h2>Feature Flags</h2>
+            <p>Enable/disable features globally or per client</p>
+          </div>
+          <button 
+            className="back-btn"
+            onClick={() => onNavigate('dashboard')}
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
       </div>
 
       <div className="flags-container">
-        <div className="flags-section">
-          <div className="section-header">
-            <h3>Filter by Module</h3>
-          </div>
+        <div className="flags-form">
+          <h3>Add/Update Feature Flag</h3>
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label>Feature Name</label>
+              <select name="feature_name" value={formData.feature_name} onChange={handleInputChange}>
+                <option value="mail_intelligence">Mail Intelligence</option>
+                <option value="clash_detection">Clash Detection</option>
+                <option value="vendor_search">Vendor Search</option>
+              </select>
+            </div>
 
-          <div className="module-filters">
-            <button
-              className={`filter-button ${selectedModule === 'all' ? 'active' : ''}`}
-              onClick={() => setSelectedModule('all')}
-            >
-              All Features ({features.length})
-            </button>
-            {modules.map(module => (
-              <button
-                key={module}
-                className={`filter-button ${selectedModule === module ? 'active' : ''}`}
-                onClick={() => setSelectedModule(module)}
-                style={{
-                  borderColor: selectedModule === module ? getModuleColor(module) : '#F0DDC4'
-                }}
-              >
-                {getModuleLabel(module)} ({features.filter(f => f.module === module).length})
-              </button>
-            ))}
-          </div>
+            <div className="form-group checkbox">
+              <label>
+                <input
+                  type="checkbox"
+                  name="is_enabled"
+                  checked={formData.is_enabled}
+                  onChange={handleInputChange}
+                />
+                Enabled
+              </label>
+            </div>
+
+            <div className="form-group checkbox">
+              <label>
+                <input
+                  type="checkbox"
+                  name="is_global"
+                  checked={formData.is_global}
+                  onChange={handleInputChange}
+                />
+                Global
+              </label>
+            </div>
+
+            {!formData.is_global && (
+              <div className="form-group">
+                <label>Client</label>
+                <select name="client_id" value={formData.client_id || ''} onChange={handleInputChange}>
+                  <option value="">Select a client</option>
+                  {clients.map(client => (
+                    <option key={client.id} value={client.id}>{client.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <button type="submit" className="submit-btn">Save Flag</button>
+          </form>
         </div>
 
-        <div className="flags-section">
-          <div className="section-header">
-            <h3>
-              {selectedModule === 'all' ? 'All Features' : getModuleLabel(selectedModule)}
-            </h3>
-            <span className="section-badge">{filteredFeatures.length} features</span>
-          </div>
-
-          <div className="features-grid">
-            {filteredFeatures.map(feature => (
-              <div key={feature.key} className="feature-card">
-                <div className="feature-header">
-                  <div>
-                    <h4>{feature.name}</h4>
-                    <div className="feature-meta">
-                      <span
-                        className="module-tag"
-                        style={{
-                          backgroundColor: getModuleColor(feature.module),
-                          color: 'white'
-                        }}
-                      >
-                        {getModuleLabel(feature.module)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={feature.enabled}
-                      onChange={() => handleToggleFeature(feature.key)}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
-
-                <p className="feature-description">{feature.description}</p>
-
-                <div className="feature-status">
-                  <span className={`status-badge ${feature.enabled ? 'enabled' : 'disabled'}`}>
-                    {feature.enabled ? '✓ Enabled' : '✗ Disabled'}
+        <div className="flags-list">
+          <h3>Current Flags</h3>
+          <div className="flags-items">
+            {flags.map(flag => (
+              <div key={flag.id} className="flag-item">
+                <div className="flag-details">
+                  <strong>{flag.feature_name}</strong>
+                  <span className={`flag-status ${flag.is_enabled ? 'enabled' : 'disabled'}`}>
+                    {flag.is_enabled ? '✓ Enabled' : '✗ Disabled'}
                   </span>
+                  <span className="flag-type">{flag.is_global ? 'Global' : `Client: ${flag.client_id}`}</span>
                 </div>
               </div>
             ))}
-          </div>
-
-          {message && (
-            <div className={`message ${message.includes('✅') ? 'success' : 'error'}`}>
-              {message}
-            </div>
-          )}
-
-          <button
-            className="save-button"
-            onClick={handleSaveFlags}
-            disabled={saving}
-          >
-            {saving ? 'Saving...' : 'Save Feature Flags'}
-          </button>
-        </div>
-
-        <div className="flags-section">
-          <div className="section-header">
-            <h3>Status Summary</h3>
-          </div>
-
-          <div className="summary-grid">
-            {modules.map(module => {
-              const moduleFeatures = features.filter(f => f.module === module);
-              const enabledCount = moduleFeatures.filter(f => f.enabled).length;
-              const totalCount = moduleFeatures.length;
-
-              return (
-                <div key={module} className="summary-card">
-                  <div
-                    className="summary-header"
-                    style={{
-                      borderColor: getModuleColor(module)
-                    }}
-                  >
-                    <h4>{getModuleLabel(module)}</h4>
-                  </div>
-
-                  <div className="summary-stats">
-                    <div className="stat">
-                      <span className="stat-label">Enabled</span>
-                      <span className="stat-value enabled">{enabledCount}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">Disabled</span>
-                      <span className="stat-value disabled">{totalCount - enabledCount}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">Total</span>
-                      <span className="stat-value">{totalCount}</span>
-                    </div>
-                  </div>
-
-                  <div className="summary-progress">
-                    <div className="progress-bar">
-                      <div
-                        className="progress-fill"
-                        style={{
-                          width: `${(enabledCount / totalCount) * 100}%`,
-                          backgroundColor: getModuleColor(module)
-                        }}
-                      ></div>
-                    </div>
-                    <span className="progress-text">
-                      {Math.round((enabledCount / totalCount) * 100)}% enabled
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
           </div>
         </div>
       </div>

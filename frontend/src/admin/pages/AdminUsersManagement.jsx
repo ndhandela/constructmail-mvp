@@ -3,7 +3,7 @@ import '../styles/AdminUsersManagement.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-export default function AdminUsersManagement({ token }) {
+export default function AdminUsersManagement({ token, onNavigate }) {
   const [admins, setAdmins] = useState([]);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -126,8 +126,25 @@ export default function AdminUsersManagement({ token }) {
   return (
     <div className="admin-users-management">
       <div className="admin-users-header">
-        <h2>Admin Users</h2>
-        <p>Create and manage admin accounts</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2>Admin Users</h2>
+            <p>Create and manage admin accounts</p>
+          </div>
+          <button 
+            onClick={() => onNavigate('dashboard')}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#0E1B2C',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
       </div>
 
       <div className="admin-users-container">

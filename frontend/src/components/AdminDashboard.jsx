@@ -50,6 +50,7 @@ export default function AdminDashboard({ token, admin, onLogout, onNavigate }) {
 
       <div className="admin-container">
         <div className="admin-grid">
+          {/* Pricing */}
           <div className="admin-section">
             <div className="section-icon">💰</div>
             <h3>Pricing Management</h3>
@@ -57,6 +58,7 @@ export default function AdminDashboard({ token, admin, onLogout, onNavigate }) {
             <button className="section-button" onClick={() => onNavigate('pricing')}>Manage Pricing</button>
           </div>
 
+          {/* Feature Flags */}
           <div className="admin-section">
             <div className="section-icon">🚀</div>
             <h3>Feature Flags</h3>
@@ -64,6 +66,7 @@ export default function AdminDashboard({ token, admin, onLogout, onNavigate }) {
             <button className="section-button" onClick={() => onNavigate('flags')}>Manage Flags</button>
           </div>
 
+          {/* GC Clients */}
           <div className="admin-section">
             <div className="section-icon">👥</div>
             <h3>GC Clients</h3>
@@ -71,6 +74,7 @@ export default function AdminDashboard({ token, admin, onLogout, onNavigate }) {
             <button className="section-button" onClick={() => onNavigate('clients')}>View Clients</button>
           </div>
 
+          {/* Admin Users */}
           <div className="admin-section">
             <div className="section-icon">🔐</div>
             <h3>Admin Users</h3>
@@ -78,6 +82,7 @@ export default function AdminDashboard({ token, admin, onLogout, onNavigate }) {
             <button className="section-button" onClick={() => onNavigate('users')}>Manage Admins</button>
           </div>
 
+          {/* Activity Log */}
           <div className="admin-section">
             <div className="section-icon">📋</div>
             <h3>Activity Log</h3>

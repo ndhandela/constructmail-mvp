@@ -3,7 +3,7 @@ import '../styles/ActivityLogViewer.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-export default function ActivityLogViewer({ token }) {
+export default function ActivityLogViewer({ token, onNavigate }) {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
@@ -75,8 +75,25 @@ export default function ActivityLogViewer({ token }) {
   return (
     <div className="activity-log-viewer">
       <div className="logs-header">
-        <h2>Activity Log</h2>
-        <p>Audit trail of all admin actions</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2>Activity Log</h2>
+            <p>Audit trail of all admin actions</p>
+          </div>
+          <button 
+            onClick={() => onNavigate('dashboard')}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#0E1B2C',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
       </div>
 
       <div className="logs-container">

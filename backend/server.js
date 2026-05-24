@@ -1735,3 +1735,178 @@ app.post('/api/vendors/:vendorId/claim', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ── ADMIN USER MANAGEMENT ────────────────────────────────────────────────
+
+const UserService = require('./user-service');
+
+// Get all GC clients
+app.get('/api/admin/clients', verifyAdminToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const offset = parseInt(req.query.offset) || 0;
+
+    const result = await UserService.getAllClients(limit, offset);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error('Get clients error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get client by ID
+app.get('/api/admin/clients/:clientId', verifyAdminToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const { clientId } = req.params;
+
+    const result = await UserService.getClient(clientId);
+
+    if (!result.success) {
+      return res.status(404).json({ error: result.error });
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error('Get client error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get all admin users
+app.get('/api/admin/users', verifyAdminToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const offset = parseInt(req.query.offset) || 0;
+
+    const result = await UserService.getAllAdminUsers(limit, offset);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error('Get admin users error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create admin user
+app.post('/api/admin/users', verifyAdminToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const { email, password, admin_level, client_id, permissions } = req.body;
+
+    const result = await UserService.createAdminUser({
+      email,
+      password,
+      admin_level,
+      client_id,
+      permissions
+    });
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    // Log activity
+    await logAdminActivity(
+      req.admin.id,
+      'admin_user_created',
+      'admin_users',
+      result.admin.id,
+      { email, admin_level }
+    );
+
+    res.json(result);
+  } catch (err) {
+    console.error('Create admin user error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update admin user
+app.put('/api/admin/users/:adminId', verifyAdminToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const { adminId } = req.params;
+    const { is_active, permissions } = req.body;
+
+    const result = await UserService.updateAdminUser(adminId, {
+      is_active,
+      permissions
+    });
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    // Log activity
+    await logAdminActivity(
+      req.admin.id,
+      'admin_user_updated',
+      'admin_users',
+      adminId,
+      { is_active, permissions }
+    );
+
+    res.json(result);
+  } catch (err) {
+    console.error('Update admin user error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete admin user
+app.delete('/api/admin/users/:adminId', verifyAdminToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const { adminId } = req.params;
+
+    const result = await UserService.deleteAdminUser(adminId);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    // Log activity
+    await logAdminActivity(
+      req.admin.id,
+      'admin_user_deleted',
+      'admin_users',
+      adminId,
+      {}
+    );
+
+    res.json(result);
+  } catch (err) {
+    console.error('Delete admin user error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get activity log
+app.get('/api/admin/activity-log', verifyAdminToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 100;
+    const offset = parseInt(req.query.offset) || 0;
+    const filters = {
+      admin_id: req.query.admin_id,
+      action: req.query.action,
+      resource_type: req.query.resource_type
+    };
+
+    const result = await UserService.getActivityLog(limit, offset, filters);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error('Get activity log error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});

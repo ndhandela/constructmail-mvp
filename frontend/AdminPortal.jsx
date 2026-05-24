@@ -12,17 +12,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 export default function AdminPortal() {
   const [token, setToken] = useState(localStorage.getItem('admin_token'));
   const [admin, setAdmin] = useState(null);
-  const [currentPage, setCurrentPage] = useState(getPageFromURL());
-
-  function getPageFromURL() {
-    const path = window.location.pathname;
-    if (path.includes('/pricing')) return 'pricing';
-    if (path.includes('/flags')) return 'flags';
-    if (path.includes('/clients')) return 'clients';
-    if (path.includes('/users')) return 'users';
-    if (path.includes('/activity-log')) return 'activity-log';
-    return 'dashboard';
-  }
+  const [currentPage, setCurrentPage] = useState('dashboard');
 
   useEffect(() => {
     const savedToken = localStorage.getItem('admin_token');
@@ -57,7 +47,6 @@ export default function AdminPortal() {
     setAdmin(adminData);
     localStorage.setItem('admin_token', newToken);
     setCurrentPage('dashboard');
-    window.history.pushState({}, '', '/admin/dashboard');
   };
 
   const handleLogout = () => {
@@ -68,35 +57,23 @@ export default function AdminPortal() {
     window.location.href = '/admin/login';
   };
 
-  const handleNavigate = (page) => {
-    setCurrentPage(page);
-    const pathMap = {
-      dashboard: '/admin/dashboard',
-      pricing: '/admin/pricing',
-      flags: '/admin/flags',
-      clients: '/admin/clients',
-      users: '/admin/users',
-      'activity-log': '/admin/activity-log'
-    };
-    window.history.pushState({}, '', pathMap[page]);
-  };
-
   if (!token) {
     return <AdminLogin onLogin={handleLogin} />;
   }
 
+  // Render based on currentPage state
   switch (currentPage) {
     case 'pricing':
-      return <PricingManagement token={token} onNavigate={handleNavigate} />;
+      return <PricingManagement token={token} />;
     case 'flags':
-      return <FeatureFlagsManagement token={token} onNavigate={handleNavigate} />;
+      return <FeatureFlagsManagement token={token} />;
     case 'clients':
-      return <ClientsManagement token={token} onNavigate={handleNavigate} />;
+      return <ClientsManagement token={token} />;
     case 'users':
-      return <AdminUsersManagement token={token} onNavigate={handleNavigate} />;
+      return <AdminUsersManagement token={token} />;
     case 'activity-log':
-      return <ActivityLogViewer token={token} onNavigate={handleNavigate} />;
+      return <ActivityLogViewer token={token} />;
     default:
-      return <AdminDashboard token={token} admin={admin} onLogout={handleLogout} onNavigate={handleNavigate} />;
+      return <AdminDashboard token={token} admin={admin} onLogout={handleLogout} onNavigate={setCurrentPage} />;
   }
 }

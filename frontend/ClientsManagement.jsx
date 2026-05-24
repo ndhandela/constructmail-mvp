@@ -3,7 +3,7 @@ import '../styles/ClientsManagement.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-export default function ClientsManagement({ token, onNavigate }) {
+export default function ClientsManagement({ token }) {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
@@ -65,18 +65,8 @@ export default function ClientsManagement({ token, onNavigate }) {
   return (
     <div className="clients-management">
       <div className="clients-header">
-        <div className="clients-header-content">
-          <div>
-            <h2>GC Clients</h2>
-            <p>Manage General Contractor accounts and subscriptions</p>
-          </div>
-          <button 
-            className="back-btn"
-            onClick={() => onNavigate('dashboard')}
-          >
-            ← Back to Dashboard
-          </button>
-        </div>
+        <h2>GC Clients</h2>
+        <p>Manage General Contractor accounts and subscriptions</p>
       </div>
 
       <div className="clients-container">

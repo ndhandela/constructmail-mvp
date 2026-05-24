@@ -3,225 +3,176 @@ import '../styles/PricingManagement.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-export default function PricingManagement({ token }) {
-  const [pricing, setPricing] = useState({});
+export default function PricingManagement({ token, onNavigate }) {
+  const [pricing, setPricing] = useState([]);
   const [clients, setClients] = useState([]);
-  const [loading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({
+    module_name: 'mail',
+    monthly_price: 0,
+    is_global: true,
+    client_id: null
+  });
 
-  const modules = [
-    { name: 'mail', label: 'POMAR Mail', description: 'Email intelligence & RFI detection' },
-    { name: 'clash', label: 'POMAR Clash', description: 'BIM clash analysis & coordination' },
-    { name: 'vendors', label: 'POMAR Vendors', description: 'Vendor intelligence network' }
-  ];
+  useEffect(() => {
+    fetchPricing();
+    fetchClients();
+  }, []);
 
   const fetchPricing = useCallback(async () => {
     try {
-      const defaultPricing = {  
-        mail: { price: 0, billing: 'monthly' },
-        clash: { price: 0, billing: 'monthly' },
-        vendors: { price: 0, billing: 'monthly' }
-      };
-      setPricing(defaultPricing);
+      const response = await fetch(`${API_BASE_URL}/api/admin/pricing`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setPricing(data.pricing);
+      }
     } catch (err) {
       console.error('Fetch pricing error:', err);
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   const fetchClients = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/clients`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const response = await fetch(`${API_BASE_URL}/api/admin/clients?limit=100`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setClients(data.clients || []);
+      const data = await response.json();
+      if (data.success) {
+        setClients(data.clients);
       }
     } catch (err) {
       console.error('Fetch clients error:', err);
     }
   }, [token]);
 
-  useEffect(() => {
-    fetchPricing();
-    fetchClients();
-  }, [fetchPricing, fetchClients]);
-
-  // rest of component continues below...
-
-
-  const handlePriceChange = (moduleKey, newPrice) => {
-    setPricing(prev => ({
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
       ...prev,
-      [moduleKey]: {
-        ...prev[moduleKey],
-        price: parseFloat(newPrice) || 0
-      }
+      [name]: type === 'checkbox' ? checked : (name === 'monthly_price' ? parseFloat(value) : value)
     }));
   };
 
-  const handleSavePricing = async () => {
-    setSaving(true);
-    setMessage('');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
     try {
-      // Save each module pricing
-      for (const [moduleKey, data] of Object.entries(pricing)) {
-        const response = await fetch(`${API_BASE_URL}/api/admin/pricing`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            module_name: moduleKey,
-            monthly_price: data.price,
-            billing_cycle: data.billing,
-            is_global: true
-          })
+      const response = await fetch(`${API_BASE_URL}/api/admin/pricing`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        fetchPricing();
+        setFormData({
+          module_name: 'mail',
+          monthly_price: 0,
+          is_global: true,
+          client_id: null
         });
-
-        if (!response.ok) {
-          throw new Error(`Failed to save ${moduleKey} pricing`);
-        }
+        setEditingId(null);
       }
-
-      setMessage('✅ Pricing updated successfully');
-      setTimeout(() => setMessage(''), 3000);
     } catch (err) {
-      console.error('Save pricing error:', err);
-      setMessage('❌ Failed to save pricing');
-    } finally {
-      setSaving(false);
+      console.error('Submit pricing error:', err);
     }
   };
 
   if (loading) {
-    return <div className="pricing-loading">Loading pricing data...</div>;
+    return <div className="pricing-loading">Loading pricing...</div>;
   }
 
   return (
     <div className="pricing-management">
       <div className="pricing-header">
-        <h2>Pricing Management</h2>
-        <p>Configure module pricing globally or per client</p>
+        <div className="pricing-header-content">
+          <div>
+            <h2>Pricing Management</h2>
+            <p>Set module pricing globally or per client</p>
+          </div>
+          <button 
+            className="back-btn"
+            onClick={() => onNavigate('dashboard')}
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
       </div>
 
       <div className="pricing-container">
-        {/* Global Pricing Section */}
-        <div className="pricing-section">
-          <div className="section-header">
-            <h3>Global Pricing</h3>
-            <span className="section-badge">Applies to all new clients</span>
-          </div>
+        <div className="pricing-form">
+          <h3>{editingId ? 'Edit Pricing' : 'Add Pricing'}</h3>
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label>Module</label>
+              <select name="module_name" value={formData.module_name} onChange={handleInputChange}>
+                <option value="mail">POMAR Mail</option>
+                <option value="clash">POMAR Clash</option>
+                <option value="vendors">POMAR Vendors</option>
+              </select>
+            </div>
 
-          <div className="modules-grid">
-            {modules.map(module => (
-              <div key={module.name} className="module-card">
-                <div className="module-header">
-                  <h4>{module.label}</h4>
-                  <p className="module-desc">{module.description}</p>
-                </div>
+            <div className="form-group">
+              <label>Monthly Price</label>
+              <input
+                type="number"
+                name="monthly_price"
+                value={formData.monthly_price}
+                onChange={handleInputChange}
+                step="0.01"
+              />
+            </div>
 
-                <div className="price-input-group">
-                  <label>Monthly Price</label>
-                  <div className="price-input-wrapper">
-                    <span className="currency">$</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={pricing[module.name]?.price || 0}
-                      onChange={(e) => handlePriceChange(module.name, e.target.value)}
-                      placeholder="0.00"
-                    />
-                    <span className="period">/month</span>
-                  </div>
-                </div>
+            <div className="form-group checkbox">
+              <label>
+                <input
+                  type="checkbox"
+                  name="is_global"
+                  checked={formData.is_global}
+                  onChange={handleInputChange}
+                />
+                Global Pricing
+              </label>
+            </div>
 
-                <div className="module-status">
-                  <span className="status-label">Status</span>
-                  <span className="status-badge active">Active</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {message && <div className={`message ${message.includes('✅') ? 'success' : 'error'}`}>{message}</div>}
-
-          <button 
-            className="save-button" 
-            onClick={handleSavePricing}
-            disabled={saving}
-          >
-            {saving ? 'Saving...' : 'Save Pricing'}
-          </button>
-        </div>
-
-        {/* Pricing Summary */}
-        <div className="pricing-section">
-          <div className="section-header">
-            <h3>Current Rates</h3>
-            <span className="section-badge">{Object.keys(pricing).length} modules</span>
-          </div>
-
-          <div className="pricing-summary">
-            {modules.map(module => (
-              <div key={module.name} className="summary-row">
-                <span className="summary-label">{module.label}</span>
-                <span className="summary-price">
-                  ${pricing[module.name]?.price || 0}/month
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Client Pricing (Future) */}
-        <div className="pricing-section">
-          <div className="section-header">
-            <h3>Client-Specific Pricing</h3>
-            <span className="section-badge">{clients.length} clients</span>
-          </div>
-
-          {clients.length > 0 ? (
-            <div className="clients-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Client</th>
-                    <th>Email</th>
-                    <th>Active Modules</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
+            {!formData.is_global && (
+              <div className="form-group">
+                <label>Client</label>
+                <select name="client_id" value={formData.client_id || ''} onChange={handleInputChange}>
+                  <option value="">Select a client</option>
                   {clients.map(client => (
-                    <tr key={client.id}>
-                      <td><strong>{client.name || 'N/A'}</strong></td>
-                      <td>{client.email}</td>
-                      <td>
-                        <span className="module-count">
-                          {client.active_modules ? Object.values(client.active_modules).filter(Boolean).length : 0} modules
-                        </span>
-                      </td>
-                      <td>
-                        <button className="action-button" disabled>Configure</button>
-                      </td>
-                    </tr>
+                    <option key={client.id} value={client.id}>{client.name}</option>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="empty-state">
-              <p>No clients yet. Pricing will apply to all new signups.</p>
-            </div>
-          )}
+                </select>
+              </div>
+            )}
+
+            <button type="submit" className="submit-btn">Save Pricing</button>
+          </form>
+        </div>
+
+        <div className="pricing-list">
+          <h3>Current Pricing</h3>
+          <div className="pricing-items">
+            {pricing.map(item => (
+              <div key={item.id} className="pricing-item">
+                <div className="pricing-details">
+                  <strong>{item.module_name}</strong>
+                  <span>${item.monthly_price}/mo</span>
+                  <span className="pricing-type">{item.is_global ? 'Global' : `Client: ${item.client_id}`}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
