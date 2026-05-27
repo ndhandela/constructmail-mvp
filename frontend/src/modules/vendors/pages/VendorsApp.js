@@ -3,6 +3,7 @@ import VendorListTable from '../components/VendorListTable';
 import VendorSearch from '../components/VendorSearch';
 import AddVendorForm from '../components/AddVendorForm';
 import CSVImport from '../components/CSVImport';
+import VendorExport from '../components/VendorExport';
 import '../styles/VendorsApp.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
@@ -105,8 +106,9 @@ export default function VendorsApp({ user, userId, onLogout }) {
             />
           </div>
           <div className="vendors-top-right">
+            <VendorExport filters={filters} />
             {!showAddSection && (
-              <button 
+              <button
                 className="add-vendor-btn"
                 onClick={() => setShowAddSection(true)}
               >
