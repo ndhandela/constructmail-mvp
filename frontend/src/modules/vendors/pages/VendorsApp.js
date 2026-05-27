@@ -138,12 +138,14 @@ export default function VendorsApp({ user, userId, onLogout }) {
         )}
 
         {/* Vendors List */}
-        <VendorListTable 
+        <VendorListTable
           vendors={vendors}
           loading={loading}
           pagination={pagination}
           onNextPage={handleNextPage}
           onPrevPage={handlePrevPage}
+          userId={userId}
+          onVendorUpdated={searchVendors}
         />
       </div>
     </div>

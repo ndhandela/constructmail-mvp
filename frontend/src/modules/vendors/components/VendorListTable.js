@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import VendorReviews from './VendorReviews';
 import '../styles/VendorListTable.css';
 
-export default function VendorListTable({ vendors, loading, pagination, onNextPage, onPrevPage }) {
+export default function VendorListTable({ vendors, loading, pagination, onNextPage, onPrevPage, userId, onVendorUpdated }) {
   const [expandedId, setExpandedId] = useState(null);
 
   if (loading) {
@@ -42,7 +43,7 @@ export default function VendorListTable({ vendors, loading, pagination, onNextPa
       <div className="vendor-list-header">
         <h2>Vendors ({pagination.total})</h2>
         <p className="page-info">
-          Showing {pagination.offset + 1}-{Math.min(pagination.offset + pagination.limit, pagination.total)} 
+          Showing {pagination.offset + 1}-{Math.min(pagination.offset + pagination.limit, pagination.total)}
           of {pagination.total}
         </p>
       </div>
@@ -63,7 +64,7 @@ export default function VendorListTable({ vendors, loading, pagination, onNextPa
           <tbody>
             {vendors.map(vendor => (
               <React.Fragment key={vendor.id}>
-                <tr className="vendor-row">
+                <tr className={`vendor-row${expandedId === vendor.id ? ' vendor-row--expanded' : ''}`}>
                   <td className="vendor-name">{vendor.name}</td>
                   <td className="vendor-trade">{vendor.trade}</td>
                   <td className="vendor-location">
@@ -75,7 +76,7 @@ export default function VendorListTable({ vendors, loading, pagination, onNextPa
                     {vendor.email && <a href={`mailto:${vendor.email}`}>{vendor.email}</a>}
                   </td>
                   <td className="vendor-insurance">
-                    <span 
+                    <span
                       className="insurance-badge"
                       style={{ backgroundColor: getInsuranceColor(vendor.insurance_status) }}
                     >
@@ -88,27 +89,31 @@ export default function VendorListTable({ vendors, loading, pagination, onNextPa
                         {'⭐'.repeat(Math.floor(parseFloat(vendor.avg_rating) || 0))}
                       </span>
                       <span className="rating-value">{(parseFloat(vendor.avg_rating) || 0).toFixed(1)}</span>
-                      <span className="review-count">({vendor.review_count})</span>
+                      <span className="review-count">({vendor.review_count || 0})</span>
                     </div>
                   </td>
                   <td className="vendor-action">
-                    <button 
+                    <button
                       className="expand-btn"
                       onClick={() => setExpandedId(expandedId === vendor.id ? null : vendor.id)}
-                      title="View details"
+                      title={expandedId === vendor.id ? 'Collapse' : 'View details & reviews'}
                     >
                       {expandedId === vendor.id ? '▼' : '▶'}
                     </button>
                   </td>
                 </tr>
+
                 {expandedId === vendor.id && (
                   <tr className="vendor-details-row">
                     <td colSpan="7">
+                      {/* ── Quick info strip ── */}
                       <div className="vendor-details">
                         {vendor.address && (
                           <div className="detail-item">
                             <span className="detail-label">Address:</span>
-                            <span className="detail-value">{vendor.address} {vendor.zip && `${vendor.zip}`}</span>
+                            <span className="detail-value">
+                              {vendor.address}{vendor.zip ? `, ${vendor.zip}` : ''}
+                            </span>
                           </div>
                         )}
                         {vendor.website && (
@@ -124,6 +129,13 @@ export default function VendorListTable({ vendors, loading, pagination, onNextPa
                           <span className="detail-value">{new Date(vendor.created_at).toLocaleDateString()}</span>
                         </div>
                       </div>
+
+                      {/* ── Reviews ── */}
+                      <VendorReviews
+                        vendor={vendor}
+                        userId={userId}
+                        onReviewAdded={onVendorUpdated}
+                      />
                     </td>
                   </tr>
                 )}
@@ -134,8 +146,8 @@ export default function VendorListTable({ vendors, loading, pagination, onNextPa
       </div>
 
       <div className="vendor-pagination">
-        <button 
-          onClick={onPrevPage} 
+        <button
+          onClick={onPrevPage}
           disabled={!hasPrevPage || loading}
           className="pagination-btn"
         >
@@ -146,8 +158,8 @@ export default function VendorListTable({ vendors, loading, pagination, onNextPa
           Page {Math.floor(pagination.offset / pagination.limit) + 1}
         </span>
 
-        <button 
-          onClick={onNextPage} 
+        <button
+          onClick={onNextPage}
           disabled={!hasNextPage || loading}
           className="pagination-btn"
         >
