@@ -14,6 +14,7 @@ export default function ActivityLogViewer({ token, onNavigate }) {
 
   useEffect(() => {
     fetchLogs();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.offset]);
 
   const fetchLogs = async () => {

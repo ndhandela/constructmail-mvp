@@ -17,6 +17,7 @@ export default function FeatureFlagsManagement({ token, onNavigate }) {
   useEffect(() => {
     fetchFlags();
     fetchClients();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchFlags = useCallback(async () => {

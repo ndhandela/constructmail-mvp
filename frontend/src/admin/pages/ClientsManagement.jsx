@@ -15,6 +15,7 @@ export default function ClientsManagement({ token, onNavigate }) {
 
   useEffect(() => {
     fetchClients();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.offset]);
 
   const fetchClients = async () => {

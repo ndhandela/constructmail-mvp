@@ -19,6 +19,7 @@ export default function AdminUsersManagement({ token, onNavigate }) {
   useEffect(() => {
     fetchAdmins();
     fetchClients();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchAdmins = async () => {

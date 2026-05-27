@@ -30,6 +30,7 @@ export default function AdminPortal() {
       setToken(savedToken);
       verifyToken(savedToken);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const verifyToken = async (adminToken) => {

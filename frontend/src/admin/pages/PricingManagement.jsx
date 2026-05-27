@@ -18,6 +18,7 @@ export default function PricingManagement({ token, onNavigate }) {
   useEffect(() => {
     fetchPricing();
     fetchClients();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchPricing = useCallback(async () => {
