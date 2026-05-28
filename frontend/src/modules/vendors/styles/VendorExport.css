@@ -1,12 +1,14 @@
 .vendor-export {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .export-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 16px;
+  padding: 12px 24px;
   background: var(--parchment, #faf8f4);
   color: var(--inkwell, #1a1a2e);
   border: 1.5px solid var(--inkwell, #1a1a2e);
