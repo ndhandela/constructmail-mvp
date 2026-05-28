@@ -8,21 +8,21 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 12px 24px;
-  background: var(--parchment, #faf8f4);
-  color: var(--inkwell, #1a1a2e);
-  border: 1.5px solid var(--inkwell, #1a1a2e);
-  border-radius: 8px;
+  padding: 10px 16px;
+  background: var(--inkwell, #1a1a2e);
+  color: var(--parchment, #faf8f4);
+  border: none;
+  border-radius: var(--radius-md, 8px);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
 }
 
 .export-btn:hover:not(:disabled) {
-  background: var(--inkwell, #1a1a2e);
-  color: #fff;
+  background: var(--saffron, #f59e0b);
+  color: var(--inkwell, #1a1a2e);
 }
 
 .export-btn:disabled {
