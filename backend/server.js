@@ -1909,4 +1909,72 @@ app.get('/api/admin/activity-log', verifyAdminToken, requireSuperAdmin, async (r
     console.error('Get activity log error:', err);
     res.status(500).json({ error: err.message });
   }
+});});
+
+// ── Admin Analytics ───────────────────────────────────────────────────────────
+app.get('/api/admin/analytics', verifyAdminToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const [
+      usersTotal,
+      usersLast30,
+      usersSignupsByDay,
+      vendorsTotal,
+      vendorsInsurance,
+      vendorsByTrade,
+      reviewsTotal,
+      reviewsAvgRating,
+    ] = await Promise.all([
+      // Total users
+      pool.query('SELECT COUNT(*) FROM users'),
+      // Users signed up in last 30 days
+      pool.query("SELECT COUNT(*) FROM users WHERE created_at >= NOW() - INTERVAL '30 days'"),
+      // Daily signups last 30 days
+      pool.query(`
+        SELECT DATE(created_at) AS day, COUNT(*)::int AS count
+        FROM users
+        WHERE created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY day ORDER BY day
+      `),
+      // Total vendors
+      pool.query('SELECT COUNT(*) FROM vendors'),
+      // Vendors by insurance status
+      pool.query(`
+        SELECT insurance_status, COUNT(*)::int AS count
+        FROM vendors
+        GROUP BY insurance_status
+      `),
+      // Vendors by trade (top 8)
+      pool.query(`
+        SELECT trade, COUNT(*)::int AS count
+        FROM vendors
+        WHERE trade IS NOT NULL AND trade != ''
+        GROUP BY trade ORDER BY count DESC LIMIT 8
+      `),
+      // Total reviews
+      pool.query('SELECT COUNT(*) FROM vendor_reviews'),
+      // Average rating across all reviews
+      pool.query('SELECT ROUND(AVG(overall_rating)::numeric, 1) AS avg FROM vendor_reviews'),
+    ]);
+
+    res.json({
+      success: true,
+      users: {
+        total: parseInt(usersTotal.rows[0].count),
+        last30Days: parseInt(usersLast30.rows[0].count),
+        signupsByDay: usersSignupsByDay.rows,
+      },
+      vendors: {
+        total: parseInt(vendorsTotal.rows[0].count),
+        byInsurance: vendorsInsurance.rows,
+        byTrade: vendorsByTrade.rows,
+      },
+      reviews: {
+        total: parseInt(reviewsTotal.rows[0].count),
+        avgRating: parseFloat(reviewsAvgRating.rows[0].avg) || 0,
+      },
+    });
+  } catch (err) {
+    console.error('Analytics error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });

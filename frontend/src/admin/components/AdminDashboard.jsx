@@ -51,6 +51,13 @@ export default function AdminDashboard({ token, admin, onLogout, onNavigate }) {
       <div className="admin-container">
         <div className="admin-grid">
           <div className="admin-section">
+            <div className="section-icon">📊</div>
+            <h3>Analytics</h3>
+            <p>User signups, vendor stats, review trends</p>
+            <button className="section-button" onClick={() => onNavigate('analytics')}>View Analytics</button>
+          </div>
+
+          <div className="admin-section">
             <div className="section-icon">💰</div>
             <h3>Pricing Management</h3>
             <p>Set module pricing globally or per client</p>
