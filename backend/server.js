@@ -1909,7 +1909,7 @@ app.get('/api/admin/activity-log', verifyAdminToken, requireSuperAdmin, async (r
     console.error('Get activity log error:', err);
     res.status(500).json({ error: err.message });
   }
-});});
+});;
 
 // ── Admin Analytics ───────────────────────────────────────────────────────────
 app.get('/api/admin/analytics', verifyAdminToken, requireSuperAdmin, async (req, res) => {
