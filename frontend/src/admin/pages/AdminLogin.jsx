@@ -3,7 +3,7 @@ import '../styles/AdminLogin.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-export default function AdminLogin({ onLoginSuccess }) {
+export default function AdminLogin({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -31,7 +31,7 @@ export default function AdminLogin({ onLoginSuccess }) {
         localStorage.setItem('admin_data', JSON.stringify(data.admin));
         
         // Callback to parent
-        onLoginSuccess(data.token);
+        onLogin(data.token, data.admin);
         
         // Redirect to dashboard
         window.location.href = '/admin/dashboard';
