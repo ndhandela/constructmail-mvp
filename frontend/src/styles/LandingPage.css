@@ -30,21 +30,22 @@
 
 .btn-ghost {
   display: inline-block;
-  color: var(--inkwell);
+  color: #ffffff;
   padding: 14px 28px;
   border-radius: var(--radius-pill);
   text-decoration: none;
   font-size: 15px;
   font-weight: 600;
-  border: 1.5px solid var(--inkwell);
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
   transition: all 0.2s ease;
   background: transparent;
   cursor: pointer;
 }
 
 .btn-ghost:hover {
-  background: var(--inkwell);
-  color: var(--parchment);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #ffffff;
+  color: #ffffff;
 }
 
 /* === Section primitives === */
@@ -117,9 +118,12 @@
 
 /* === HERO === */
 .hero {
-  padding: 120px 60px 100px;
+  padding: 140px 60px 120px;
   text-align: center;
-  background: linear-gradient(180deg, white 0%, var(--parchment) 100%);
+  position: relative;
+  background:
+    linear-gradient(rgba(15, 15, 28, 0.68), rgba(15, 15, 28, 0.74)),
+    url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1920&q=80') center center / cover no-repeat;
 }
 
 .hero-eyebrow {
@@ -136,7 +140,7 @@
   font-weight: 400;
   font-size: 64px;
   line-height: 1.1;
-  color: var(--inkwell);
+  color: #ffffff;
   max-width: 900px;
   margin: 0 auto 28px;
   letter-spacing: -1.5px;
@@ -149,7 +153,7 @@
 
 .hero-sub {
   font-size: 19px;
-  color: var(--text-light);
+  color: rgba(255, 255, 255, 0.82);
   max-width: 640px;
   margin: 0 auto 40px;
   line-height: 1.6;

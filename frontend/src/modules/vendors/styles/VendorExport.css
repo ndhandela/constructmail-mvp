@@ -1,38 +1,25 @@
 .vendor-export {
   position: relative;
-  display: flex;
-  align-items: center;
 }
 
+/* Inherits all sizing from add-vendor-btn — only override color */
 .export-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  background: var(--inkwell, #1a1a2e);
-  color: var(--parchment, #faf8f4);
-  border: none;
-  border-radius: var(--radius-md, 8px);
-  font-weight: 600;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
+  background-color: var(--inkwell, #1a1a2e) !important;
+  color: var(--parchment, #faf8f4) !important;
+  padding: 12px 24px !important;
+  font-size: 14px !important;
+  margin-top: 0 !important;
 }
 
 .export-btn:hover:not(:disabled) {
-  background: var(--saffron, #f59e0b);
-  color: var(--inkwell, #1a1a2e);
+  background-color: var(--saffron, #f59e0b) !important;
+  color: var(--inkwell, #1a1a2e) !important;
+  box-shadow: none !important;
 }
 
 .export-btn:disabled {
   opacity: 0.65;
   cursor: not-allowed;
-}
-
-.export-caret {
-  font-size: 11px;
-  margin-left: 2px;
 }
 
 /* ── Dropdown ── */

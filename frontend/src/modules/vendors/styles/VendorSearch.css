@@ -5,7 +5,8 @@
 .search-bar-compact {
   display: flex;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 0;
+  align-items: flex-start;
 }
 
 .search-input-compact {
@@ -30,7 +31,7 @@
 }
 
 .filter-toggle-compact {
-  padding: 10px 16px;
+  padding: 12px 24px;
   background-color: var(--inkwell);
   color: var(--parchment);
   border: none;
@@ -38,7 +39,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  font-size: 12px;
+  font-size: 14px;
   white-space: nowrap;
   text-transform: uppercase;
   letter-spacing: 0.5px;

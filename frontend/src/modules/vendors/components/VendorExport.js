@@ -193,19 +193,18 @@ export default function VendorExport({ filters }) {
     }
   };
 
-  return (
-    <div className="vendor-export" ref={ref}>
-      <button
-        className="export-btn"
-        onClick={() => setOpen(o => !o)}
-        disabled={!!loading}
-      >
-        {loading ? `Exporting ${loading.toUpperCase()}…` : '⬇ Export'}
-        <span className="export-caret">▾</span>
-      </button>
+return (
+  <>
+    <button
+      className="add-vendor-btn export-btn"
+      ref={ref}
+      onClick={() => setOpen(o => !o)}
+      disabled={!!loading}
+    >
+      {loading ? `Exporting ${loading.toUpperCase()}…` : '⬇ Export ▾'}
 
       {open && (
-        <div className="export-dropdown">
+        <div className="export-dropdown" onClick={e => e.stopPropagation()}>
           <button className="export-option" onClick={() => handleExport('csv')}>
             <span className="export-option-icon">📄</span>
             <div>
@@ -222,8 +221,9 @@ export default function VendorExport({ filters }) {
           </button>
         </div>
       )}
+    </button>
 
-      {error && <p className="export-error">{error}</p>}
-    </div>
-  );
+    {error && <p className="export-error">{error}</p>}
+  </>
+);
 }
