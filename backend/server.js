@@ -1953,7 +1953,7 @@ app.get('/api/admin/analytics', verifyAdminToken, requireSuperAdmin, async (req,
       // Total reviews
       pool.query('SELECT COUNT(*) FROM vendor_reviews'),
       // Average rating across all reviews
-      pool.query('SELECT ROUND(AVG(overall_rating)::numeric, 1) AS avg FROM vendor_reviews'),
+      pool.query('SELECT ROUND(AVG((rating_reliability + rating_cost + rating_quality + rating_communication + rating_insurance)::numeric / 5), 1) AS avg FROM vendor_reviews'),
     ]);
 
     res.json({
