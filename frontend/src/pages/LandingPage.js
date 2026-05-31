@@ -24,6 +24,9 @@ export default function LandingPage({ onProductSelect }) {
           <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('clash')}>
             Try POMAR Clash — Free
           </button>
+          <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('vendors')}>
+            Explore POMAR Vendors
+          </button>
           <a href="/contact" className="btn-ghost">Book a Demo</a>
         </div>
       </section>
