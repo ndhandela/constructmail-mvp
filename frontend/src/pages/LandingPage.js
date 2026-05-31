@@ -116,6 +116,14 @@ export default function LandingPage({ onProductSelect }) {
               <span className="product-link">Try it free →</span>
             </div>
 
+            <div className="product-card live" onClick={() => onProductSelect && onProductSelect('vendors')}>
+              <span className="product-badge badge-live">Live Now</span>
+              <h3>POMAR Vendors</h3>
+              <div className="product-tagline">Vendor Intelligence</div>
+              <p>Find, vet, and track trusted subcontractors and suppliers. Insurance verification, star ratings across 5 trade categories, and one-click CSV or PDF export.</p>
+              <span className="product-link">Explore →</span>
+            </div>
+
             <div className="product-card soon">
               <span className="product-badge badge-soon">On the Roadmap</span>
               <h3>POMAR Specs</h3>
