@@ -1,0 +1,196 @@
+import io
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+from typing import Optional, List, Any
+from db import get_pool
+from services.clash_helpers import analyze_clash_report, draft_clash_rfi
+
+router = APIRouter(prefix="/api/clash", tags=["Clash"])
+
+
+class AnalyzeRequest(BaseModel):
+    summary: dict
+    topClashes: list
+    testName: str
+
+
+class DraftRFIRequest(BaseModel):
+    clashName: str
+    status: str
+    distance: str
+    item1: dict
+    item2: dict
+    clashPoint: str
+    discipline: str
+    priority: str
+
+
+class AssignmentRequest(BaseModel):
+    userId: str
+    projectKey: str
+    clashName: str
+    assignedTo: Optional[str] = None
+    discipline: Optional[str] = None
+    notes: Optional[str] = None
+    status: Optional[str] = "open"
+
+
+class SaveReportRequest(BaseModel):
+    userId: str
+    testName: Optional[str] = "Clash Test"
+    fileName: Optional[str] = "report.html"
+    summary: Optional[dict] = None
+    projectKey: Optional[str] = None
+
+
+class AgendaPDFRequest(BaseModel):
+    testName: Optional[str] = None
+    fileName: Optional[str] = None
+    clashes: Optional[List[Any]] = []
+    assignments: Optional[List[Any]] = []
+
+
+@router.post("/analyze")
+async def analyze(req: AnalyzeRequest):
+    analysis = await analyze_clash_report(req.summary, req.topClashes, req.testName)
+    return {"analysis": analysis}
+
+
+@router.post("/draft-rfi")
+async def draft_rfi(req: DraftRFIRequest):
+    return await draft_clash_rfi(
+        req.clashName, req.status, req.distance,
+        req.item1, req.item2, req.clashPoint, req.discipline, req.priority
+    )
+
+
+@router.get("/assignments")
+async def get_assignments(userId: str, projectKey: str):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT * FROM clash_assignments WHERE user_id = $1 AND project_key = $2", userId, projectKey
+        )
+    return {"assignments": [dict(r) for r in rows]}
+
+
+@router.post("/assignments")
+async def save_assignment(req: AssignmentRequest):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """INSERT INTO clash_assignments (user_id, project_key, clash_name, assigned_to, discipline, notes, status, updated_at)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,NOW())
+               ON CONFLICT (user_id, project_key, clash_name)
+               DO UPDATE SET assigned_to=$4, discipline=$5, notes=$6, status=$7, updated_at=NOW()
+               RETURNING *""",
+            req.userId, req.projectKey, req.clashName,
+            req.assignedTo, req.discipline, req.notes, req.status or "open",
+        )
+    return {"assignment": dict(row)}
+
+
+@router.post("/reports")
+async def save_report(req: SaveReportRequest):
+    pool = await get_pool()
+    summary = req.summary or {}
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """INSERT INTO clash_reports (user_id, test_name, file_name, total_clashes, new_clashes, active_clashes, reviewed_clashes, critical_clashes, high_clashes, project_key, created_at)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW()) RETURNING *""",
+            req.userId, req.testName, req.fileName,
+            summary.get("total", 0), summary.get("New", 0), summary.get("Active", 0),
+            summary.get("Reviewed", 0), summary.get("Critical", 0), summary.get("High", 0),
+            req.projectKey,
+        )
+    return {"report": dict(row)}
+
+
+@router.get("/reports")
+async def get_reports(userId: str):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT * FROM clash_reports WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10", userId
+        )
+    return {"reports": [dict(r) for r in rows]}
+
+
+@router.post("/agenda-pdf")
+async def agenda_pdf(req: AgendaPDFRequest):
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.colors import HexColor
+
+        buf = io.BytesIO()
+        c = canvas.Canvas(buf, pagesize=A4)
+        width, height = A4
+
+        # Header
+        c.setFillColor(HexColor("#0E1B2C"))
+        c.rect(0, height - 80, width, 80, fill=1, stroke=0)
+        c.setFillColor(HexColor("#FFFFFF"))
+        c.setFont("Helvetica-Bold", 20)
+        c.drawString(50, height - 30, "POMAR Clash")
+        c.setFont("Helvetica", 10)
+        c.drawString(50, height - 50, "BIM Coordination Meeting Agenda")
+
+        # Title
+        c.setFillColor(HexColor("#0E1B2C"))
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(50, height - 110, req.testName or "Clash Test")
+        c.setFont("Helvetica", 9)
+        c.setFillColor(HexColor("#475569"))
+        c.drawString(50, height - 125, req.fileName or "")
+
+        # Clash list
+        assignment_map = {a.get("clash_name"): a for a in (req.assignments or [])}
+        y = height - 160
+
+        c.setFillColor(HexColor("#0E1B2C"))
+        c.setFont("Helvetica-Bold", 9)
+        c.drawString(50, y, "CLASH")
+        c.drawString(200, y, "SEVERITY")
+        c.drawString(300, y, "STATUS")
+        y -= 15
+
+        def severity(dist):
+            d = abs(dist or 0)
+            if d >= 0.5: return "Critical", "#DC2626"
+            if d >= 0.2: return "High", "#D97706"
+            if d >= 0.05: return "Medium", "#2563EB"
+            return "Low", "#475569"
+
+        for clash in (req.clashes or []):
+            if y < 80:
+                c.showPage()
+                y = height - 60
+            sev_label, sev_color = severity(clash.get("distance", 0))
+            a = assignment_map.get(clash.get("name", ""), {})
+            c.setFillColor(HexColor("#0E1B2C"))
+            c.setFont("Helvetica", 7)
+            c.drawString(50, y, str(clash.get("name", ""))[:30])
+            c.setFillColor(HexColor(sev_color))
+            c.setFont("Helvetica-Bold", 7)
+            c.drawString(200, y, sev_label)
+            c.setFillColor(HexColor("#475569"))
+            c.setFont("Helvetica", 7)
+            c.drawString(300, y, str(a.get("status", "open")))
+            y -= 14
+
+        # Footer
+        c.setFillColor(HexColor("#475569"))
+        c.setFont("Helvetica", 7)
+        c.drawCentredString(width / 2, 20, "POMAR Clash · TechDen Solutions · pomar.ai")
+        c.save()
+        buf.seek(0)
+
+        return StreamingResponse(
+            buf,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=POMAR-Clash-Agenda.pdf"},
+        )
+    except Exception as e:
+        raise HTTPException(500, str(e))
