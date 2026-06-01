@@ -2,17 +2,6 @@ import React, { useState, useRef } from 'react';
 import PomarLogo from './PomarLogo';
 import '../styles/Header.css';
 
-function getInitials(user) {
-  if (!user) return '?';
-  const name = user.first_name && user.last_name
-    ? `${user.first_name} ${user.last_name}`
-    : user.full_name || user.name || '';
-  if (name.trim()) {
-    return name.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
-  }
-  return (user.email || '?')[0].toUpperCase();
-}
-
 function getDisplayName(user) {
   if (!user) return '';
   if (user.first_name || user.last_name) {
@@ -53,7 +42,6 @@ export default function Header({ userId, onLogout, user }) {
     window.location.href = '/';
   };
 
-  const initials    = getInitials(user);
   const displayName = getDisplayName(user);
 
   return (
