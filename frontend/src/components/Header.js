@@ -130,7 +130,12 @@ export default function Header({ userId, onLogout, user }) {
             >
               {user?.avatar_url
                 ? <img src={user.avatar_url} alt={displayName} className="header-avatar-img" />
-                : <span className="header-avatar-initials">{initials}</span>
+                : (
+                  <svg className="header-avatar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="8" r="4" fill="white"/>
+                    <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                )
               }
             </button>
 

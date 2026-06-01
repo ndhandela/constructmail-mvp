@@ -327,3 +327,9 @@
   color: var(--error);
   background: #fef2f2;
 }
+
+.header-avatar-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
