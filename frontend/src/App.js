@@ -9,6 +9,9 @@ import AboutUs from './pages/AboutUs';
 import ResetPassword from './pages/ResetPassword';
 import AdminPortal from './admin/pages/AdminPortal';
 import VendorsApp from './modules/vendors/pages/VendorsApp';
+import ConnectApp from './modules/connect/pages/ConnectApp';
+import MarketplaceApp from './modules/marketplace/pages/MarketplaceApp';
+import ProfileApp from './modules/profile/pages/ProfileApp';
 
 // Modules
 import ConstructMailApp from './modules/constructmail/pages/ConstructMailApp';
@@ -20,7 +23,7 @@ import './styles/components.css';
 import './App.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-const PRODUCT_PATHS = ['/clash', '/constructmail', '/dashboard', '/vendors'];
+const PRODUCT_PATHS = ['/clash', '/constructmail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile'];
 
 function App() {
   const [userId, setUserId] = useState(null);
@@ -61,6 +64,7 @@ function App() {
           localStorage.setItem('constructmail_userId', data.userId);
           fetchUser(data.userId);
           if (path === '/clash') setCurrentProduct('clash');
+          else if (path === '/connect') setCurrentProduct('connect');
           else setCurrentProduct('dashboard');
           window.history.replaceState({}, document.title, window.location.pathname);
         } else {
@@ -95,6 +99,9 @@ function App() {
       if (path === '/clash') setCurrentProduct('clash');
       if (path === '/vendors') setCurrentProduct('vendors');
       if (path === '/dashboard') setCurrentProduct('dashboard');
+      if (path === '/connect') setCurrentProduct('connect');
+      if (path === '/marketplace') setCurrentProduct('marketplace');
+      if (path === '/profile') setCurrentProduct('profile');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
@@ -260,11 +267,44 @@ if (userId && path === '/dashboard') {
     );
   }
 
+  // ── POMAR Connect ─────────────────────────────────────────────────────
+  if (currentProduct === 'connect' || path === '/connect') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} />
+        <ConnectApp userId={userId} />
+        <Footer />
+      </>
+    );
+  }
+
 if (currentProduct === 'dashboard' || path === '/dashboard') {
     return (
       <>
         <Header userId={userId} onLogout={handleLogout} />
         <ProductDashboard user={user} userId={userId} onProductSelect={handleProductSelect} />
+        <Footer />
+      </>
+    );
+  }
+
+  // ── Profile ───────────────────────────────────────────────────────────
+  if (currentProduct === 'profile' || path === '/profile') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <ProfileApp userId={userId} />
+        <Footer />
+      </>
+    );
+  }
+
+  // ── POMAR Marketplace ──────────────────────────────────────────────────
+  if (currentProduct === 'marketplace' || path === '/marketplace') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <MarketplaceApp user={user} userId={userId} />
         <Footer />
       </>
     );

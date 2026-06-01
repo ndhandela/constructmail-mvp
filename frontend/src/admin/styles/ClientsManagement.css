@@ -236,3 +236,71 @@
   color: var(--slate);
   font-weight: 600;
 }
+
+/* Module Toggles */
+.detail-item--full {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.module-toggles {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.module-toggles-label {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1a1a1a;
+  white-space: nowrap;
+}
+
+.module-toggle-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.module-toggle-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #374151;
+}
+
+.module-toggle-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #D97706;
+  cursor: pointer;
+}
+
+.module-toggle-name { user-select: none; }
+
+.save-modules-btn {
+  background: #0E1B2C;
+  color: white;
+  border: none;
+  border-radius: 100px;
+  padding: 6px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.save-modules-btn:hover:not(:disabled) { background: #15263D; }
+.save-modules-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.modules-msg {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.modules-msg--success { color: #10B981; }
+.modules-msg--error   { color: #DC2626; }

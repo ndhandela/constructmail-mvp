@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from typing import Optional, List, Any
 from db import get_pool
 from services.clash_helpers import analyze_clash_report, draft_clash_rfi
+from routers.connect import enqueue_clash_report
 
 router = APIRouter(prefix="/api/clash", tags=["Clash"])
 
@@ -104,7 +105,11 @@ async def save_report(req: SaveReportRequest):
             summary.get("Reviewed", 0), summary.get("Critical", 0), summary.get("High", 0),
             req.projectKey,
         )
-    return {"report": dict(row)}
+        report_row = dict(row)
+    # Auto-enqueue high/critical clashes into Connect queue
+    user_id = int(req.userId) if req.userId and str(req.userId).isdigit() else None
+    await enqueue_clash_report(report_row, user_id=user_id)
+    return {"report": report_row}
 
 
 @router.get("/reports")

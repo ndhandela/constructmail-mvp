@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 from db import get_pool
 from services.ai_helpers import summarize_email_thread, extract_action_items, detect_signals, process_meeting_notes
+from routers.connect import enqueue_mail_signal
 
 router = APIRouter(prefix="/api", tags=["AI"])
 
@@ -128,7 +129,10 @@ async def detect_signals_route(req: DetectSignalsRequest):
                     "INSERT INTO signals (project_id, raw_text, signal_type, confidence) VALUES ($1,$2,$3,$4) RETURNING *",
                     p_id, signal.get("excerpt"), signal.get("type"), signal.get("confidence"),
                 )
-                saved.append(dict(row))
+                saved_row = dict(row)
+                saved.append(saved_row)
+                # Auto-enqueue RFI/Change Order signals into Connect queue
+                await enqueue_mail_signal(saved_row, user_id=req.userId)
     return saved
 
 

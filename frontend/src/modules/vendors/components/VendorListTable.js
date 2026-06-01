@@ -2,8 +2,42 @@ import React, { useState } from 'react';
 import VendorReviews from './VendorReviews';
 import '../styles/VendorListTable.css';
 
-export default function VendorListTable({ vendors, loading, pagination, onNextPage, onPrevPage, userId, onVendorUpdated }) {
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+
+export default function VendorListTable({ vendors, loading, pagination, onNextPage, onPrevPage, userId, onVendorUpdated, hasMarketplaceLicense }) {
   const [expandedId, setExpandedId] = useState(null);
+  const [sharingId, setSharingId] = useState(null);
+  const [shareMessages, setShareMessages] = useState({});
+  const [sharedIds, setSharedIds] = useState(() => {
+    const already = {};
+    (vendors || []).forEach(v => { if (v.shared_to_marketplace) already[v.id] = true; });
+    return already;
+  });
+
+  const handleShareToMarketplace = async (e, vendorId) => {
+    e.stopPropagation();
+    setSharingId(vendorId);
+    setShareMessages(prev => ({ ...prev, [vendorId]: null }));
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/marketplace/vendors/${vendorId}/share-to-marketplace?userId=${userId}`,
+        { method: 'POST' }
+      );
+      const data = await res.json();
+      if (data.success) {
+        setSharedIds(prev => ({ ...prev, [vendorId]: true }));
+        setShareMessages(prev => ({ ...prev, [vendorId]: { type: 'success', text: '✓ Shared to Marketplace' } }));
+        if (onVendorUpdated) onVendorUpdated();
+        setTimeout(() => setShareMessages(prev => ({ ...prev, [vendorId]: null })), 3000);
+      } else {
+        setShareMessages(prev => ({ ...prev, [vendorId]: { type: 'error', text: data.detail || 'Could not share.' } }));
+      }
+    } catch {
+      setShareMessages(prev => ({ ...prev, [vendorId]: { type: 'error', text: 'Network error.' } }));
+    } finally {
+      setSharingId(null);
+    }
+  };
 
   if (loading) {
     return <div className="vendor-list-loading">Loading vendors...</div>;
@@ -127,6 +161,33 @@ export default function VendorListTable({ vendors, loading, pagination, onNextPa
                         <div className="detail-item">
                           <span className="detail-label">Joined:</span>
                           <span className="detail-value">{new Date(vendor.created_at).toLocaleDateString()}</span>
+                        </div>
+
+                        {/* ── Share to Marketplace ── */}
+                        <div className="detail-item" style={{ marginTop: 12 }}>
+                          {(sharedIds[vendor.id] || vendor.shared_to_marketplace) ? (
+                            <span className="share-marketplace-badge">✓ Shared to Marketplace</span>
+                          ) : hasMarketplaceLicense ? (
+                            <button
+                              className="share-marketplace-btn"
+                              onClick={(e) => handleShareToMarketplace(e, vendor.id)}
+                              disabled={sharingId === vendor.id}
+                            >
+                              {sharingId === vendor.id ? 'Sharing…' : '🌐 Share to Marketplace'}
+                            </button>
+                          ) : (
+                            <span
+                              className="share-marketplace-btn disabled"
+                              title="Marketplace license required"
+                            >
+                              🌐 Share to Marketplace
+                            </span>
+                          )}
+                          {shareMessages[vendor.id] && (
+                            <span className={`share-msg share-msg--${shareMessages[vendor.id].type}`} style={{ marginLeft: 10 }}>
+                              {shareMessages[vendor.id].text}
+                            </span>
+                          )}
                         </div>
                       </div>
 

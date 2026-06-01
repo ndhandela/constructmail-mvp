@@ -283,7 +283,12 @@ async function initAllAdminTables() {
     await initVendorImports();
     await initVendorProfileViews();
     await initVendorUsageTracking();
-    
+
+    // POMAR Connect tables
+    await initConnectQueue();
+    await initConnectLog();
+    await migrateConnectStatus();
+
     console.log('✓ All tables initialized successfully');
   } catch (err) {
     console.error('Tables initialization error:', err);
@@ -429,6 +434,59 @@ async function initVendorUsageTracking() {
   console.log('✓ Vendor usage tracking table ready');
 }
 
+
+// ── POMAR CONNECT TABLES ─────────────────────────────────────────────────────
+
+async function initConnectQueue() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS connect_queue (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      module TEXT NOT NULL CHECK (module IN ('mail', 'clash', 'vendor')),
+      type TEXT NOT NULL CHECK (type IN ('rfi', 'change_order', 'clash', 'compliance')),
+      title TEXT NOT NULL,
+      detail TEXT,
+      priority TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('high', 'medium', 'low')),
+      status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'pushed', 'dismissed')),
+      source_id TEXT,
+      pmis_target TEXT CHECK (pmis_target IN ('procore', 'kahua')),
+      user_id INT REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+  console.log('✓ connect_queue table ready');
+}
+
+async function initConnectLog() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS connect_log (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      queue_item_id UUID REFERENCES connect_queue(id) ON DELETE SET NULL,
+      action TEXT NOT NULL,
+      module TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (status IN ('success', 'failed')),
+      error_message TEXT,
+      user_id INT REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+  console.log('✓ connect_log table ready');
+}
+
+async function migrateConnectStatus() {
+  await pool.query(`
+    ALTER TABLE vendors ADD COLUMN IF NOT EXISTS connect_status TEXT DEFAULT NULL;
+  `);
+  // signals table acts as mail's source; we add connect_status to signals
+  await pool.query(`
+    ALTER TABLE signals ADD COLUMN IF NOT EXISTS connect_status TEXT DEFAULT NULL;
+  `);
+  // clash_reports for clash module
+  await pool.query(`
+    ALTER TABLE clash_reports ADD COLUMN IF NOT EXISTS connect_status TEXT DEFAULT NULL;
+  `);
+  console.log('✓ connect_status columns migrated');
+}
 
 // Run on startup
 initAllAdminTables();

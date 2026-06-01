@@ -212,3 +212,118 @@
     display: none;
   }
 }
+
+/* ── Profile Avatar ───────────────────────────────────────────────────────── */
+
+.header-profile-dropdown {
+  position: relative;
+}
+
+.header-avatar-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--inkwell);
+  border: 2px solid var(--border-light);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.header-avatar-btn:hover {
+  border-color: var(--saffron);
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
+}
+
+.header-avatar-initials {
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.header-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Profile dropdown panel */
+.profile-dropdown-menu {
+  right: 0;
+  left: auto;
+  min-width: 220px;
+  padding: 6px;
+}
+
+.profile-dropdown-identity {
+  padding: 12px 14px 10px;
+}
+
+.profile-dropdown-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--inkwell);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-dropdown-email {
+  font-size: 12px;
+  color: var(--slate);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-dropdown-divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: 4px 0;
+}
+
+.profile-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--inkwell);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  font-family: inherit;
+}
+
+.profile-dropdown-item:hover {
+  background: var(--parchment);
+}
+
+.profile-dropdown-icon {
+  font-size: 15px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.profile-logout-btn {
+  color: var(--slate);
+}
+
+.profile-logout-btn:hover {
+  color: var(--error);
+  background: #fef2f2;
+}

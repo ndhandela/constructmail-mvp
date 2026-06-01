@@ -99,6 +99,15 @@ export default function ClashAnalyzer() {
   return (
     <main className="clash-page">
 
+      {/* ── Connect link ── */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '12px 24px 0' }}>
+        <a href="/connect" style={{ textDecoration: 'none' }}>
+          <button style={{ background: '#D97706', color: '#fff', border: 'none', padding: '7px 14px', borderRadius: '8px', fontWeight: '600', fontSize: '0.82rem', cursor: 'pointer' }}>
+            ⚡ Connect
+          </button>
+        </a>
+      </div>
+
       {/* ── Home screen ── */}
       {screen === 'home' && (
         <ClashHome

@@ -192,7 +192,7 @@ async def init_db():
             CREATE TABLE IF NOT EXISTS client_subscriptions (
                 id SERIAL PRIMARY KEY,
                 client_id INT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
-                active_modules JSONB DEFAULT '{"mail": false, "clash": false, "vendors": false}',
+                active_modules JSONB DEFAULT '{"mail": false, "clash": false, "vendors": false, "marketplace": false}',
                 monthly_spend DECIMAL(10,2) DEFAULT 0,
                 total_spend DECIMAL(12,2) DEFAULT 0,
                 status VARCHAR(50) DEFAULT 'active',
@@ -270,6 +270,114 @@ async def init_db():
                 vendor_id INT NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
                 action_type VARCHAR(100),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS connect_queue (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                module TEXT NOT NULL CHECK (module IN ('mail','clash','vendor')),
+                type TEXT NOT NULL CHECK (type IN ('rfi','change_order','clash','compliance')),
+                title TEXT NOT NULL,
+                detail TEXT,
+                priority TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('high','medium','low')),
+                status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','reviewed','pushed','dismissed')),
+                source_id TEXT,
+                pmis_target TEXT CHECK (pmis_target IN ('procore','kahua')),
+                user_id INT REFERENCES users(id) ON DELETE CASCADE,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS connect_log (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                queue_item_id UUID REFERENCES connect_queue(id) ON DELETE SET NULL,
+                action TEXT NOT NULL,
+                module TEXT NOT NULL,
+                status TEXT NOT NULL CHECK (status IN ('success','failed')),
+                error_message TEXT,
+                user_id INT REFERENCES users(id) ON DELETE CASCADE,
+                created_at TIMESTAMP DEFAULT NOW()
+            );
+
+            ALTER TABLE vendors ADD COLUMN IF NOT EXISTS connect_status TEXT DEFAULT NULL;
+            ALTER TABLE signals ADD COLUMN IF NOT EXISTS connect_status TEXT DEFAULT NULL;
+            ALTER TABLE clash_reports ADD COLUMN IF NOT EXISTS connect_status TEXT DEFAULT NULL;
+
+            -- Marketplace tables (migration 002)
+            CREATE TABLE IF NOT EXISTS marketplace_listing_types (
+                id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                slug       VARCHAR(50)  UNIQUE NOT NULL,
+                label      VARCHAR(100) NOT NULL,
+                is_active  BOOLEAN      NOT NULL DEFAULT true,
+                created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS marketplace_listings (
+                id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                listing_type_id        UUID NOT NULL REFERENCES marketplace_listing_types(id),
+                submitted_by_client_id INT  REFERENCES users(id),
+                submitted_by_user_id   INT  REFERENCES users(id),
+                status                 VARCHAR(20) NOT NULL DEFAULT 'active'
+                                           CHECK (status IN ('active', 'flagged', 'removed')),
+                created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at             TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS marketplace_vendor_details (
+                id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                listing_id    UUID UNIQUE NOT NULL REFERENCES marketplace_listings(id) ON DELETE CASCADE,
+                name          VARCHAR(255) NOT NULL,
+                trade         VARCHAR(100),
+                location      VARCHAR(255),
+                contact_email VARCHAR(255),
+                contact_phone VARCHAR(50),
+                website       VARCHAR(255),
+                description   TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS marketplace_reviews (
+                id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                listing_id         UUID NOT NULL REFERENCES marketplace_listings(id) ON DELETE CASCADE,
+                reviewer_client_id INT  REFERENCES users(id),
+                reviewer_user_id   INT  REFERENCES users(id),
+                rating             INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+                comment            TEXT,
+                created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+
+            ALTER TABLE vendors ADD COLUMN IF NOT EXISTS shared_to_marketplace  BOOLEAN DEFAULT false;
+            ALTER TABLE vendors ADD COLUMN IF NOT EXISTS marketplace_listing_id UUID    REFERENCES marketplace_listings(id);
+
+            -- Ensure existing client_subscriptions rows have marketplace key
+            UPDATE client_subscriptions
+            SET active_modules = active_modules || '{"marketplace": false}'::jsonb
+            WHERE active_modules -> 'marketplace' IS NULL;
+
+            -- Seed vendor listing type
+            INSERT INTO marketplace_listing_types (slug, label)
+            VALUES ('vendor', 'Vendors')
+            ON CONFLICT (slug) DO NOTHING;
+
+            -- Profile columns (migration 003)
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name  VARCHAR(100);
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name   VARCHAR(100);
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS phone       VARCHAR(50);
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS job_title   VARCHAR(100);
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url  VARCHAR(500);
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at  TIMESTAMPTZ DEFAULT NOW();
+
+            CREATE TABLE IF NOT EXISTS clients (
+                id               SERIAL PRIMARY KEY,
+                user_id          INT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+                company_name     VARCHAR(255),
+                company_phone    VARCHAR(50),
+                company_address  VARCHAR(500),
+                company_city     VARCHAR(100),
+                company_state    VARCHAR(50),
+                company_zip      VARCHAR(20),
+                company_website  VARCHAR(255),
+                company_size     VARCHAR(50),
+                updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
         """)
 

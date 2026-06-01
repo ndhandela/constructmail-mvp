@@ -217,3 +217,50 @@ async def admin_analytics(admin: dict = Depends(require_super_admin)):
         "vendors": {"total": vendors_total, "byInsurance": [dict(r) for r in vendors_insurance], "byTrade": [dict(r) for r in vendors_by_trade]},
         "reviews": {"total": reviews_total, "avgRating": float(avg_rating or 0)},
     }
+
+
+class UpdateModulesRequest(BaseModel):
+    modules: dict  # e.g. {"mail": true, "marketplace": true}
+
+
+@router.put("/clients/{client_id}/modules")
+async def update_client_modules(
+    client_id: int,
+    req: UpdateModulesRequest,
+    admin: dict = Depends(require_super_admin),
+):
+    """Enable or disable individual modules for a client."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        existing = await conn.fetchrow(
+            "SELECT id, active_modules FROM client_subscriptions WHERE client_id = $1",
+            client_id,
+        )
+        if not existing:
+            # Create subscription row if it doesn't exist yet
+            row = await conn.fetchrow(
+                """
+                INSERT INTO client_subscriptions (client_id, active_modules)
+                VALUES ($1, $2::jsonb)
+                RETURNING id, active_modules
+                """,
+                client_id,
+                json.dumps({"mail": False, "clash": False, "vendors": False, "marketplace": False, **req.modules}),
+            )
+        else:
+            merged = {**(existing["active_modules"] or {}), **req.modules}
+            row = await conn.fetchrow(
+                """
+                UPDATE client_subscriptions
+                SET active_modules = $1::jsonb, updated_at = NOW()
+                WHERE client_id = $2
+                RETURNING id, active_modules
+                """,
+                json.dumps(merged),
+                client_id,
+            )
+    await user_service.log_admin_activity(
+        admin["id"], "modules_updated", "client_subscriptions", row["id"],
+        {"client_id": client_id, "modules": req.modules},
+    )
+    return {"success": True, "active_modules": row["active_modules"]}

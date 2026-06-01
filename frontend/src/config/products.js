@@ -29,6 +29,16 @@ export const PRODUCTS = [
     color: '#D97706',
     status: 'live'
   },
+  {
+    id: 'connect',
+    name: 'POMAR Connect',
+    description: 'Unified action queue — push RFIs, clashes & compliance to Procore/Kahua',
+    icon: '⚡',
+    path: '/connect',
+    logo: '/logos/pomar.png',
+    color: '#D97706',
+    status: 'live'
+  },
 ];
 
 export const getProductById = (id) => PRODUCTS.find(p => p.id === id);

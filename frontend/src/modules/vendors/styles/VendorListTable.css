@@ -281,3 +281,48 @@
     width: 100%;
   }
 }
+/* Share to Marketplace */
+.share-marketplace-btn {
+  background: var(--inkwell);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.share-marketplace-btn:hover:not(:disabled) {
+  background: var(--inkwell-light);
+}
+
+.share-marketplace-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.share-marketplace-btn.disabled {
+  background: #d1d5db;
+  color: #6b7280;
+  cursor: not-allowed;
+  display: inline-block;
+  border-radius: var(--radius-pill);
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.share-marketplace-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--success);
+  background: #d1fae5;
+  border-radius: var(--radius-pill);
+  padding: 5px 12px;
+}
+
+.share-msg { font-size: 12px; }
+.share-msg--success { color: var(--success); }
+.share-msg--error   { color: var(--error); }

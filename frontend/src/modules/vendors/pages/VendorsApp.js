@@ -12,6 +12,7 @@ export default function VendorsApp({ user, userId, onLogout }) {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showAddSection, setShowAddSection] = useState(false);
+  const [hasMarketplaceLicense, setHasMarketplaceLicense] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     trade: '',
@@ -60,8 +61,20 @@ export default function VendorsApp({ user, userId, onLogout }) {
     }, [filters, pagination.limit, pagination.offset]);
 
   useEffect(() => {
-      searchVendors();
-    }, [filters, pagination.offset, searchVendors]);
+    searchVendors();
+  }, [filters, pagination.offset, searchVendors]);
+
+  useEffect(() => {
+    const checkMarketplaceLicense = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/marketplace/listings?userId=${userId}`);
+        setHasMarketplaceLicense(res.status !== 403);
+      } catch {
+        setHasMarketplaceLicense(false);
+      }
+    };
+    if (userId) checkMarketplaceLicense();
+  }, [userId]);
 
   const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
@@ -106,6 +119,11 @@ export default function VendorsApp({ user, userId, onLogout }) {
             />
           </div>
           <div className="vendors-top-right">
+            <a href="/connect" style={{ textDecoration: 'none' }}>
+              <button style={{ background: '#D97706', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', fontWeight: '600', fontSize: '0.82rem', cursor: 'pointer' }}>
+                ⚡ Connect
+              </button>
+            </a>
             <VendorExport filters={filters} />
             {!showAddSection && (
               <button
@@ -148,6 +166,7 @@ export default function VendorsApp({ user, userId, onLogout }) {
           onPrevPage={handlePrevPage}
           userId={userId}
           onVendorUpdated={searchVendors}
+          hasMarketplaceLicense={hasMarketplaceLicense}
         />
       </div>
     </div>
