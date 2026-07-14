@@ -38,7 +38,8 @@ class PushRequest(BaseModel):
 
 async def _insert_queue_item(conn, *, module: str, type_: str, title: str,
                               detail: str, priority: str, source_id: str,
-                              pmis_target: str, user_id: Optional[int]):
+                              pmis_target: str, user_id: Optional[int],
+                              project_id: Optional[int] = None):
     """Insert into connect_queue only if same source_id not already pending."""
     existing = await conn.fetchval(
         "SELECT id FROM connect_queue WHERE source_id=$1 AND status='pending'",
@@ -48,20 +49,20 @@ async def _insert_queue_item(conn, *, module: str, type_: str, title: str,
         return None
     row = await conn.fetchrow(
         """INSERT INTO connect_queue
-           (module, type, title, detail, priority, source_id, pmis_target, user_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *""",
-        module, type_, title, detail, priority, source_id, pmis_target, user_id,
+           (module, type, title, detail, priority, source_id, pmis_target, user_id, project_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *""",
+        module, type_, title, detail, priority, source_id, pmis_target, user_id, project_id,
     )
     return dict(row)
 
 
 async def _log_action(conn, *, queue_item_id, action: str, module: str,
                        status: str, error_message: Optional[str] = None,
-                       user_id: Optional[int] = None):
+                       user_id: Optional[int] = None, project_id: Optional[int] = None):
     await conn.execute(
-        """INSERT INTO connect_log (queue_item_id, action, module, status, error_message, user_id)
-           VALUES ($1,$2,$3,$4,$5,$6)""",
-        queue_item_id, action, module, status, error_message, user_id,
+        """INSERT INTO connect_log (queue_item_id, action, module, status, error_message, user_id, project_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7)""",
+        queue_item_id, action, module, status, error_message, user_id, project_id,
     )
 
 
@@ -87,6 +88,7 @@ async def enqueue_mail_signal(signal_row: dict, user_id: Optional[int] = None):
             source_id=str(signal_row["id"]),
             pmis_target="procore",
             user_id=user_id,
+            project_id=signal_row.get("project_id"),
         )
 
 
@@ -120,6 +122,7 @@ async def enqueue_clash_report(report_row: dict, user_id: Optional[int] = None):
             source_id=str(report_row["id"]),
             pmis_target="procore",
             user_id=user_id,
+            project_id=report_row.get("project_id"),
         )
 
 
@@ -221,19 +224,25 @@ def start_scheduler():
 # ── Task 3: REST Endpoints ────────────────────────────────────────────────────
 
 @router.get("/queue")
-async def get_queue(user_id: Optional[int] = None):
+async def get_queue(user_id: Optional[int] = None, project_id: Optional[int] = None):
     """Return all pending queue items, high priority first, newest first."""
     pool = await get_pool()
     async with pool.acquire() as conn:
         query = """
-            SELECT id, module, type, title, detail, priority, pmis_target, status, created_at
+            SELECT id, module, type, title, detail, priority, pmis_target, status, created_at, project_id
             FROM connect_queue
             WHERE status = 'pending'
         """
         params = []
+        p = 1
         if user_id:
-            query += " AND (user_id = $1 OR user_id IS NULL)"
+            query += f" AND (user_id = ${p} OR user_id IS NULL)"
             params.append(user_id)
+            p += 1
+        if project_id:
+            query += f" AND (project_id = ${p} OR project_id IS NULL)"
+            params.append(project_id)
+            p += 1
         query += """
             ORDER BY
               CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
@@ -298,6 +307,7 @@ async def push_queue_item(item_id: UUID, body: PushRequest = PushRequest()):
                 module=item["module"],
                 status="success",
                 user_id=body.user_id,
+                project_id=item.get("project_id"),
             )
             return {"success": True, "message": f"Pushed to {target.capitalize()}"}
         else:
@@ -309,43 +319,70 @@ async def push_queue_item(item_id: UUID, body: PushRequest = PushRequest()):
                 status="failed",
                 error_message=error_msg,
                 user_id=body.user_id,
+                project_id=item.get("project_id"),
             )
             raise HTTPException(500, f"Push failed: {error_msg}")
 
 
 @router.get("/log")
-async def get_log(user_id: Optional[int] = None, limit: int = 20):
+async def get_log(user_id: Optional[int] = None, project_id: Optional[int] = None, limit: int = 20):
     """Return last N automation log entries."""
     pool = await get_pool()
     async with pool.acquire() as conn:
-        rows = await conn.fetch(
-            """SELECT cl.id, cl.action, cl.module, cl.status, cl.error_message, cl.created_at,
-                      cq.title AS queue_title, cq.type AS queue_type
-               FROM connect_log cl
-               LEFT JOIN connect_queue cq ON cq.id = cl.queue_item_id
-               ORDER BY cl.created_at DESC
-               LIMIT $1""",
-            limit,
-        )
+        query = """SELECT cl.id, cl.action, cl.module, cl.status, cl.error_message, cl.created_at,
+                          cq.title AS queue_title, cq.type AS queue_type
+                   FROM connect_log cl
+                   LEFT JOIN connect_queue cq ON cq.id = cl.queue_item_id
+                   WHERE 1=1"""
+        params = []
+        p = 1
+        if user_id:
+            query += f" AND (cl.user_id = ${p} OR cl.user_id IS NULL)"
+            params.append(user_id)
+            p += 1
+        if project_id:
+            query += f" AND (cl.project_id = ${p} OR cl.project_id IS NULL)"
+            params.append(project_id)
+            p += 1
+        query += f" ORDER BY cl.created_at DESC LIMIT ${p}"
+        params.append(limit)
+        rows = await conn.fetch(query, *params)
     return [dict(r) for r in rows]
 
 
 @router.get("/kpis")
-async def get_kpis(user_id: Optional[int] = None):
+async def get_kpis(user_id: Optional[int] = None, project_id: Optional[int] = None):
     """KPI counts for the Connect dashboard header cards."""
     pool = await get_pool()
     async with pool.acquire() as conn:
-        pending_count = await conn.fetchval(
-            "SELECT COUNT(*) FROM connect_queue WHERE status='pending'"
-        )
-        rfis_today = await conn.fetchval(
-            """SELECT COUNT(*) FROM connect_queue
-               WHERE type IN ('rfi','change_order')
-               AND DATE(created_at) = CURRENT_DATE"""
-        )
-        clash_alerts = await conn.fetchval(
-            "SELECT COUNT(*) FROM connect_queue WHERE module='clash' AND status='pending'"
-        )
+        if project_id:
+            pending_count = await conn.fetchval(
+                "SELECT COUNT(*) FROM connect_queue WHERE status='pending' AND (project_id=$1 OR project_id IS NULL)",
+                project_id,
+            )
+            rfis_today = await conn.fetchval(
+                """SELECT COUNT(*) FROM connect_queue
+                   WHERE type IN ('rfi','change_order')
+                   AND DATE(created_at) = CURRENT_DATE
+                   AND (project_id=$1 OR project_id IS NULL)""",
+                project_id,
+            )
+            clash_alerts = await conn.fetchval(
+                "SELECT COUNT(*) FROM connect_queue WHERE module='clash' AND status='pending' AND (project_id=$1 OR project_id IS NULL)",
+                project_id,
+            )
+        else:
+            pending_count = await conn.fetchval(
+                "SELECT COUNT(*) FROM connect_queue WHERE status='pending'"
+            )
+            rfis_today = await conn.fetchval(
+                """SELECT COUNT(*) FROM connect_queue
+                   WHERE type IN ('rfi','change_order')
+                   AND DATE(created_at) = CURRENT_DATE"""
+            )
+            clash_alerts = await conn.fetchval(
+                "SELECT COUNT(*) FROM connect_queue WHERE module='clash' AND status='pending'"
+            )
         total_vendors = await conn.fetchval("SELECT COUNT(*) FROM vendors")
         flagged_vendors = await conn.fetchval(
             """SELECT COUNT(DISTINCT id) FROM vendors

@@ -426,6 +426,10 @@ async def init_db():
             -- Clash project scoping (migration 007)
             ALTER TABLE clash_reports     ADD COLUMN IF NOT EXISTS project_id INT REFERENCES projects(id);
             ALTER TABLE clash_assignments ADD COLUMN IF NOT EXISTS project_id INT REFERENCES projects(id);
+
+            -- Connect project scoping (migration 008)
+            ALTER TABLE connect_queue ADD COLUMN IF NOT EXISTS project_id INT REFERENCES projects(id);
+            ALTER TABLE connect_log   ADD COLUMN IF NOT EXISTS project_id INT REFERENCES projects(id);
         """)
 
         await _backfill_clash_project_ids(conn)
