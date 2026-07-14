@@ -433,6 +433,7 @@ async def init_db():
         """)
 
         await _backfill_clash_project_ids(conn)
+        await _backfill_vendor_and_connect_project_ids(conn)
 
     print("✓ Database initialized")
 
@@ -469,4 +470,46 @@ async def _backfill_clash_project_ids(conn):
         await conn.execute(
             "UPDATE clash_assignments SET project_id = $1 WHERE user_id = $2 AND project_id IS NULL",
             project_id, raw_user_id,
+        )
+
+
+async def _backfill_vendor_and_connect_project_ids(conn):
+    """
+    One-time (idempotent) backfill for migration 009. Assigns pre-existing
+    vendor_imports links and connect_queue/connect_log rows to each user's
+    Default Project, so nothing disappears from the UI once project scoping
+    ships. vendor_imports is the only user<->vendor relationship that predates
+    project_vendors, so each imported vendor is linked to the importing user's
+    Default Project.
+    """
+    imports = await conn.fetch(
+        """SELECT DISTINCT vi.user_id, vi.vendor_id
+           FROM vendor_imports vi
+           LEFT JOIN project_vendors pv ON pv.vendor_id = vi.vendor_id
+           WHERE pv.id IS NULL"""
+    )
+    for row in imports:
+        project_id = await get_or_create_default_project(conn, row["user_id"])
+        await conn.execute(
+            "INSERT INTO project_vendors (project_id, vendor_id) VALUES ($1,$2) ON CONFLICT DO NOTHING",
+            project_id, row["vendor_id"],
+        )
+
+    connect_user_ids = await conn.fetch(
+        """SELECT DISTINCT user_id FROM (
+             SELECT user_id FROM connect_queue WHERE user_id IS NOT NULL AND project_id IS NULL
+             UNION
+             SELECT user_id FROM connect_log WHERE user_id IS NOT NULL AND project_id IS NULL
+           ) t"""
+    )
+    for row in connect_user_ids:
+        uid = row["user_id"]
+        project_id = await get_or_create_default_project(conn, uid)
+        await conn.execute(
+            "UPDATE connect_queue SET project_id = $1 WHERE user_id = $2 AND project_id IS NULL",
+            project_id, uid,
+        )
+        await conn.execute(
+            "UPDATE connect_log SET project_id = $1 WHERE user_id = $2 AND project_id IS NULL",
+            project_id, uid,
         )

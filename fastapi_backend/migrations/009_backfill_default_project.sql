@@ -1,0 +1,13 @@
+-- Migration: 009_backfill_default_project.sql
+-- Documents the backfill sweep run by fastapi_backend/db.py's
+-- _backfill_vendor_and_connect_project_ids on every startup (idempotent,
+-- guarded by NULL/NOT-EXISTS checks — no raw SQL to run here, this is a
+-- record of what that Python routine does):
+--
+--   * vendor_imports (the only pre-existing user<->vendor link) is backfilled
+--     into project_vendors under each importing user's Default Project.
+--   * connect_queue / connect_log rows with a user_id but no project_id are
+--     assigned to that user's Default Project.
+--
+-- (Clash's equivalent backfill shipped in migration 007 /
+-- _backfill_clash_project_ids.)
