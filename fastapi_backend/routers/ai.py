@@ -4,17 +4,10 @@ from pydantic import BaseModel
 from typing import Optional
 from db import get_pool
 from services.ai_helpers import summarize_email_thread, extract_action_items, detect_signals, process_meeting_notes
+from services.project_helpers import get_or_create_default_project
 from routers.connect import enqueue_mail_signal
 
 router = APIRouter(prefix="/api", tags=["AI"])
-
-
-async def get_or_create_default_project(conn, user_id: int) -> int:
-    row = await conn.fetchrow("SELECT id FROM projects WHERE user_id = $1 AND name = $2", user_id, "Default Project")
-    if row:
-        return row["id"]
-    row = await conn.fetchrow("INSERT INTO projects (user_id, name) VALUES ($1, $2) RETURNING id", user_id, "Default Project")
-    return row["id"]
 
 
 class SummarizeRequest(BaseModel):

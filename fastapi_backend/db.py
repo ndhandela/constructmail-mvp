@@ -1,6 +1,7 @@
 import os
 import asyncpg
 from dotenv import load_dotenv
+from services.project_helpers import get_or_create_default_project
 
 load_dotenv()
 
@@ -421,6 +422,47 @@ async def init_db():
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 UNIQUE(project_id, listing_id)
             );
+
+            -- Clash project scoping (migration 007)
+            ALTER TABLE clash_reports     ADD COLUMN IF NOT EXISTS project_id INT REFERENCES projects(id);
+            ALTER TABLE clash_assignments ADD COLUMN IF NOT EXISTS project_id INT REFERENCES projects(id);
         """)
 
+        await _backfill_clash_project_ids(conn)
+
     print("✓ Database initialized")
+
+
+async def _backfill_clash_project_ids(conn):
+    """
+    One-time (idempotent) backfill for migration 007. clash_reports/clash_assignments
+    predate project scoping and only carry a TEXT user_id plus a project_key that's an
+    opaque per-report hash (see ClashAnalyzer.js:getProjectKey) — not a real project
+    name. There's nothing meaningful to match project_key against, so every existing
+    row is assigned to its user's Default Project instead. Rows whose user_id isn't a
+    valid users.id (legacy/test data) are left untouched rather than guessed at.
+    """
+    user_ids = await conn.fetch(
+        """SELECT DISTINCT user_id FROM (
+             SELECT user_id FROM clash_reports WHERE project_id IS NULL
+             UNION
+             SELECT user_id FROM clash_assignments WHERE project_id IS NULL
+           ) t"""
+    )
+    for row in user_ids:
+        raw_user_id = row["user_id"]
+        if not raw_user_id or not str(raw_user_id).isdigit():
+            continue
+        uid = int(raw_user_id)
+        user_exists = await conn.fetchval("SELECT id FROM users WHERE id = $1", uid)
+        if not user_exists:
+            continue
+        project_id = await get_or_create_default_project(conn, uid)
+        await conn.execute(
+            "UPDATE clash_reports SET project_id = $1 WHERE user_id = $2 AND project_id IS NULL",
+            project_id, raw_user_id,
+        )
+        await conn.execute(
+            "UPDATE clash_assignments SET project_id = $1 WHERE user_id = $2 AND project_id IS NULL",
+            project_id, raw_user_id,
+        )

@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from typing import Optional, List, Any
 from db import get_pool
 from services.clash_helpers import analyze_clash_report, draft_clash_rfi
+from services.project_helpers import get_or_create_default_project
 from routers.connect import enqueue_clash_report
 
 router = APIRouter(prefix="/api/clash", tags=["Clash"])
@@ -30,6 +31,7 @@ class DraftRFIRequest(BaseModel):
 class AssignmentRequest(BaseModel):
     userId: str
     projectKey: str
+    projectId: Optional[int] = None
     clashName: str
     assignedTo: Optional[str] = None
     discipline: Optional[str] = None
@@ -43,6 +45,7 @@ class SaveReportRequest(BaseModel):
     fileName: Optional[str] = "report.html"
     summary: Optional[dict] = None
     projectKey: Optional[str] = None
+    projectId: Optional[int] = None
 
 
 class AgendaPDFRequest(BaseModel):
@@ -67,12 +70,18 @@ async def draft_rfi(req: DraftRFIRequest):
 
 
 @router.get("/assignments")
-async def get_assignments(userId: str, projectKey: str):
+async def get_assignments(userId: str, projectKey: str, projectId: Optional[int] = None):
     pool = await get_pool()
     async with pool.acquire() as conn:
-        rows = await conn.fetch(
-            "SELECT * FROM clash_assignments WHERE user_id = $1 AND project_key = $2", userId, projectKey
-        )
+        if projectId:
+            rows = await conn.fetch(
+                "SELECT * FROM clash_assignments WHERE user_id = $1 AND project_key = $2 AND project_id = $3",
+                userId, projectKey, projectId,
+            )
+        else:
+            rows = await conn.fetch(
+                "SELECT * FROM clash_assignments WHERE user_id = $1 AND project_key = $2", userId, projectKey
+            )
     return {"assignments": [dict(r) for r in rows]}
 
 
@@ -80,13 +89,16 @@ async def get_assignments(userId: str, projectKey: str):
 async def save_assignment(req: AssignmentRequest):
     pool = await get_pool()
     async with pool.acquire() as conn:
+        project_id = req.projectId
+        if project_id is None and req.userId and str(req.userId).isdigit():
+            project_id = await get_or_create_default_project(conn, int(req.userId))
         row = await conn.fetchrow(
-            """INSERT INTO clash_assignments (user_id, project_key, clash_name, assigned_to, discipline, notes, status, updated_at)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,NOW())
+            """INSERT INTO clash_assignments (user_id, project_key, project_id, clash_name, assigned_to, discipline, notes, status, updated_at)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())
                ON CONFLICT (user_id, project_key, clash_name)
-               DO UPDATE SET assigned_to=$4, discipline=$5, notes=$6, status=$7, updated_at=NOW()
+               DO UPDATE SET project_id=$3, assigned_to=$5, discipline=$6, notes=$7, status=$8, updated_at=NOW()
                RETURNING *""",
-            req.userId, req.projectKey, req.clashName,
+            req.userId, req.projectKey, project_id, req.clashName,
             req.assignedTo, req.discipline, req.notes, req.status or "open",
         )
     return {"assignment": dict(row)}
@@ -97,13 +109,16 @@ async def save_report(req: SaveReportRequest):
     pool = await get_pool()
     summary = req.summary or {}
     async with pool.acquire() as conn:
+        project_id = req.projectId
+        if project_id is None and req.userId and str(req.userId).isdigit():
+            project_id = await get_or_create_default_project(conn, int(req.userId))
         row = await conn.fetchrow(
-            """INSERT INTO clash_reports (user_id, test_name, file_name, total_clashes, new_clashes, active_clashes, reviewed_clashes, critical_clashes, high_clashes, project_key, created_at)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW()) RETURNING *""",
+            """INSERT INTO clash_reports (user_id, test_name, file_name, total_clashes, new_clashes, active_clashes, reviewed_clashes, critical_clashes, high_clashes, project_key, project_id, created_at)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW()) RETURNING *""",
             req.userId, req.testName, req.fileName,
             summary.get("total", 0), summary.get("New", 0), summary.get("Active", 0),
             summary.get("Reviewed", 0), summary.get("Critical", 0), summary.get("High", 0),
-            req.projectKey,
+            req.projectKey, project_id,
         )
         report_row = dict(row)
     # Auto-enqueue high/critical clashes into Connect queue
@@ -113,12 +128,18 @@ async def save_report(req: SaveReportRequest):
 
 
 @router.get("/reports")
-async def get_reports(userId: str):
+async def get_reports(userId: str, projectId: Optional[int] = None):
     pool = await get_pool()
     async with pool.acquire() as conn:
-        rows = await conn.fetch(
-            "SELECT * FROM clash_reports WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10", userId
-        )
+        if projectId:
+            rows = await conn.fetch(
+                "SELECT * FROM clash_reports WHERE user_id = $1 AND project_id = $2 ORDER BY created_at DESC LIMIT 10",
+                userId, projectId,
+            )
+        else:
+            rows = await conn.fetch(
+                "SELECT * FROM clash_reports WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10", userId
+            )
     return {"reports": [dict(r) for r in rows]}
 
 
