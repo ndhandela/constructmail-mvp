@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 from db import get_pool
 from services.email_service import send_email
+from services.project_helpers import get_or_create_default_project
 
 router = APIRouter(tags=["Misc"])
 
@@ -60,6 +61,18 @@ async def debug_user_data(user_id: int):
         "projects": [dict(r) for r in projects],
         "allSignals": [dict(r) for r in signals],
     }
+
+
+@router.get("/api/projects")
+async def get_projects(userId: int):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await get_or_create_default_project(conn, userId)
+        rows = await conn.fetch(
+            "SELECT id, name, project_number, client_name FROM projects WHERE user_id = $1 ORDER BY created_at",
+            userId,
+        )
+    return {"success": True, "projects": [dict(r) for r in rows]}
 
 
 @router.get("/api/clients")

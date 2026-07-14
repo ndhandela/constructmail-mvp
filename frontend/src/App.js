@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ProjectProvider } from './contexts/ProjectContext';
 import Auth from './modules/shared/auth/Auth';
 import LandingPage from './pages/LandingPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -202,11 +203,11 @@ function App() {
   // ── Detect /dashboard path for logged-in users ──────────────────────────
 if (userId && path === '/dashboard') {
   return (
-    <>
+    <ProjectProvider userId={userId}>
       <Header userId={userId} onLogout={handleLogout} />
       <ProductDashboard user={user} userId={userId} onProductSelect={handleProductSelect} />
       <Footer />
-    </>
+    </ProjectProvider>
   );
 }
 
@@ -237,76 +238,76 @@ if (userId && path === '/dashboard') {
   // ── POMAR Mail ───────────────────────────────────────────────────────────
   if (currentProduct === 'constructmail') {
     return (
-      <>
+      <ProjectProvider userId={userId}>
         <Header userId={userId} onLogout={handleLogout} />
         <ConstructMailApp user={user} userId={userId} onLogout={handleLogout} />
         <Footer />
-      </>
+      </ProjectProvider>
     );
   }
 
   // ── POMAR Clash ──────────────────────────────────────────────────────────
   if (currentProduct === 'clash') {
     return (
-      <>
+      <ProjectProvider userId={userId}>
         <Header userId={userId} onLogout={handleLogout} />
         <ClashAnalyzer />
         <Footer />
-      </>
+      </ProjectProvider>
     );
   }
 
   // ── POMAR Vendors ────────────────────────────────────────────────────
   if (currentProduct === 'vendors') {
     return (
-      <>
+      <ProjectProvider userId={userId}>
         <Header userId={userId} onLogout={handleLogout} />
         <VendorsApp user={user} userId={userId} onLogout={handleLogout} />
         <Footer />
-      </>
+      </ProjectProvider>
     );
   }
 
   // ── POMAR Connect ─────────────────────────────────────────────────────
   if (currentProduct === 'connect' || path === '/connect') {
     return (
-      <>
+      <ProjectProvider userId={userId}>
         <Header userId={userId} onLogout={handleLogout} />
         <ConnectApp userId={userId} />
         <Footer />
-      </>
+      </ProjectProvider>
     );
   }
 
 if (currentProduct === 'dashboard' || path === '/dashboard') {
     return (
-      <>
+      <ProjectProvider userId={userId}>
         <Header userId={userId} onLogout={handleLogout} />
         <ProductDashboard user={user} userId={userId} onProductSelect={handleProductSelect} />
         <Footer />
-      </>
+      </ProjectProvider>
     );
   }
 
   // ── Profile ───────────────────────────────────────────────────────────
   if (currentProduct === 'profile' || path === '/profile') {
     return (
-      <>
+      <ProjectProvider userId={userId}>
         <Header userId={userId} onLogout={handleLogout} user={user} />
         <ProfileApp userId={userId} />
         <Footer />
-      </>
+      </ProjectProvider>
     );
   }
 
   // ── POMAR Marketplace ──────────────────────────────────────────────────
   if (currentProduct === 'marketplace' || path === '/marketplace') {
     return (
-      <>
+      <ProjectProvider userId={userId}>
         <Header userId={userId} onLogout={handleLogout} user={user} />
         <MarketplaceApp user={user} userId={userId} />
         <Footer />
-      </>
+      </ProjectProvider>
     );
   }
 
