@@ -38,6 +38,10 @@ class ReviewRequest(BaseModel):
     comment: Optional[str] = None
 
 
+class SaveToProjectRequest(BaseModel):
+    projectId: int
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @router.get("/types")
@@ -235,6 +239,65 @@ async def add_review(listing_id: str, req: ReviewRequest, userId: int):
         )
 
     return {"success": True, "review": dict(review)}
+
+
+# ── Save a listing to a specific project ─────────────────────────────────────
+
+@router.post("/listings/{listing_id}/save-to-project")
+async def save_listing_to_project(listing_id: str, req: SaveToProjectRequest, userId: int):
+    await _require_marketplace_license(userId)
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        listing_exists = await conn.fetchval(
+            "SELECT id FROM marketplace_listings WHERE id = $1", listing_id
+        )
+        if not listing_exists:
+            raise HTTPException(404, "Listing not found")
+        project_exists = await conn.fetchval(
+            "SELECT id FROM projects WHERE id = $1", req.projectId
+        )
+        if not project_exists:
+            raise HTTPException(404, "Project not found")
+
+        row = await conn.fetchrow(
+            """INSERT INTO project_marketplace_saves (project_id, listing_id, saved_by_user_id)
+               VALUES ($1,$2,$3)
+               ON CONFLICT (project_id, listing_id) DO NOTHING RETURNING *""",
+            req.projectId, listing_id, userId,
+        )
+        if not row:
+            row = await conn.fetchrow(
+                "SELECT * FROM project_marketplace_saves WHERE project_id = $1 AND listing_id = $2",
+                req.projectId, listing_id,
+            )
+    return {"success": True, "save": dict(row)}
+
+
+@router.get("/projects/{project_id}/saved-listings")
+async def get_project_saved_listings(project_id: int, userId: int):
+    await _require_marketplace_license(userId)
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT
+                ml.id, ml.status, ml.created_at,
+                mlt.slug  AS listing_type,
+                mlt.label AS listing_type_label,
+                mvd.name, mvd.trade, mvd.location,
+                mvd.contact_email, mvd.contact_phone,
+                mvd.website, mvd.description,
+                pms.created_at AS saved_at
+            FROM project_marketplace_saves pms
+            JOIN marketplace_listings ml ON ml.id = pms.listing_id
+            JOIN marketplace_listing_types mlt ON mlt.id = ml.listing_type_id
+            LEFT JOIN marketplace_vendor_details mvd ON mvd.listing_id = ml.id
+            WHERE pms.project_id = $1
+            ORDER BY pms.created_at DESC
+            """,
+            project_id,
+        )
+    return {"success": True, "listings": [dict(r) for r in rows]}
 
 
 # ── Share private vendor to marketplace ──────────────────────────────────────

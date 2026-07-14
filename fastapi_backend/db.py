@@ -411,6 +411,16 @@ async def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(project_id, vendor_id)
             );
+
+            -- Project marketplace saves (migration 006)
+            CREATE TABLE IF NOT EXISTS project_marketplace_saves (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES projects(id),
+                listing_id UUID NOT NULL REFERENCES marketplace_listings(id),
+                saved_by_user_id INT REFERENCES users(id),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                UNIQUE(project_id, listing_id)
+            );
         """)
 
     print("✓ Database initialized")
