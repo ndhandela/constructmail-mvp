@@ -402,6 +402,15 @@ async def init_db():
 
             ALTER TABLE users ADD COLUMN IF NOT EXISTS gmail_send_scope_granted   BOOLEAN DEFAULT false;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS outlook_send_scope_granted BOOLEAN DEFAULT false;
+
+            -- Project-vendor linking (migration 005)
+            CREATE TABLE IF NOT EXISTS project_vendors (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES projects(id),
+                vendor_id INT NOT NULL REFERENCES vendors(id),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(project_id, vendor_id)
+            );
         """)
 
     print("✓ Database initialized")

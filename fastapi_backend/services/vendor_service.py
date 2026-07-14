@@ -36,33 +36,42 @@ async def get_vendor(vendor_id: int) -> dict:
 async def search_vendors(filters: dict) -> dict:
     pool = await get_pool()
     async with pool.acquire() as conn:
-        query = "SELECT * FROM vendors WHERE 1=1"
+        select_clause = "SELECT v.*"
+        from_clause = "FROM vendors v"
         params = []
         p = 1
 
+        if filters.get("project_id"):
+            select_clause = "SELECT DISTINCT v.*"
+            from_clause += f" JOIN project_vendors pv ON pv.vendor_id = v.id AND pv.project_id = ${p}"
+            params.append(int(filters["project_id"]))
+            p += 1
+
+        query = f"{select_clause} {from_clause} WHERE 1=1"
+
         if filters.get("search"):
-            query += f" AND (LOWER(name) LIKE LOWER(${p}) OR LOWER(trade) LIKE LOWER(${p}))"
+            query += f" AND (LOWER(v.name) LIKE LOWER(${p}) OR LOWER(v.trade) LIKE LOWER(${p}))"
             params.append(f"%{filters['search']}%")
             p += 1
         if filters.get("trade"):
-            query += f" AND LOWER(trade) = LOWER(${p})"
+            query += f" AND LOWER(v.trade) = LOWER(${p})"
             params.append(filters["trade"])
             p += 1
         if filters.get("city"):
-            query += f" AND LOWER(city) = LOWER(${p})"
+            query += f" AND LOWER(v.city) = LOWER(${p})"
             params.append(filters["city"])
             p += 1
         if filters.get("insurance_status"):
-            query += f" AND insurance_status = ${p}"
+            query += f" AND v.insurance_status = ${p}"
             params.append(filters["insurance_status"])
             p += 1
         if filters.get("min_rating"):
-            query += f" AND avg_rating >= ${p}"
+            query += f" AND v.avg_rating >= ${p}"
             params.append(float(filters["min_rating"]))
             p += 1
 
-        sort_map = {"rating": "avg_rating DESC", "name": "name ASC", "newest": "created_at DESC", "reviews": "review_count DESC"}
-        query += f" ORDER BY {sort_map.get(filters.get('sort', 'newest'), 'created_at DESC')}"
+        sort_map = {"rating": "v.avg_rating DESC", "name": "v.name ASC", "newest": "v.created_at DESC", "reviews": "v.review_count DESC"}
+        query += f" ORDER BY {sort_map.get(filters.get('sort', 'newest'), 'v.created_at DESC')}"
 
         limit = int(filters.get("limit", 50))
         offset = int(filters.get("offset", 0))
@@ -71,6 +80,28 @@ async def search_vendors(filters: dict) -> dict:
 
         rows = await conn.fetch(query, *params)
         return {"success": True, "vendors": [dict(r) for r in rows], "total": len(rows)}
+
+
+async def link_vendor_to_project(vendor_id: int, project_id: int) -> dict:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        vendor = await conn.fetchval("SELECT id FROM vendors WHERE id = $1", vendor_id)
+        if not vendor:
+            return {"success": False, "error": "Vendor not found"}
+        project = await conn.fetchval("SELECT id FROM projects WHERE id = $1", project_id)
+        if not project:
+            return {"success": False, "error": "Project not found"}
+        row = await conn.fetchrow(
+            """INSERT INTO project_vendors (project_id, vendor_id) VALUES ($1,$2)
+               ON CONFLICT (project_id, vendor_id) DO NOTHING RETURNING *""",
+            project_id, vendor_id,
+        )
+        if not row:
+            row = await conn.fetchrow(
+                "SELECT * FROM project_vendors WHERE project_id = $1 AND vendor_id = $2",
+                project_id, vendor_id,
+            )
+        return {"success": True, "link": dict(row)}
 
 
 async def update_vendor(vendor_id: int, updates: dict) -> dict:

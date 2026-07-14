@@ -37,6 +37,10 @@ class ClaimRequest(BaseModel):
     password: str
 
 
+class LinkProjectRequest(BaseModel):
+    projectId: int
+
+
 @router.post("")
 async def create_vendor(req: CreateVendorRequest):
     result = await vendor_service.create_vendor(req.dict())
@@ -52,6 +56,7 @@ async def search_vendors(
     city: Optional[str] = None,
     insurance_status: Optional[str] = None,
     min_rating: Optional[float] = None,
+    project_id: Optional[int] = None,
     sort: str = "newest",
     limit: int = 50,
     offset: int = 0,
@@ -59,7 +64,7 @@ async def search_vendors(
     filters = {k: v for k, v in {
         "search": search, "trade": trade, "city": city,
         "insurance_status": insurance_status, "min_rating": min_rating,
-        "sort": sort, "limit": limit, "offset": offset,
+        "project_id": project_id, "sort": sort, "limit": limit, "offset": offset,
     }.items() if v is not None}
     result = await vendor_service.search_vendors(filters)
     if not result["success"]:
@@ -106,6 +111,14 @@ async def bulk_import(file: UploadFile = File(...), userId: int = Form(...)):
     vendors = list(reader)
     result = await vendor_service.bulk_import_vendors(vendors, userId)
     return {"success": True, "imported": result["imported"], "failed": result["failed"]}
+
+
+@router.post("/{vendor_id}/link-project")
+async def link_vendor_to_project(vendor_id: int, req: LinkProjectRequest):
+    result = await vendor_service.link_vendor_to_project(vendor_id, req.projectId)
+    if not result["success"]:
+        raise HTTPException(404, result["error"])
+    return {"success": True, "link": result["link"]}
 
 
 @router.post("/{vendor_id}/claim")
