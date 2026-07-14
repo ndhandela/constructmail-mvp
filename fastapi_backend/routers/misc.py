@@ -75,6 +75,88 @@ async def get_projects(userId: int):
     return {"success": True, "projects": [dict(r) for r in rows]}
 
 
+@router.get("/api/activity/feed")
+async def get_activity_feed(userId: int, limit: int = 20):
+    """
+    Merged recent-activity feed across a user's projects, tagged by project and
+    module. Powers the "All projects" option in the Header switcher. Marketplace
+    is browse-oriented and intentionally excluded.
+    """
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        project_names = {
+            r["id"]: r["name"]
+            for r in await conn.fetch("SELECT id, name FROM projects WHERE user_id = $1", userId)
+        }
+
+        mail_summaries = await conn.fetch(
+            """SELECT id, project_id, summary AS title, created_at FROM email_threads
+               WHERE project_id = ANY($1::int[]) ORDER BY created_at DESC LIMIT $2""",
+            list(project_names.keys()), limit,
+        )
+        mail_signals = await conn.fetch(
+            """SELECT id, project_id, signal_type, raw_text, created_at FROM signals
+               WHERE project_id = ANY($1::int[]) ORDER BY created_at DESC LIMIT $2""",
+            list(project_names.keys()), limit,
+        )
+        clash_reports = await conn.fetch(
+            """SELECT id, project_id, test_name, total_clashes, created_at FROM clash_reports
+               WHERE project_id = ANY($1::int[]) ORDER BY created_at DESC LIMIT $2""",
+            list(project_names.keys()), limit,
+        )
+        vendor_links = await conn.fetch(
+            """SELECT pv.id, pv.project_id, v.name AS vendor_name, pv.created_at
+               FROM project_vendors pv JOIN vendors v ON v.id = pv.vendor_id
+               WHERE pv.project_id = ANY($1::int[]) ORDER BY pv.created_at DESC LIMIT $2""",
+            list(project_names.keys()), limit,
+        )
+        connect_items = await conn.fetch(
+            """SELECT id, project_id, title, created_at FROM connect_queue
+               WHERE project_id = ANY($1::int[]) ORDER BY created_at DESC LIMIT $2""",
+            list(project_names.keys()), limit,
+        )
+
+    items = []
+    for r in mail_summaries:
+        items.append({
+            "module": "mail", "type": "summary",
+            "title": (r["title"] or "")[:120] or "Email thread summarized",
+            "project_id": r["project_id"], "project_name": project_names.get(r["project_id"]),
+            "created_at": r["created_at"],
+        })
+    for r in mail_signals:
+        items.append({
+            "module": "mail", "type": "signal",
+            "title": f"{r['signal_type'] or 'Signal'} detected: {(r['raw_text'] or '')[:80]}",
+            "project_id": r["project_id"], "project_name": project_names.get(r["project_id"]),
+            "created_at": r["created_at"],
+        })
+    for r in clash_reports:
+        items.append({
+            "module": "clash", "type": "clash_report",
+            "title": f"{r['test_name'] or 'Clash report'} — {r['total_clashes']} clashes",
+            "project_id": r["project_id"], "project_name": project_names.get(r["project_id"]),
+            "created_at": r["created_at"],
+        })
+    for r in vendor_links:
+        items.append({
+            "module": "vendor", "type": "vendor_linked",
+            "title": f"{r['vendor_name']} linked to project",
+            "project_id": r["project_id"], "project_name": project_names.get(r["project_id"]),
+            "created_at": r["created_at"],
+        })
+    for r in connect_items:
+        items.append({
+            "module": "connect", "type": "queue_item",
+            "title": r["title"],
+            "project_id": r["project_id"], "project_name": project_names.get(r["project_id"]),
+            "created_at": r["created_at"],
+        })
+
+    items.sort(key=lambda i: i["created_at"], reverse=True)
+    return {"success": True, "items": items[:limit]}
+
+
 @router.get("/api/clients")
 async def get_clients_list(admin_token: str = None):
     # Simple endpoint — auth handled separately in admin router

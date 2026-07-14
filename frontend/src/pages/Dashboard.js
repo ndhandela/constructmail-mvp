@@ -1,6 +1,62 @@
-import React from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { PRODUCTS } from '../config/products';
+import { ProjectContext } from '../contexts/ProjectContext';
 import '../styles/Dashboard.css';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+
+const MODULE_ICONS = { mail: '✉️', clash: '⚡', vendor: '🏢', connect: '⚡' };
+
+function timeAgo(ts) {
+  if (!ts) return '';
+  const diff = (Date.now() - new Date(ts).getTime()) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
+function ActivityFeedPanel({ userId }) {
+  const { projects } = useContext(ProjectContext);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) return;
+    setLoading(true);
+    fetch(`${API_BASE_URL}/api/activity/feed?userId=${userId}`)
+      .then((res) => res.json())
+      .then((data) => setItems(data.items || []))
+      .catch((err) => console.error('Fetch activity feed error:', err))
+      .finally(() => setLoading(false));
+  }, [userId, projects.length]);
+
+  if (projects.length <= 1) return null;
+
+  return (
+    <>
+      <div className="pd-section-label" style={{ marginTop: 40 }}>Recent activity across projects</div>
+      <div className="pd-activity-feed">
+        {loading ? (
+          <p className="pd-activity-empty">Loading…</p>
+        ) : items.length === 0 ? (
+          <p className="pd-activity-empty">No recent activity yet.</p>
+        ) : (
+          <ul className="pd-activity-list">
+            {items.map((item, i) => (
+              <li key={i} className="pd-activity-item">
+                <span className="pd-activity-icon">{MODULE_ICONS[item.module] || '📋'}</span>
+                <span className="pd-activity-title">{item.title}</span>
+                <span className="pd-activity-project">{item.project_name}</span>
+                <span className="pd-activity-time">{timeAgo(item.created_at)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </>
+  );
+}
 
 // Clean SVG icons for each product
 const PRODUCT_ICONS = {
@@ -116,6 +172,8 @@ export default function ProductDashboard({ user, userId, onProductSelect }) {
           </div>
         ))}
       </div>
+
+      <ActivityFeedPanel userId={userId} />
     </div>
   );
 }

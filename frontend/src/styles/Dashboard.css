@@ -130,3 +130,63 @@
 @media (max-width: 600px) {
   .pd-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Cross-project activity feed ─────────────────────────────────────────── */
+
+.pd-activity-feed {
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 8px;
+}
+
+.pd-activity-empty {
+  padding: 16px;
+  color: var(--slate);
+  font-size: 13px;
+  margin: 0;
+}
+
+.pd-activity-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pd-activity-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 13px;
+}
+
+.pd-activity-item:last-child {
+  border-bottom: none;
+}
+
+.pd-activity-icon {
+  flex-shrink: 0;
+}
+
+.pd-activity-title {
+  flex: 1;
+  color: var(--inkwell);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pd-activity-project {
+  flex-shrink: 0;
+  color: var(--saffron);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.pd-activity-time {
+  flex-shrink: 0;
+  color: var(--slate);
+  font-size: 12px;
+}
