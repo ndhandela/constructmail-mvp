@@ -18,6 +18,8 @@ async def init_db():
     pool = await get_pool()
     async with pool.acquire() as conn:
         await conn.execute("""
+            CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
                 email VARCHAR(255) UNIQUE NOT NULL,
@@ -379,6 +381,27 @@ async def init_db():
                 updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
+
+            -- Draft replies (migration 004)
+            CREATE TABLE IF NOT EXISTS draft_replies (
+                id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id            INT NOT NULL REFERENCES users(id),
+                source_email_id    VARCHAR NOT NULL,
+                provider           VARCHAR NOT NULL CHECK (provider IN ('gmail', 'outlook')),
+                thread_id          VARCHAR NOT NULL,
+                ai_generated_body  TEXT NOT NULL,
+                edited_body        TEXT,
+                status             VARCHAR NOT NULL DEFAULT 'pending_review'
+                                       CHECK (status IN ('pending_review', 'approved', 'sent', 'discarded')),
+                created_at         TIMESTAMPTZ DEFAULT now(),
+                sent_at            TIMESTAMPTZ,
+                sent_message_id    VARCHAR
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_draft_replies_user_status ON draft_replies(user_id, status);
+
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS gmail_send_scope_granted   BOOLEAN DEFAULT false;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS outlook_send_scope_granted BOOLEAN DEFAULT false;
         """)
 
     print("✓ Database initialized")

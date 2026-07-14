@@ -54,6 +54,11 @@ export default function ConnectApp({ userId }) {
   const [pushing, setPushing] = useState({});
   const [toast, setToast] = useState(null);
 
+  const [drafts, setDrafts] = useState([]);
+  const [editingDraftId, setEditingDraftId] = useState(null);
+  const [draftBodies, setDraftBodies] = useState({});
+  const [sendingDraft, setSendingDraft] = useState({});
+
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
@@ -65,19 +70,21 @@ export default function ConnectApp({ userId }) {
       const uid = userId || localStorage.getItem('constructmail_userId');
       const qs = uid ? `?user_id=${uid}` : '';
 
-      const [qRes, lRes, kRes] = await Promise.all([
+      const [qRes, lRes, kRes, dRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/connect/queue${qs}`),
         fetch(`${API_BASE_URL}/api/connect/log?limit=10`),
         fetch(`${API_BASE_URL}/api/connect/kpis${qs}`),
+        uid ? fetch(`${API_BASE_URL}/api/mail/drafts?userId=${uid}`) : Promise.resolve(null),
       ]);
 
-      const [qData, lData, kData] = await Promise.all([
-        qRes.json(), lRes.json(), kRes.json(),
+      const [qData, lData, kData, dData] = await Promise.all([
+        qRes.json(), lRes.json(), kRes.json(), dRes ? dRes.json() : Promise.resolve([]),
       ]);
 
       setQueue(Array.isArray(qData) ? qData : []);
       setLog(Array.isArray(lData) ? lData : []);
       setKpis(kData);
+      setDrafts(Array.isArray(dData) ? dData : []);
     } catch (err) {
       console.error('Connect fetch error:', err);
     } finally {
@@ -86,6 +93,61 @@ export default function ConnectApp({ userId }) {
   }, [userId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  // ── Draft reply handlers ──────────────────────────────────────────────
+
+  const currentDraftBody = (draft) =>
+    draftBodies[draft.id] ?? draft.edited_body ?? draft.ai_generated_body;
+
+  const handleDraftEdit = (draft) => {
+    setDraftBodies(b => ({ ...b, [draft.id]: currentDraftBody(draft) }));
+    setEditingDraftId(draft.id);
+  };
+
+  const handleDraftBodyChange = (draftId, value) => {
+    setDraftBodies(b => ({ ...b, [draftId]: value }));
+  };
+
+  const handleApproveAndSend = async (draft) => {
+    setSendingDraft(s => ({ ...s, [draft.id]: true }));
+    try {
+      const body = currentDraftBody(draft);
+      if (body !== (draft.edited_body ?? draft.ai_generated_body)) {
+        await fetch(`${API_BASE_URL}/api/mail/drafts/${draft.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ edited_body: body }),
+        });
+      }
+      const res = await fetch(`${API_BASE_URL}/api/mail/${draft.provider}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft_reply_id: draft.id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('✅ Reply sent');
+        setDrafts(d => d.filter(x => x.id !== draft.id));
+        setEditingDraftId(id => (id === draft.id ? null : id));
+      } else {
+        showToast(`❌ ${data.detail || 'Send failed'}`, 'error');
+      }
+    } catch (err) {
+      showToast('❌ Network error', 'error');
+    } finally {
+      setSendingDraft(s => ({ ...s, [draft.id]: false }));
+    }
+  };
+
+  const handleDiscardDraft = async (draft) => {
+    try {
+      await fetch(`${API_BASE_URL}/api/mail/drafts/${draft.id}/discard`, { method: 'POST' });
+      setDrafts(d => d.filter(x => x.id !== draft.id));
+      showToast('Draft discarded');
+    } catch (err) {
+      showToast('❌ Failed to discard', 'error');
+    }
+  };
 
   const handlePush = async (item) => {
     setPushing(p => ({ ...p, [item.id]: true }));
@@ -178,11 +240,67 @@ export default function ConnectApp({ userId }) {
           <div className="connect-section-header">
             <h2>
               Action Queue
-              {queue.length > 0 && (
-                <span className="count-badge">{queue.length}</span>
+              {(queue.length + drafts.length) > 0 && (
+                <span className="count-badge">{queue.length + drafts.length}</span>
               )}
             </h2>
           </div>
+
+          {drafts.length > 0 && (
+            <div className="draft-reply-list">
+              {drafts.map(draft => (
+                <div className="draft-reply-card" key={draft.id}>
+                  <div className="draft-reply-header">
+                    <span className={`draft-reply-provider ${draft.provider}`}>
+                      {draft.provider === 'gmail' ? '✉️ Gmail' : '📧 Outlook'}
+                    </span>
+                    <span className="draft-reply-people">
+                      {draft.from && <>From: {draft.from}</>}
+                      {draft.to && <> · To: {draft.to}</>}
+                    </span>
+                  </div>
+                  {draft.subject && <div className="draft-reply-subject">{draft.subject}</div>}
+                  {draft.snippet && (
+                    <div className="draft-reply-original">
+                      <span className="draft-reply-label">Original</span>
+                      <p>{draft.snippet}</p>
+                    </div>
+                  )}
+                  <div className="draft-reply-body-section">
+                    <span className="draft-reply-label">AI-drafted reply</span>
+                    {editingDraftId === draft.id ? (
+                      <textarea
+                        className="draft-reply-textarea"
+                        value={currentDraftBody(draft)}
+                        onChange={(e) => handleDraftBodyChange(draft.id, e.target.value)}
+                        rows={6}
+                      />
+                    ) : (
+                      <p className="draft-reply-text">{currentDraftBody(draft)}</p>
+                    )}
+                  </div>
+                  <div className="draft-reply-actions">
+                    <button
+                      className="dismiss-btn"
+                      onClick={() => (editingDraftId === draft.id ? setEditingDraftId(null) : handleDraftEdit(draft))}
+                    >
+                      {editingDraftId === draft.id ? 'Done Editing' : 'Edit'}
+                    </button>
+                    <button
+                      className="push-btn"
+                      disabled={sendingDraft[draft.id]}
+                      onClick={() => handleApproveAndSend(draft)}
+                    >
+                      {sendingDraft[draft.id] ? 'Sending…' : '✓ Approve & Send'}
+                    </button>
+                    <button className="dismiss-btn" onClick={() => handleDiscardDraft(draft)}>
+                      Discard
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="connect-queue-card">
             {loading ? (

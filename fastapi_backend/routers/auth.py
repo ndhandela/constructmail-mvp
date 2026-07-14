@@ -46,6 +46,7 @@ class ResetPasswordRequest(BaseModel):
 class GmailCallbackRequest(BaseModel):
     code: str
     userId: int
+    codeVerifier: Optional[str] = None
 
 
 class OutlookCallbackRequest(BaseModel):
@@ -182,17 +183,18 @@ async def reset_password(req: ResetPasswordRequest):
 @router.get("/gmail-url")
 async def gmail_url():
     from services.gmail_helpers import get_google_auth_url
-    return {"authUrl": get_google_auth_url()}
+    result = get_google_auth_url()
+    return {"authUrl": result["auth_url"], "codeVerifier": result["code_verifier"]}
 
 
 @router.post("/gmail-callback")
 async def gmail_callback(req: GmailCallbackRequest):
     from services.gmail_helpers import get_access_token
-    tokens = await get_access_token(req.code)
+    tokens = await get_access_token(req.code, req.codeVerifier)
     pool = await get_pool()
     async with pool.acquire() as conn:
         await conn.execute(
-            "UPDATE users SET gmail_access_token = $1, gmail_refresh_token = $2 WHERE id = $3",
+            "UPDATE users SET gmail_access_token = $1, gmail_refresh_token = $2, gmail_send_scope_granted = TRUE WHERE id = $3",
             tokens["access_token"], tokens.get("refresh_token"), req.userId,
         )
     return {"success": True, "message": "Gmail connected successfully"}
@@ -211,7 +213,7 @@ async def outlook_callback_post(req: OutlookCallbackRequest):
     pool = await get_pool()
     async with pool.acquire() as conn:
         await conn.execute(
-            "UPDATE users SET outlook_access_token = $1, outlook_refresh_token = $2, outlook_token_expires = $3 WHERE id = $4",
+            "UPDATE users SET outlook_access_token = $1, outlook_refresh_token = $2, outlook_token_expires = $3, outlook_send_scope_granted = TRUE WHERE id = $4",
             tokens["access_token"], tokens.get("refresh_token"), tokens.get("expires_at"), req.userId,
         )
     return {"success": True, "message": "Outlook connected successfully"}
@@ -247,12 +249,17 @@ async def procore_callback(code: str = None, state: str = ""):
     if not code:
         raise HTTPException(400, "No code received")
     tokens = await exchange_code_for_token(code)
+    import os as _os
+    key = _os.getenv("TOKEN_ENCRYPTION_KEY")
     pool = await get_pool()
     async with pool.acquire() as conn:
         await conn.execute(
             """INSERT INTO procore_tokens (user_id, access_token, refresh_token, expires_at)
-               VALUES ($1,$2,$3,NOW() + INTERVAL '2 hours')
-               ON CONFLICT (user_id) DO UPDATE SET access_token=$2, refresh_token=$3, expires_at=NOW() + INTERVAL '2 hours'""",
-            state, tokens["access_token"], tokens.get("refresh_token"),
+               VALUES ($1, pgp_sym_encrypt($2, $3), pgp_sym_encrypt($4, $3), NOW() + INTERVAL '2 hours')
+               ON CONFLICT (user_id) DO UPDATE SET
+                 access_token = pgp_sym_encrypt($2, $3),
+                 refresh_token = pgp_sym_encrypt($4, $3),
+                 expires_at = NOW() + INTERVAL '2 hours'""",
+            state, tokens["access_token"], key, tokens.get("refresh_token"),
         )
     return HTMLResponse("<script>window.opener&&window.opener.postMessage({type:'PROCORE_CONNECTED'},'*');window.close();</script>")

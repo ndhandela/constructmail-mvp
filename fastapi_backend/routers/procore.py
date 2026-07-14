@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
@@ -23,9 +24,13 @@ async def procore_status(userId: str):
 
 @router.get("/projects")
 async def procore_projects(userId: str):
+    key = os.getenv("TOKEN_ENCRYPTION_KEY")
     pool = await get_pool()
     async with pool.acquire() as conn:
-        row = await conn.fetchrow("SELECT access_token FROM procore_tokens WHERE user_id = $1", userId)
+        row = await conn.fetchrow(
+            "SELECT pgp_sym_decrypt(access_token::bytea, $2) AS access_token FROM procore_tokens WHERE user_id = $1",
+            userId, key,
+        )
     if not row:
         raise HTTPException(401, "Procore not connected")
     projects = await get_projects(row["access_token"])
@@ -34,9 +39,13 @@ async def procore_projects(userId: str):
 
 @router.post("/create-rfi")
 async def procore_create_rfi(req: CreateRFIRequest):
+    key = os.getenv("TOKEN_ENCRYPTION_KEY")
     pool = await get_pool()
     async with pool.acquire() as conn:
-        row = await conn.fetchrow("SELECT access_token FROM procore_tokens WHERE user_id = $1", req.userId)
+        row = await conn.fetchrow(
+            "SELECT pgp_sym_decrypt(access_token::bytea, $2) AS access_token FROM procore_tokens WHERE user_id = $1",
+            req.userId, key,
+        )
     if not row:
         raise HTTPException(401, "Procore not connected")
     rfi = await create_rfi(row["access_token"], req.projectId, req.rfiData)

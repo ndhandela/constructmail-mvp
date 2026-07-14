@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backend",
+      "runtimeExecutable": "fastapi_backend/venv/bin/python",
+      "runtimeArgs": ["-m", "uvicorn", "main:app", "--reload", "--port", "3001", "--app-dir", "fastapi_backend"],
+      "port": 3001
+    },
+    {
+      "name": "frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start", "--prefix", "frontend"],
+      "port": 3000
+    }
+  ]
+}

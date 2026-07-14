@@ -1,5 +1,7 @@
 import os
 import base64
+from email.message import EmailMessage
+from google.auth.transport.requests import Request as GoogleAuthRequest
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
@@ -7,8 +9,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Google silently adds "openid" to the granted scope set whenever userinfo.email /
+# userinfo.profile are requested. oauthlib's strict scope-matching otherwise raises
+# that as a hard error on token exchange, so it must be relaxed.
+os.environ.setdefault("OAUTHLIB_RELAX_TOKEN_SCOPE", "1")
+
 SCOPES = [
     "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/gmail.send",
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/userinfo.profile",
 ]
@@ -24,15 +32,24 @@ CLIENT_CONFIG = {
 }
 
 
-def get_google_auth_url() -> str:
+def get_google_auth_url() -> dict:
+    """Returns the auth URL plus the PKCE code_verifier that generated it.
+
+    google_auth_oauthlib's Flow auto-generates a code_verifier per instance and
+    embeds its S256 challenge in the authorization URL. Since the URL is built here
+    and the token is exchanged later in get_access_token() with a brand-new Flow
+    instance, the verifier must be threaded through the caller (stored client-side
+    and sent back with the code) — otherwise Google rejects the exchange with
+    "invalid_grant: Missing code verifier".
+    """
     flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES)
     flow.redirect_uri = os.getenv("GMAIL_REDIRECT_URI")
     auth_url, _ = flow.authorization_url(access_type="offline", prompt="consent")
-    return auth_url
+    return {"auth_url": auth_url, "code_verifier": flow.code_verifier}
 
 
-async def get_access_token(code: str) -> dict:
-    flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES)
+async def get_access_token(code: str, code_verifier: str = None) -> dict:
+    flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES, code_verifier=code_verifier)
     flow.redirect_uri = os.getenv("GMAIL_REDIRECT_URI")
     flow.fetch_token(code=code)
     creds = flow.credentials
@@ -103,3 +120,68 @@ async def get_gmail_thread(access_token: str, thread_id: str) -> list:
             "body": _get_email_body(msg["payload"]),
         })
     return result
+
+
+async def refresh_gmail_token(refresh_token: str) -> dict:
+    """Exchange a stored refresh token for a fresh access token."""
+    creds = Credentials(
+        token=None,
+        refresh_token=refresh_token,
+        client_id=os.getenv("GMAIL_CLIENT_ID"),
+        client_secret=os.getenv("GMAIL_CLIENT_SECRET"),
+        token_uri="https://oauth2.googleapis.com/token",
+    )
+    creds.refresh(GoogleAuthRequest())
+    return {"access_token": creds.token}
+
+
+async def get_gmail_message_meta(access_token: str, message_id: str) -> dict:
+    """Fetch from/to/subject/snippet for a single message (used to render review cards)."""
+    creds = Credentials(token=access_token)
+    service = build("gmail", "v1", credentials=creds)
+    full = service.users().messages().get(userId="me", id=message_id, format="full").execute()
+    headers = full["payload"]["headers"]
+    return {
+        "id": message_id,
+        "from": _get_header(headers, "From"),
+        "to": _get_header(headers, "To"),
+        "subject": _get_header(headers, "Subject"),
+        "snippet": full.get("snippet", ""),
+    }
+
+
+async def send_gmail_reply(
+    access_token: str, thread_id: str, original_message_id: str, to: str, subject: str, body: str
+) -> dict:
+    """Send a reply within an existing Gmail thread.
+
+    Gmail's `threadId` alone doesn't establish RFC822 threading — the In-Reply-To and
+    References headers must be set to the original message's Message-ID, otherwise most
+    clients render the reply as a new, disconnected message.
+    """
+    creds = Credentials(token=access_token)
+    service = build("gmail", "v1", credentials=creds)
+
+    orig = service.users().messages().get(
+        userId="me", id=original_message_id, format="metadata",
+        metadataHeaders=["Message-ID", "References"],
+    ).execute()
+    orig_headers = orig.get("payload", {}).get("headers", [])
+    rfc_message_id = _get_header(orig_headers, "Message-ID")
+    prior_references = _get_header(orig_headers, "References")
+    references = f"{prior_references} {rfc_message_id}".strip() if prior_references else rfc_message_id
+
+    message = EmailMessage()
+    message["To"] = to
+    message["Subject"] = subject if subject.lower().startswith("re:") else f"Re: {subject}"
+    if rfc_message_id:
+        message["In-Reply-To"] = rfc_message_id
+    if references:
+        message["References"] = references
+    message.set_content(body)
+
+    raw = base64.urlsafe_b64encode(message.as_bytes()).decode("utf-8")
+    sent = service.users().messages().send(
+        userId="me", body={"raw": raw, "threadId": thread_id}
+    ).execute()
+    return {"id": sent.get("id"), "threadId": sent.get("threadId")}

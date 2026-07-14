@@ -16,24 +16,28 @@ HEADERS = {
 
 
 def _parse_json(text: str):
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        cleaned = cleaned.split("\n", 1)[1] if "\n" in cleaned else cleaned[3:]
+        if cleaned.rstrip().endswith("```"):
+            cleaned = cleaned.rstrip()[:-3]
     try:
-        return json.loads(text)
+        return json.loads(cleaned)
     except Exception:
         return None
 
 
-async def _call_claude(system: str, user_message: str, model: str = "claude-sonnet-4-6", max_tokens: int = 800):
+async def _call_claude(system: str, user_message: str, model: str = "claude-sonnet-4-6", max_tokens: int = 800, temperature: float = None):
+    payload = {
+        "model": model,
+        "max_tokens": max_tokens,
+        "system": system,
+        "messages": [{"role": "user", "content": user_message}],
+    }
+    if temperature is not None:
+        payload["temperature"] = temperature
     async with httpx.AsyncClient(timeout=60) as client:
-        response = await client.post(
-            CLAUDE_API_URL,
-            headers=HEADERS,
-            json={
-                "model": model,
-                "max_tokens": max_tokens,
-                "system": system,
-                "messages": [{"role": "user", "content": user_message}],
-            },
-        )
+        response = await client.post(CLAUDE_API_URL, headers=HEADERS, json=payload)
         response.raise_for_status()
         return response.json()["content"][0]["text"]
 
@@ -46,9 +50,17 @@ Return this exact structure:
   "summary": "A concise 2-3 sentence summary of the main topic and outcome",
   "decisions": ["Decision 1", "Decision 2"],
   "open_items": ["Unresolved item 1", "Unresolved item 2"],
-  "key_people": ["Person 1", "Person 2"]
-}"""
-    content = await _call_claude(system, f"Analyze this email thread:\n\n{email_text}")
+  "key_people": ["Person 1", "Person 2"],
+  "needs_reply": true or false,
+  "suggested_reply": "A grounded draft reply, or null"
+}
+
+For needs_reply/suggested_reply:
+- Set needs_reply to true only if the thread contains an open question, RFI, change order, or action item that is clearly waiting on a response from the recipient.
+- If needs_reply is true, write suggested_reply as a professional email reply body (no subject line, no greeting boilerplate beyond a simple greeting/sign-off) that directly addresses the open item(s), referencing who is waiting on what per the thread.
+- Only reference facts, dates, and commitments that actually appear in the thread. Never invent commitments, dates, or approvals that aren't already stated.
+- If needs_reply is false, set suggested_reply to null."""
+    content = await _call_claude(system, f"Analyze this email thread:\n\n{email_text}", max_tokens=1200, temperature=0.2)
     parsed = _parse_json(content)
     if not parsed:
         raise ValueError("Invalid JSON response from Claude")

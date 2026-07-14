@@ -1,9 +1,0 @@
-<svg width="500" height="120" viewBox="0 0 500 120" xmlns="http://www.w3.org/2000/svg">
-  <text x="0" y="92" font-family="Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="100" fill="#FAF7F2" letter-spacing="-4">P</text>
-  <g transform="translate(78, 16)">
-    <circle cx="40" cy="40" r="36" fill="none" stroke="#FAF7F2" stroke-width="10"/>
-    <circle cx="40" cy="40" r="19" fill="none" stroke="#D97706" stroke-width="4"/>
-    <circle cx="40" cy="40" r="7" fill="#D97706"/>
-  </g>
-  <text x="166" y="92" font-family="Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="100" fill="#FAF7F2" letter-spacing="-4">MAR</text>
-</svg>

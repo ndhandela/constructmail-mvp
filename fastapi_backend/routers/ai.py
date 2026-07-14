@@ -21,6 +21,11 @@ class SummarizeRequest(BaseModel):
     emailText: str
     userId: int
     projectId: Optional[int] = None
+    # Present only when this summarize call originated from a live inbox thread
+    # selection (not pasted text) — required to file a draft_replies row.
+    provider: Optional[str] = None
+    threadId: Optional[str] = None
+    sourceEmailId: Optional[str] = None
 
 
 class ExtractActionsRequest(BaseModel):
@@ -41,6 +46,31 @@ class ProcessMeetingRequest(BaseModel):
     projectId: Optional[int] = None
 
 
+async def _maybe_create_draft_reply(conn, req: "SummarizeRequest", result: dict) -> Optional[str]:
+    """File a pending_review draft_replies row if the thread came from a live inbox
+    selection and Claude flagged it as needing a reply. Never sends anything."""
+    if not (req.provider and req.threadId and req.sourceEmailId):
+        return None
+    if req.provider not in ("gmail", "outlook"):
+        return None
+    if not result.get("needs_reply") or not result.get("suggested_reply"):
+        return None
+
+    existing = await conn.fetchval(
+        "SELECT id FROM draft_replies WHERE source_email_id = $1 AND status = 'pending_review'",
+        req.sourceEmailId,
+    )
+    if existing:
+        return str(existing)
+
+    row = await conn.fetchrow(
+        """INSERT INTO draft_replies (user_id, source_email_id, provider, thread_id, ai_generated_body)
+           VALUES ($1, $2, $3, $4, $5) RETURNING id""",
+        req.userId, req.sourceEmailId, req.provider, req.threadId, result["suggested_reply"],
+    )
+    return str(row["id"])
+
+
 @router.post("/summarize")
 async def summarize(req: SummarizeRequest):
     if not req.emailText.strip():
@@ -53,12 +83,14 @@ async def summarize(req: SummarizeRequest):
             "INSERT INTO email_threads (project_id, raw_text, summary, decisions) VALUES ($1,$2,$3,$4) RETURNING *",
             p_id, req.emailText, result["summary"], json.dumps(result.get("decisions")),
         )
+        draft_reply_id = await _maybe_create_draft_reply(conn, req, result)
     return {
         "id": row["id"],
         "summary": result["summary"],
         "decisions": result.get("decisions"),
         "open_items": result.get("open_items"),
         "key_people": result.get("key_people"),
+        "draft_reply_id": draft_reply_id,
     }
 
 

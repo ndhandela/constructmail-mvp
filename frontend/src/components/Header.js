@@ -161,7 +161,7 @@ export default function Header({ userId, onLogout, user }) {
         ) : (
           <a href="/login" className="header-btn-login">Login</a>
         )}
-        <a href="/contact" className="header-btn-book">Book a Demo</a>
+        {!userId && <a href="/contact" className="header-btn-book">Book a Demo</a>}
       </div>
     </header>
   );

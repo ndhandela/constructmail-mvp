@@ -37,7 +37,13 @@ useEffect(() => {
         { params: { userId } }
       );
       const fullThread = response.data.map(msg => msg.body).join('\n\n---\n\n');
-      onEmailSelect(fullThread);
+      const lastMessage = response.data[response.data.length - 1];
+      onEmailSelect({
+        body: fullThread,
+        provider: 'gmail',
+        threadId,
+        sourceEmailId: lastMessage?.id,
+      });
       setSelectedEmail(threadId);
     } catch (err) {
       alert('Failed to fetch email thread');

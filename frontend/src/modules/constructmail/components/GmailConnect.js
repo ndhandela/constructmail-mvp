@@ -13,6 +13,7 @@ const handleConnectGmail = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/api/auth/gmail-url`);
     const authUrl = response.data.authUrl;
+    const codeVerifier = response.data.codeVerifier;
 
     const popup = window.open(authUrl, 'Gmail Login', 'width=500,height=600');
 
@@ -34,7 +35,8 @@ const handleConnectGmail = async () => {
         if (code) {
           axios.post(`${API_BASE_URL}/api/auth/gmail-callback`, {
             code,
-            userId
+            userId,
+            codeVerifier
           }).then(() => {
             setIsConnected(true);
             onConnect();

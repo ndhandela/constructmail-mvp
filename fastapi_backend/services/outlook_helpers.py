@@ -85,6 +85,59 @@ async def get_outlook_emails(access_token: str, max_results: int = 15) -> list:
     ]
 
 
+async def get_outlook_message_meta(access_token: str, message_id: str) -> dict:
+    """Fetch from/to/subject/snippet for a single message (used to render review cards)."""
+    async with httpx.AsyncClient(timeout=30) as client:
+        response = await client.get(
+            f"https://graph.microsoft.com/v1.0/me/messages/{message_id}",
+            headers={"Authorization": f"Bearer {access_token}"},
+            params={"$select": "id,subject,from,toRecipients,bodyPreview"},
+        )
+        response.raise_for_status()
+        m = response.json()
+    return {
+        "id": m["id"],
+        "from": m["from"]["emailAddress"]["address"],
+        "to": ", ".join(r["emailAddress"]["address"] for r in m.get("toRecipients", [])),
+        "subject": m["subject"],
+        "snippet": m.get("bodyPreview", ""),
+    }
+
+
+async def send_outlook_reply(access_token: str, message_id: str, comment: str) -> dict:
+    """Send a reply to an Outlook message with a custom body.
+
+    Graph's simple `/reply` endpoint only accepts a short comment appended above the
+    quoted original — it can't replace the body outright. Since the review workflow
+    always supplies a full AI-drafted (and possibly edited) body, we use the
+    createReply -> PATCH body -> send chain instead, which lets us set the exact body
+    while Graph still handles recipients, subject prefixing, and threading.
+    """
+    headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+    async with httpx.AsyncClient(timeout=30) as client:
+        create = await client.post(
+            f"https://graph.microsoft.com/v1.0/me/messages/{message_id}/createReply",
+            headers=headers, json={},
+        )
+        create.raise_for_status()
+        draft_id = create.json()["id"]
+
+        patch = await client.patch(
+            f"https://graph.microsoft.com/v1.0/me/messages/{draft_id}",
+            headers=headers,
+            json={"body": {"contentType": "Text", "content": comment}},
+        )
+        patch.raise_for_status()
+
+        send = await client.post(
+            f"https://graph.microsoft.com/v1.0/me/messages/{draft_id}/send",
+            headers=headers,
+        )
+        send.raise_for_status()
+
+    return {"id": draft_id}
+
+
 async def get_outlook_thread(access_token: str, conversation_id: str) -> list:
     async with httpx.AsyncClient(timeout=30) as client:
         response = await client.get(
