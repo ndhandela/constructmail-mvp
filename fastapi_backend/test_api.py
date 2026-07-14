@@ -120,6 +120,15 @@ test("GET  /api/open-actions",               "GET",  "/api/open-actions",     20
 test("GET  /api/recent-signals",             "GET",  "/api/recent-signals",   200, params={"userId": user_id})
 
 # ─────────────────────────────────────────────
+print("\n━━━ PROJECTS ━━━")
+proj_resp = test("GET  /api/projects",  "GET", "/api/projects", 200,
+                 params={"userId": user_id}, check_keys=["projects"])
+
+project_id = None
+if proj_resp.get("projects"):
+    project_id = proj_resp["projects"][0]["id"]
+
+# ─────────────────────────────────────────────
 print("\n━━━ CLASH ━━━")
 test("POST /api/clash/analyze",    "POST", "/api/clash/analyze", 200,
      json_body={"summary": {"total": 10, "New": 3, "Active": 5, "Reviewed": 2, "Approved": 0, "Resolved": 0, "type": "Hard", "tolerance": "0.001"},
@@ -146,6 +155,18 @@ test("POST /api/clash/reports",    "POST", "/api/clash/reports", 200,
 
 test("GET  /api/clash/reports",    "GET",  "/api/clash/reports", 200, params={"userId": str(user_id)})
 
+if project_id:
+    test("POST /api/clash/assignments (projectId)", "POST", "/api/clash/assignments", 200,
+         json_body={"userId": str(user_id), "projectKey": "proj-002", "projectId": project_id,
+                    "clashName": "Clash-002", "assignedTo": "Sarah", "discipline": "Structural", "status": "open"})
+    test("GET  /api/clash/assignments (projectId)", "GET", "/api/clash/assignments", 200,
+         params={"userId": str(user_id), "projectKey": "proj-002", "projectId": project_id})
+    test("POST /api/clash/reports (projectId)", "POST", "/api/clash/reports", 200,
+         json_body={"userId": str(user_id), "testName": "Test 2", "fileName": "report2.html", "projectId": project_id,
+                    "summary": {"total": 5, "New": 1, "Active": 2, "Reviewed": 1, "Critical": 0, "High": 1}})
+    test("GET  /api/clash/reports (projectId)", "GET", "/api/clash/reports", 200,
+         params={"userId": str(user_id), "projectId": project_id})
+
 # ─────────────────────────────────────────────
 print("\n━━━ VENDORS ━━━")
 v_resp = test("POST /api/vendors",          "POST", "/api/vendors", 200,
@@ -168,6 +189,25 @@ if vendor_id:
                     "rating_quality": 5, "rating_communication": 4, "rating_insurance": 3,
                     "comment": "Solid work"})
     test("GET  /api/vendors/:id/reviews",   "GET",  f"/api/vendors/{vendor_id}/reviews", 200)
+
+    if project_id:
+        test("POST /api/vendors/:id/link-project", "POST", f"/api/vendors/{vendor_id}/link-project", 200,
+             json_body={"projectId": project_id}, check_keys=["link"])
+        test("GET  /api/vendors (project_id)", "GET", "/api/vendors", 200,
+             params={"project_id": project_id}, check_keys=["vendors"])
+
+# ─────────────────────────────────────────────
+print("\n━━━ CONNECT (project scoping) ━━━")
+if project_id:
+    test("GET  /api/connect/queue (project_id)", "GET", "/api/connect/queue", 200,
+         params={"user_id": user_id, "project_id": project_id})
+    test("GET  /api/connect/log (project_id)",   "GET", "/api/connect/log", 200,
+         params={"user_id": user_id, "project_id": project_id, "limit": 10})
+    test("GET  /api/connect/kpis (project_id)",  "GET", "/api/connect/kpis", 200,
+         params={"user_id": user_id, "project_id": project_id})
+
+test("GET  /api/activity/feed", "GET", "/api/activity/feed", 200,
+     params={"userId": user_id}, check_keys=["items"])
 
 # ─────────────────────────────────────────────
 print("\n━━━ PROCORE ━━━")
