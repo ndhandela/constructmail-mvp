@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
+import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
 import '../styles/ConnectApp.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
@@ -59,6 +60,8 @@ export default function ConnectApp({ userId }) {
   const [draftBodies, setDraftBodies] = useState({});
   const [sendingDraft, setSendingDraft] = useState({});
 
+  const { currentProjectId } = useContext(ProjectContext);
+
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
@@ -68,12 +71,16 @@ export default function ConnectApp({ userId }) {
     setLoading(true);
     try {
       const uid = userId || localStorage.getItem('constructmail_userId');
-      const qs = uid ? `?user_id=${uid}` : '';
+      const projectParam = currentProjectId && currentProjectId !== ALL_PROJECTS
+        ? `project_id=${currentProjectId}`
+        : '';
+      const qs = [uid ? `user_id=${uid}` : '', projectParam].filter(Boolean).join('&');
+      const qsPrefixed = qs ? `?${qs}` : '';
 
       const [qRes, lRes, kRes, dRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/connect/queue${qs}`),
-        fetch(`${API_BASE_URL}/api/connect/log?limit=10`),
-        fetch(`${API_BASE_URL}/api/connect/kpis${qs}`),
+        fetch(`${API_BASE_URL}/api/connect/queue${qsPrefixed}`),
+        fetch(`${API_BASE_URL}/api/connect/log?limit=10${projectParam ? `&${projectParam}` : ''}`),
+        fetch(`${API_BASE_URL}/api/connect/kpis${qsPrefixed}`),
         uid ? fetch(`${API_BASE_URL}/api/mail/drafts?userId=${uid}`) : Promise.resolve(null),
       ]);
 
@@ -90,7 +97,7 @@ export default function ConnectApp({ userId }) {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, currentProjectId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 

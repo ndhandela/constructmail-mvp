@@ -266,6 +266,29 @@
   margin: 12px 0;
 }
 
+.mp-save-to-project-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  margin: 4px 0 12px;
+  background: var(--saffron);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mp-save-to-project-btn:hover:not(:disabled) {
+  background: var(--saffron-hover);
+}
+
+.mp-save-to-project-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
 /* Reviews section inside card */
 .mp-reviews-section {
   margin-top: 16px;

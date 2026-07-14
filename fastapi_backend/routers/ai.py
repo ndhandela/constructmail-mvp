@@ -162,33 +162,51 @@ async def detect_signals_route(req: DetectSignalsRequest):
 
 
 @router.get("/recent-summaries")
-async def recent_summaries(userId: int):
+async def recent_summaries(userId: int, projectId: Optional[int] = None):
     pool = await get_pool()
     async with pool.acquire() as conn:
-        rows = await conn.fetch(
-            "SELECT * FROM email_threads WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1) ORDER BY created_at DESC LIMIT 5",
-            userId,
-        )
+        if projectId:
+            rows = await conn.fetch(
+                "SELECT * FROM email_threads WHERE project_id = $1 ORDER BY created_at DESC LIMIT 5",
+                projectId,
+            )
+        else:
+            rows = await conn.fetch(
+                "SELECT * FROM email_threads WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1) ORDER BY created_at DESC LIMIT 5",
+                userId,
+            )
     return [dict(r) for r in rows]
 
 
 @router.get("/open-actions")
-async def open_actions(userId: int):
+async def open_actions(userId: int, projectId: Optional[int] = None):
     pool = await get_pool()
     async with pool.acquire() as conn:
-        rows = await conn.fetch(
-            "SELECT * FROM action_items WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1) AND status = 'open' ORDER BY due_date ASC LIMIT 10",
-            userId,
-        )
+        if projectId:
+            rows = await conn.fetch(
+                "SELECT * FROM action_items WHERE project_id = $1 AND status = 'open' ORDER BY due_date ASC LIMIT 10",
+                projectId,
+            )
+        else:
+            rows = await conn.fetch(
+                "SELECT * FROM action_items WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1) AND status = 'open' ORDER BY due_date ASC LIMIT 10",
+                userId,
+            )
     return [dict(r) for r in rows]
 
 
 @router.get("/recent-signals")
-async def recent_signals(userId: int):
+async def recent_signals(userId: int, projectId: Optional[int] = None):
     pool = await get_pool()
     async with pool.acquire() as conn:
-        rows = await conn.fetch(
-            "SELECT * FROM signals WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1) ORDER BY created_at DESC LIMIT 5",
-            userId,
-        )
+        if projectId:
+            rows = await conn.fetch(
+                "SELECT * FROM signals WHERE project_id = $1 ORDER BY created_at DESC LIMIT 5",
+                projectId,
+            )
+        else:
+            rows = await conn.fetch(
+                "SELECT * FROM signals WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1) ORDER BY created_at DESC LIMIT 5",
+                userId,
+            )
     return [dict(r) for r in rows]

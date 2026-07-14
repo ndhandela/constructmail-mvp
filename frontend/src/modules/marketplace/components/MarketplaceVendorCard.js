@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import MarketplaceReviewForm from './MarketplaceReviewForm';
+import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
@@ -20,6 +21,33 @@ export default function MarketplaceVendorCard({ listing, userId }) {
   const [reviews, setReviews] = useState([]);
   const [avgRating, setAvgRating] = useState(parseFloat(listing.avg_rating) || 0);
   const [reviewCount, setReviewCount] = useState(listing.review_count || 0);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const { currentProjectId } = useContext(ProjectContext);
+  const canSaveToProject = currentProjectId && currentProjectId !== ALL_PROJECTS;
+
+  const handleSaveToProject = async (e) => {
+    e.stopPropagation();
+    if (!canSaveToProject || saving) return;
+    setSaving(true);
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/marketplace/listings/${listing.id}/save-to-project?userId=${userId}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId: Number(currentProjectId) }),
+        }
+      );
+      const data = await res.json();
+      if (data.success) setSaved(true);
+    } catch (err) {
+      console.error('Save to project error:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   useEffect(() => {
     if (expanded && reviews.length === 0 && listing.review_count > 0) {
@@ -99,6 +127,16 @@ export default function MarketplaceVendorCard({ listing, userId }) {
           )}
           {listing.description && (
             <p className="mp-description">{listing.description}</p>
+          )}
+
+          {canSaveToProject && (
+            <button
+              className="mp-save-to-project-btn"
+              onClick={handleSaveToProject}
+              disabled={saving || saved}
+            >
+              {saved ? '✓ Saved to project' : saving ? 'Saving…' : '📌 Save to project'}
+            </button>
           )}
 
           {/* Reviews */}

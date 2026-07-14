@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import VendorListTable from '../components/VendorListTable';
 import VendorSearch from '../components/VendorSearch';
 import AddVendorForm from '../components/AddVendorForm';
 import CSVImport from '../components/CSVImport';
 import VendorExport from '../components/VendorExport';
+import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
 import '../styles/VendorsApp.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
@@ -27,6 +28,8 @@ export default function VendorsApp({ user, userId, onLogout }) {
     total: 0
   });
 
+  const { currentProjectId } = useContext(ProjectContext);
+
   const searchVendors = useCallback(async () => {
       setLoading(true);
       try {
@@ -35,6 +38,9 @@ export default function VendorsApp({ user, userId, onLogout }) {
           limit: pagination.limit,
           offset: pagination.offset
         });
+        if (currentProjectId && currentProjectId !== ALL_PROJECTS) {
+          queryParams.set('project_id', currentProjectId);
+        }
 
         const response = await fetch(
           `${API_BASE_URL}/api/vendors?${queryParams}`,
@@ -58,11 +64,11 @@ export default function VendorsApp({ user, userId, onLogout }) {
       } finally {
         setLoading(false);
       }
-    }, [filters, pagination.limit, pagination.offset]);
+    }, [filters, pagination.limit, pagination.offset, currentProjectId]);
 
   useEffect(() => {
     searchVendors();
-  }, [filters, pagination.offset, searchVendors]);
+  }, [filters, pagination.offset, currentProjectId, searchVendors]);
 
   useEffect(() => {
     const checkMarketplaceLicense = async () => {

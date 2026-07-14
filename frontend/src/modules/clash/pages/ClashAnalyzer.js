@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import ClashHome from '../components/ClashHome';
 import ClashUploader from '../components/ClashUploader';
 import ClashDashboard from '../components/ClashDashboard';
 import ClashDelta from '../components/ClashDelta';
 import ClashAssignments from '../components/ClashAssignments';
 import { parseNavisworksHTML } from '../components/ClashParser';
+import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
 import '../styles/ClashAnalyzer.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
@@ -33,6 +34,9 @@ export default function ClashAnalyzer() {
   const [activeTab, setActiveTab]   = useState('dashboard');
 
   const userId = localStorage.getItem('constructmail_userId');
+  // Named distinctly from ProcoreConnect.js's `projectId` (a Procore remote
+  // project id used for RFI push) — this is the POMAR project from the Header switcher.
+  const { currentProjectId: pomarProjectId } = useContext(ProjectContext);
 
   const saveReportHistory = async (result, name) => {
     if (!userId) return;
@@ -47,6 +51,7 @@ export default function ClashAnalyzer() {
           testName:   result.testName,
           fileName:   name,
           projectKey: getProjectKey(result),
+          projectId:  pomarProjectId !== ALL_PROJECTS ? pomarProjectId : undefined,
           summary: {
             total:    result.summary.total,
             New:      result.summary.New,

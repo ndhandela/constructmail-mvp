@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
 import '../styles/ActionExtractor.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
@@ -9,6 +10,7 @@ export default function ActionExtractor({ userId, selectedEmailText })  {
   const [loading, setLoading] = useState(false);
   const [actions, setActions] = useState([]);
   const [error, setError] = useState('');
+  const { currentProjectId } = useContext(ProjectContext);
 
 useEffect(() => {
     if (selectedEmailText) {
@@ -28,7 +30,8 @@ const handleSubmit = async (e) => {
     
     const response = await axios.post(`${API_BASE_URL}/api/extract-actions`, {
       emailText,
-      userId: userId
+      userId: userId,
+      projectId: currentProjectId !== ALL_PROJECTS ? currentProjectId : undefined,
     }, {
       timeout: 30000,
     });

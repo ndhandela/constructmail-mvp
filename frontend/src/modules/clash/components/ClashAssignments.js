@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { getSeverity } from './ClashParser';
+import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
 import '../styles/ClashAnalyzer.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
@@ -50,10 +51,15 @@ export default function ClashAssignments({ report, fileName, userId }) {
   const [filterStatus, setFilterStatus]     = useState('');
 
   const projectKey = getProjectKey(report);
+  // Named distinctly from ProcoreConnect.js's `projectId` (a Procore remote
+  // project id used for RFI push) — this is the POMAR project from the Header switcher.
+  const { currentProjectId: pomarProjectId } = useContext(ProjectContext);
+  const pomarProjectParam = pomarProjectId !== ALL_PROJECTS ? pomarProjectId : undefined;
 
   useEffect(() => {
     if (!userId) { setLoading(false); return; }
-    fetch(`${API_BASE_URL}/api/clash/assignments?userId=${userId}&projectKey=${projectKey}`)
+    const projectIdQs = pomarProjectParam ? `&projectId=${pomarProjectParam}` : '';
+    fetch(`${API_BASE_URL}/api/clash/assignments?userId=${userId}&projectKey=${projectKey}${projectIdQs}`)
       .then(r => r.json())
       .then(data => {
         const map = {};
@@ -63,7 +69,7 @@ export default function ClashAssignments({ report, fileName, userId }) {
       .catch(console.error)
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, projectKey]);
+  }, [userId, projectKey, pomarProjectParam]);
 
   const saveAssignment = useCallback(async (clashName, field, value) => {
     const current = assignments[clashName] || {};
@@ -77,6 +83,7 @@ export default function ClashAssignments({ report, fileName, userId }) {
         body: JSON.stringify({
           userId,
           projectKey,
+          projectId: pomarProjectParam,
           clashName,
           assignedTo: updated.assigned_to || null,
           discipline: updated.discipline  || null,
@@ -89,7 +96,7 @@ export default function ClashAssignments({ report, fileName, userId }) {
     } finally {
       setSaving(prev => ({ ...prev, [clashName]: false }));
     }
-  }, [assignments, userId, projectKey]);
+  }, [assignments, userId, projectKey, pomarProjectParam]);
 
   const handleExportPDF = async () => {
     setExporting(true);
