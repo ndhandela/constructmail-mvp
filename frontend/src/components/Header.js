@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 import PomarLogo from './PomarLogo';
+import { ProjectContext, ALL_PROJECTS } from '../contexts/ProjectContext';
 import '../styles/Header.css';
 
 function getDisplayName(user) {
@@ -13,9 +14,13 @@ function getDisplayName(user) {
 export default function Header({ userId, onLogout, user }) {
   const [platformOpen, setPlatformOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [projectOpen, setProjectOpen] = useState(false);
 
   const platformTimer = useRef(null);
   const profileTimer  = useRef(null);
+  const projectTimer  = useRef(null);
+
+  const { projects, currentProjectId, setCurrentProjectId } = useContext(ProjectContext);
 
   // Platform dropdown handlers
   const onPlatformEnter = () => {
@@ -25,6 +30,24 @@ export default function Header({ userId, onLogout, user }) {
   const onPlatformLeave = () => {
     platformTimer.current = setTimeout(() => setPlatformOpen(false), 200);
   };
+
+  // Project dropdown handlers
+  const onProjectEnter = () => {
+    clearTimeout(projectTimer.current);
+    setProjectOpen(true);
+  };
+  const onProjectLeave = () => {
+    projectTimer.current = setTimeout(() => setProjectOpen(false), 200);
+  };
+
+  const handleProjectSelect = (projectId) => {
+    setCurrentProjectId(projectId);
+    setProjectOpen(false);
+  };
+
+  const currentProjectName = currentProjectId === ALL_PROJECTS
+    ? 'All projects'
+    : (projects.find((p) => String(p.id) === String(currentProjectId))?.name || 'All projects');
 
   // Profile dropdown handlers
   const onProfileEnter = () => {
@@ -104,6 +127,39 @@ export default function Header({ userId, onLogout, user }) {
       </nav>
 
       <div className="header-right">
+        {userId && (
+          /* ── Project switcher ── */
+          <div
+            className="header-dropdown header-project-dropdown"
+            onMouseEnter={onProjectEnter}
+            onMouseLeave={onProjectLeave}
+          >
+            <button className="header-link dropdown-trigger project-switcher-btn">
+              {currentProjectName} <span className="caret">▾</span>
+            </button>
+            {projectOpen && (
+              <div className="dropdown-menu project-dropdown-menu">
+                <button
+                  className={`dropdown-item project-dropdown-item ${currentProjectId === ALL_PROJECTS ? 'active' : ''}`}
+                  onClick={() => handleProjectSelect(ALL_PROJECTS)}
+                >
+                  All projects
+                </button>
+                {projects.length > 0 && <div className="profile-dropdown-divider" />}
+                {projects.map((p) => (
+                  <button
+                    key={p.id}
+                    className={`dropdown-item project-dropdown-item ${String(currentProjectId) === String(p.id) ? 'active' : ''}`}
+                    onClick={() => handleProjectSelect(String(p.id))}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {userId ? (
           /* ── Profile avatar + dropdown ── */
           <div
