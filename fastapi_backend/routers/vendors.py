@@ -55,15 +55,16 @@ async def search_vendors(
     trade: Optional[str] = None,
     city: Optional[str] = None,
     insurance_status: Optional[str] = None,
-    min_rating: Optional[float] = None,
+    min_rating: Optional[str] = None,
     project_id: Optional[int] = None,
     sort: str = "newest",
     limit: int = 50,
     offset: int = 0,
 ):
+    parsed_min_rating = float(min_rating) if min_rating else None
     filters = {k: v for k, v in {
         "search": search, "trade": trade, "city": city,
-        "insurance_status": insurance_status, "min_rating": min_rating,
+        "insurance_status": insurance_status, "min_rating": parsed_min_rating,
         "project_id": project_id, "sort": sort, "limit": limit, "offset": offset,
     }.items() if v is not None}
     result = await vendor_service.search_vendors(filters)
