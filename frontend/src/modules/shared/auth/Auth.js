@@ -18,9 +18,6 @@ const ROLES = [
   { value: 'Other',         label: 'Other' },
 ];
 
-const DEMO_EMAIL    = 'demo@pomar.ai';
-const DEMO_PASSWORD = 'POMARdemo2024';
-
 export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
   const [mode, setMode]               = useState(defaultMode);
   const [loading, setLoading]         = useState(false);
@@ -110,11 +107,6 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
     }
   };
 
-  const fillDemoAccount = () => {
-    setLoginEmail(DEMO_EMAIL);
-    setLoginPassword(DEMO_PASSWORD);
-  };
-
   return (
     <div className="auth-container">
       <div className="auth-card">
@@ -193,13 +185,6 @@ export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
         {/* ── LOGIN ── */}
         {mode === 'login' && (
           <div>
-            <div className="auth-demo-banner">
-              <span>🧪</span>
-              <div>
-                <p className="auth-demo-title">Want to try first?</p>
-                <p className="auth-demo-sub">Use our test account — <button type="button" className="auth-demo-fill" onClick={fillDemoAccount}>click to fill credentials</button></p>
-              </div>
-            </div>
             <form onSubmit={handleLogin} className="auth-form">
               <div className="auth-field">
                 <label className="auth-label">Work Email</label>
