@@ -43,6 +43,11 @@
   background: var(--parchment);
 }
 
+.header-link.active {
+  color: var(--saffron);
+  font-weight: 700;
+}
+
 .caret {
   font-size: 10px;
   margin-left: 2px;

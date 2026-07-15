@@ -48,11 +48,6 @@ function App() {
       return;
     }
 
-    if (['/privacy', '/about', '/contact', '/reset-password'].includes(path)) {
-      setLoading(false);
-      return;
-    }
-
     const verifyTokenFn = async (token) => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/auth/verify-token`, {
@@ -131,11 +126,19 @@ function App() {
     setCurrentProduct(productId);
   };
 
+  // ── Auth loading ─────────────────────────────────────────────────────────
+  // Static/public routes still wait for this — otherwise Header would render
+  // once immediately with userId=null (before localStorage/token resolution
+  // finishes) and always show the logged-out state on these pages.
+  if (loading) {
+    return <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>;
+  }
+
   // ── Static no-auth routes ────────────────────────────────────────────────
   if (path === '/privacy') {
     return (
       <>
-        <Header userId={userId} onLogout={handleLogout} />
+        <Header userId={userId} onLogout={handleLogout} user={user} />
         <PrivacyPolicy />
         <Footer />
       </>
@@ -145,7 +148,7 @@ function App() {
   if (path === '/about') {
     return (
       <>
-        <Header userId={userId} onLogout={handleLogout} />
+        <Header userId={userId} onLogout={handleLogout} user={user} />
         <AboutUs />
         <Footer />
       </>
@@ -155,16 +158,11 @@ function App() {
   if (path === '/contact') {
     return (
       <>
-        <Header userId={userId} onLogout={handleLogout} />
+        <Header userId={userId} onLogout={handleLogout} user={user} />
         <Contact />
         <Footer />
       </>
     );
-  }
-
-  // ── Auth loading ─────────────────────────────────────────────────────────
-  if (loading) {
-    return <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>;
   }
 
   // ── Login route ──────────────────────────────────────────────────────────
@@ -187,7 +185,7 @@ function App() {
   if (path === '/reset-password') {
   return (
     <>
-      <Header userId={userId} onLogout={handleLogout} />
+      <Header userId={userId} onLogout={handleLogout} user={user} />
       <ResetPassword />
       <Footer />
     </>

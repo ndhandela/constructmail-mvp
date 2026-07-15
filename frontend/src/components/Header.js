@@ -17,7 +17,19 @@ function getDisplayName(user) {
   return user.full_name || user.name || user.email || '';
 }
 
+// Product nav shown to logged-in users. All four are reachable regardless of
+// plan — unlicensed modules (e.g. Marketplace) render their own upgrade/lock
+// prompt rather than being hidden from nav, matching the dashboard's pattern.
+const PRODUCT_NAV = [
+  { path: '/constructmail', label: 'Mail' },
+  { path: '/clash',         label: 'Clash' },
+  { path: '/vendors',       label: 'Vendors' },
+  { path: '/marketplace',   label: 'Marketplace' },
+];
+
 export default function Header({ userId, onLogout, user }) {
+  const isLoggedIn = !!userId;
+
   const [platformOpen, setPlatformOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [projectOpen, setProjectOpen] = useState(false);
@@ -29,6 +41,8 @@ export default function Header({ userId, onLogout, user }) {
 
   const { projects, currentProjectId, setCurrentProjectId, refreshProjects } = useContext(ProjectContext);
   const canCreateProject = PROJECT_CREATOR_ROLES.includes(user?.role);
+
+  const currentPath = window.location.pathname;
 
   // Platform dropdown handlers
   const onPlatformEnter = () => {
@@ -78,64 +92,71 @@ export default function Header({ userId, onLogout, user }) {
   return (
     <header className="main-header">
       <div className="header-left">
-        <a href="/" className="header-logo-link" aria-label="POMAR home">
+        <a href={isLoggedIn ? '/dashboard' : '/'} className="header-logo-link" aria-label={isLoggedIn ? 'POMAR dashboard' : 'POMAR home'}>
           <PomarLogo variant="light" height={32} />
         </a>
       </div>
 
-      <nav className="header-nav">
-        <a href="/" className="header-link">Home</a>
+      {isLoggedIn ? (
+        /* ── Logged-in: product nav ── */
+        <nav className="header-nav">
+          {PRODUCT_NAV.map((item) => (
+            <a
+              key={item.path}
+              href={item.path}
+              className={`header-link ${currentPath === item.path ? 'active' : ''}`}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+      ) : (
+        /* ── Logged-out: marketing nav ── */
+        <nav className="header-nav">
+          <a href="/" className="header-link">Home</a>
 
-        {/* Platform dropdown */}
-        <div
-          className="header-dropdown"
-          onMouseEnter={onPlatformEnter}
-          onMouseLeave={onPlatformLeave}
-        >
-          <button className="header-link dropdown-trigger">
-            Platform <span className="caret">▾</span>
-          </button>
-          {platformOpen && (
-            <div className="dropdown-menu">
-              <a href="/constructmail" className="dropdown-item">
-                <span className="dropdown-item-tag">Live</span>
-                <div>
-                  <div className="dropdown-item-title">POMAR Mail <span className="dropdown-item-lock">🔒</span></div>
-                  <div className="dropdown-item-sub">POMAR Mail</div>
-                </div>
-              </a>
-              <a href="/clash" className="dropdown-item">
-                <span className="dropdown-item-tag">Live</span>
-                <div>
-                  <div className="dropdown-item-title">POMAR Clash <span className="dropdown-item-lock">🔒</span></div>
-                  <div className="dropdown-item-sub">BIM Clash Report Analyzer</div>
-                </div>
-              </a>
-              <a href="/vendors" className="dropdown-item">
-                <span className="dropdown-item-tag">Live</span>
-                <div>
-                  <div className="dropdown-item-title">POMAR Vendors <span className="dropdown-item-lock">🔒</span></div>
-                  <div className="dropdown-item-sub">Find trusted contractors</div>
-                </div>
-              </a>
-              {userId && (
-                <a href="/marketplace" className="dropdown-item">
+          {/* Platform dropdown */}
+          <div
+            className="header-dropdown"
+            onMouseEnter={onPlatformEnter}
+            onMouseLeave={onPlatformLeave}
+          >
+            <button className="header-link dropdown-trigger">
+              Platform <span className="caret">▾</span>
+            </button>
+            {platformOpen && (
+              <div className="dropdown-menu">
+                <a href="/constructmail" className="dropdown-item">
                   <span className="dropdown-item-tag">Live</span>
                   <div>
-                    <div className="dropdown-item-title">POMAR Marketplace <span className="dropdown-item-lock">🔒</span></div>
-                    <div className="dropdown-item-sub">Shared vendor network</div>
+                    <div className="dropdown-item-title">POMAR Mail <span className="dropdown-item-lock">🔒</span></div>
+                    <div className="dropdown-item-sub">POMAR Mail</div>
                   </div>
                 </a>
-              )}
-            </div>
-          )}
-        </div>
+                <a href="/clash" className="dropdown-item">
+                  <span className="dropdown-item-tag">Live</span>
+                  <div>
+                    <div className="dropdown-item-title">POMAR Clash <span className="dropdown-item-lock">🔒</span></div>
+                    <div className="dropdown-item-sub">BIM Clash Report Analyzer</div>
+                  </div>
+                </a>
+                <a href="/vendors" className="dropdown-item">
+                  <span className="dropdown-item-tag">Live</span>
+                  <div>
+                    <div className="dropdown-item-title">POMAR Vendors <span className="dropdown-item-lock">🔒</span></div>
+                    <div className="dropdown-item-sub">Find trusted contractors</div>
+                  </div>
+                </a>
+              </div>
+            )}
+          </div>
 
-        <a href="/about" className="header-link">About</a>
-      </nav>
+          <a href="/about" className="header-link">About</a>
+        </nav>
+      )}
 
       <div className="header-right">
-        {userId && (
+        {isLoggedIn && (
           /* ── Project switcher ── */
           <div
             className="header-dropdown header-project-dropdown"
@@ -190,7 +211,7 @@ export default function Header({ userId, onLogout, user }) {
           />
         )}
 
-        {userId ? (
+        {isLoggedIn ? (
           /* ── Profile avatar + dropdown ── */
           <div
             className="header-dropdown header-profile-dropdown"
@@ -234,6 +255,17 @@ export default function Header({ userId, onLogout, user }) {
 
                 <div className="profile-dropdown-divider" />
 
+                <a
+                  href="/about"
+                  className="dropdown-item profile-dropdown-item"
+                  onClick={() => setProfileOpen(false)}
+                >
+                  <span className="profile-dropdown-icon">ℹ️</span>
+                  About Us
+                </a>
+
+                <div className="profile-dropdown-divider" />
+
                 <button
                   className="dropdown-item profile-dropdown-item profile-logout-btn"
                   onClick={handleLogoutClick}
@@ -247,7 +279,7 @@ export default function Header({ userId, onLogout, user }) {
         ) : (
           <a href="/login" className="header-btn-login">Login</a>
         )}
-        {!userId && <a href="/contact" className="header-btn-book">Book a Demo</a>}
+        {!isLoggedIn && <a href="/contact" className="header-btn-book">Book a Demo</a>}
       </div>
     </header>
   );
