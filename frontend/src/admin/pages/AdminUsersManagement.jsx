@@ -13,7 +13,7 @@ export default function AdminUsersManagement({ token, onNavigate }) {
     email: '',
     password: '',
     admin_level: 'super_admin',
-    client_id: ''
+    company_id: ''
   });
 
   useEffect(() => {
@@ -73,7 +73,7 @@ export default function AdminUsersManagement({ token, onNavigate }) {
         },
         body: JSON.stringify({
           ...formData,
-          client_id: formData.client_id ? parseInt(formData.client_id) : null
+          company_id: formData.company_id ? parseInt(formData.company_id) : null
         })
       });
 
@@ -85,7 +85,7 @@ export default function AdminUsersManagement({ token, onNavigate }) {
           email: '',
           password: '',
           admin_level: 'super_admin',
-          client_id: ''
+          company_id: ''
         });
         setShowCreateForm(false);
         fetchAdmins();
@@ -209,8 +209,8 @@ export default function AdminUsersManagement({ token, onNavigate }) {
                 <div className="form-group">
                   <label>Assign to Client</label>
                   <select
-                    name="client_id"
-                    value={formData.client_id}
+                    name="company_id"
+                    value={formData.company_id}
                     onChange={handleInputChange}
                   >
                     <option value="">Select a client</option>

@@ -79,11 +79,14 @@ function ModuleToggles({ company, token, onModulesUpdated }) {
   );
 }
 
+const ADD_COMPANY_TIMEOUT_MS = 15000;
+
 function AddCompanyModal({ token, onClose, onCreated }) {
   const [form, setForm] = useState({ companyName: '', ownerFullName: '', ownerEmail: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [emailSent, setEmailSent] = useState(true);
 
   const handleChange = (e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -91,6 +94,10 @@ function AddCompanyModal({ token, onClose, onCreated }) {
     e.preventDefault();
     setSaving(true);
     setError('');
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), ADD_COMPANY_TIMEOUT_MS);
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/companies`, {
         method: 'POST',
@@ -99,17 +106,24 @@ function AddCompanyModal({ token, onClose, onCreated }) {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(form),
+        signal: controller.signal,
       });
       const data = await res.json();
       if (data.success) {
+        setEmailSent(data.email_sent !== false);
         setSuccess(true);
         onCreated();
       } else {
         setError(data.detail || 'Could not create company.');
       }
-    } catch {
-      setError('Network error. Try again.');
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        setError('Request timed out. The company may or may not have been created — check the list before retrying.');
+      } else {
+        setError('Network error. Try again.');
+      }
     } finally {
+      clearTimeout(timeoutId);
       setSaving(false);
     }
   };
@@ -120,7 +134,13 @@ function AddCompanyModal({ token, onClose, onCreated }) {
         {success ? (
           <div>
             <h3>Company created</h3>
-            <p>An invite email has been sent to {form.ownerEmail} to set their password.</p>
+            {emailSent ? (
+              <p>An invite email has been sent to {form.ownerEmail} to set their password.</p>
+            ) : (
+              <p className="modules-msg modules-msg--error">
+                Company created, but invite email failed to send. You'll need to resend the invite to {form.ownerEmail} manually.
+              </p>
+            )}
             <button className="save-modules-btn" onClick={onClose}>Done</button>
           </div>
         ) : (

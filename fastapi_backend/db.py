@@ -40,6 +40,19 @@ async def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
+            -- Invite-only accounts: companies become the unit of module access,
+            -- replacing per-user client_subscriptions (migration 013). Created
+            -- here, before admin_users/module_pricing/feature_flags, so those
+            -- tables can reference companies(id) from the start (migration 014).
+            CREATE TABLE IF NOT EXISTS companies (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                active_modules JSONB DEFAULT '{"mail": false, "clash": false, "vendors": false, "marketplace": false}',
+                status VARCHAR(50) DEFAULT 'active',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
             CREATE TABLE IF NOT EXISTS projects (
                 id SERIAL PRIMARY KEY,
                 user_id INT NOT NULL REFERENCES users(id),
@@ -141,7 +154,7 @@ async def init_db():
                 email VARCHAR(255) UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
                 admin_level VARCHAR(50) NOT NULL CHECK (admin_level IN ('super_admin', 'client_admin')),
-                client_id INT REFERENCES users(id) ON DELETE CASCADE,
+                company_id INT REFERENCES companies(id) ON DELETE CASCADE,
                 permissions JSONB DEFAULT '{"pricing": true, "features": true, "users": true}',
                 is_active BOOLEAN DEFAULT TRUE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -152,7 +165,7 @@ async def init_db():
             CREATE TABLE IF NOT EXISTS module_pricing (
                 id SERIAL PRIMARY KEY,
                 is_global BOOLEAN DEFAULT FALSE,
-                client_id INT REFERENCES users(id) ON DELETE CASCADE,
+                company_id INT REFERENCES companies(id) ON DELETE CASCADE,
                 module_name VARCHAR(50) NOT NULL,
                 monthly_price DECIMAL(10,2) NOT NULL DEFAULT 0,
                 billing_cycle VARCHAR(50) DEFAULT 'monthly',
@@ -160,14 +173,14 @@ async def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_by_admin_id INT REFERENCES admin_users(id),
-                UNIQUE(client_id, module_name),
+                UNIQUE(company_id, module_name),
                 UNIQUE(module_name, is_global)
             );
 
             CREATE TABLE IF NOT EXISTS feature_flags (
                 id SERIAL PRIMARY KEY,
                 is_global BOOLEAN DEFAULT FALSE,
-                client_id INT REFERENCES users(id) ON DELETE CASCADE,
+                company_id INT REFERENCES companies(id) ON DELETE CASCADE,
                 feature_key VARCHAR(255) NOT NULL,
                 feature_name VARCHAR(255),
                 module VARCHAR(50),
@@ -176,7 +189,7 @@ async def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_by_admin_id INT REFERENCES admin_users(id),
-                UNIQUE(client_id, feature_key),
+                UNIQUE(company_id, feature_key),
                 UNIQUE(feature_key, is_global)
             );
 
@@ -481,22 +494,54 @@ async def init_db():
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
 
-            -- Invite-only accounts: companies become the unit of module access,
-            -- replacing per-user client_subscriptions (migration 013)
-            CREATE TABLE IF NOT EXISTS companies (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                active_modules JSONB DEFAULT '{"mail": false, "clash": false, "vendors": false, "marketplace": false}',
-                status VARCHAR(50) DEFAULT 'active',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-
             ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE CASCADE;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS permission_level VARCHAR(20) DEFAULT 'member';
             ALTER TABLE users ADD COLUMN IF NOT EXISTS invite_token VARCHAR(255);
             ALTER TABLE users ADD COLUMN IF NOT EXISTS invite_token_expires TIMESTAMP;
             ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
+
+            -- admin_users/module_pricing/feature_flags previously scoped to a
+            -- single users.id under the old 1:1 user-as-client model. Companies
+            -- are now the unit of tenancy, so these move to company_id
+            -- referencing companies(id) instead (migration 014). Existing
+            -- client_id values were users.id and aren't valid companies.id, so
+            -- they're cleared rather than carried over.
+            DO $mig014$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'admin_users' AND column_name = 'client_id'
+                ) THEN
+                    ALTER TABLE admin_users RENAME COLUMN client_id TO company_id;
+                    UPDATE admin_users SET company_id = NULL;
+                    ALTER TABLE admin_users DROP CONSTRAINT IF EXISTS admin_users_client_id_fkey;
+                    ALTER TABLE admin_users ADD CONSTRAINT admin_users_company_id_fkey
+                        FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE;
+                END IF;
+
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'module_pricing' AND column_name = 'client_id'
+                ) THEN
+                    ALTER TABLE module_pricing RENAME COLUMN client_id TO company_id;
+                    UPDATE module_pricing SET company_id = NULL;
+                    ALTER TABLE module_pricing DROP CONSTRAINT IF EXISTS module_pricing_client_id_fkey;
+                    ALTER TABLE module_pricing ADD CONSTRAINT module_pricing_company_id_fkey
+                        FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE;
+                END IF;
+
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'feature_flags' AND column_name = 'client_id'
+                ) THEN
+                    ALTER TABLE feature_flags RENAME COLUMN client_id TO company_id;
+                    UPDATE feature_flags SET company_id = NULL;
+                    ALTER TABLE feature_flags DROP CONSTRAINT IF EXISTS feature_flags_client_id_fkey;
+                    ALTER TABLE feature_flags ADD CONSTRAINT feature_flags_company_id_fkey
+                        FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE;
+                END IF;
+            END
+            $mig014$;
         """)
 
         await _backfill_clash_project_ids(conn)

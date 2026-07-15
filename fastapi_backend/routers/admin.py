@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import secrets
 from datetime import datetime, timedelta
@@ -25,7 +26,7 @@ class CreateAdminRequest(BaseModel):
     email: str
     password: str
     admin_level: str
-    client_id: Optional[int] = None
+    company_id: Optional[int] = None
     permissions: Optional[dict] = None
 
 
@@ -39,7 +40,7 @@ class PricingRequest(BaseModel):
     monthly_price: Optional[float] = 0
     billing_cycle: Optional[str] = "monthly"
     is_global: Optional[bool] = False
-    client_id: Optional[int] = None
+    company_id: Optional[int] = None
 
 
 class FeatureFlagsRequest(BaseModel):
@@ -57,7 +58,7 @@ async def admin_login(req: AdminLoginRequest):
     pool = await get_pool()
     async with pool.acquire() as conn:
         admin = await conn.fetchrow(
-            "SELECT id, email, password_hash, admin_level, client_id, is_active FROM admin_users WHERE email = $1",
+            "SELECT id, email, password_hash, admin_level, company_id, is_active FROM admin_users WHERE email = $1",
             req.email.lower().strip(),
         )
     if not admin:
@@ -85,7 +86,7 @@ async def get_admin_me(admin: dict = Depends(get_current_admin)):
     pool = await get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT id, email, admin_level, client_id, is_active, created_at, last_login FROM admin_users WHERE id = $1",
+            "SELECT id, email, admin_level, company_id, is_active, created_at, last_login FROM admin_users WHERE id = $1",
             admin["id"],
         )
     if not row:
@@ -136,25 +137,30 @@ async def create_company(req: CreateCompanyRequest, admin: dict = Depends(requir
 
     invite_url = f"{FRONTEND_URL}/accept-invite?token={invite_token}"
     first_name = req.ownerFullName.strip().split(" ")[0]
-    await send_email(
-        to=owner_email,
-        subject="You're invited to POMAR",
-        html=f"""
-        <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
-          <h2 style="color: #0E1B2C;">Welcome to POMAR</h2>
-          <p>Hi {first_name},</p>
-          <p>You've been set up as the owner of <strong>{req.companyName.strip()}</strong> on POMAR. Set your password to get started.</p>
-          <a href="{invite_url}" style="display:inline-block;padding:12px 24px;background:#D97706;color:white;border-radius:100px;text-decoration:none;font-weight:600;margin:20px 0;">
-            Set Your Password
-          </a>
-          <p style="color:#666;font-size:13px;">This link expires in 7 days.</p>
-        </div>""",
-    )
+    try:
+        email_sent = await send_email(
+            to=owner_email,
+            subject="You're invited to POMAR",
+            html=f"""
+            <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+              <h2 style="color: #0E1B2C;">Welcome to POMAR</h2>
+              <p>Hi {first_name},</p>
+              <p>You've been set up as the owner of <strong>{req.companyName.strip()}</strong> on POMAR. Set your password to get started.</p>
+              <a href="{invite_url}" style="display:inline-block;padding:12px 24px;background:#D97706;color:white;border-radius:100px;text-decoration:none;font-weight:600;margin:20px 0;">
+                Set Your Password
+              </a>
+              <p style="color:#666;font-size:13px;">This link expires in 7 days.</p>
+            </div>""",
+        )
+    except Exception as e:
+        logging.error(f"create_company: invite email failed for {owner_email!r}: {e}")
+        email_sent = False
+
     await user_service.log_admin_activity(
         admin["id"], "company_created", "companies", company["id"],
         {"companyName": req.companyName, "ownerEmail": owner_email},
     )
-    return {"success": True, "companyId": company["id"], "userId": user["id"]}
+    return {"success": True, "companyId": company["id"], "userId": user["id"], "email_sent": email_sent}
 
 
 @router.get("/users")
@@ -210,11 +216,11 @@ async def save_pricing(req: PricingRequest, admin: dict = Depends(require_super_
     pool = await get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            """INSERT INTO module_pricing (is_global, client_id, module_name, monthly_price, billing_cycle, is_active, updated_by_admin_id)
+            """INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active, updated_by_admin_id)
                VALUES ($1,$2,$3,$4,$5,true,$6)
                ON CONFLICT (module_name, is_global) DO UPDATE SET monthly_price=$4, billing_cycle=$5, updated_at=NOW(), updated_by_admin_id=$6
                RETURNING *""",
-            req.is_global or False, req.client_id, req.module_name, req.monthly_price or 0, req.billing_cycle or "monthly", admin["id"],
+            req.is_global or False, req.company_id, req.module_name, req.monthly_price or 0, req.billing_cycle or "monthly", admin["id"],
         )
     await user_service.log_admin_activity(admin["id"], "pricing_updated", "module_pricing", row["id"], {"module_name": req.module_name})
     return {"success": True, "pricing": dict(row)}
