@@ -5,8 +5,18 @@ from pydantic import BaseModel
 from typing import Optional, List, Any
 from db import get_pool
 from services.clash_helpers import analyze_clash_report, draft_clash_rfi
-from services.project_helpers import get_or_create_default_project
+from services.project_helpers import get_or_create_default_project, require_project_member
 from routers.connect import enqueue_clash_report
+
+
+async def _require_member_if_project_scoped(conn, project_id: Optional[int], user_id: str):
+    """clash_assignments/clash_reports carry userId as a legacy TEXT column, so
+    membership can only be checked when it's actually a numeric user id."""
+    if project_id is None:
+        return
+    if not user_id or not str(user_id).isdigit():
+        raise HTTPException(403, "You do not have access to this project")
+    await require_project_member(conn, project_id, int(user_id))
 
 router = APIRouter(prefix="/api/clash", tags=["Clash"])
 
@@ -73,6 +83,7 @@ async def draft_rfi(req: DraftRFIRequest):
 async def get_assignments(userId: str, projectKey: str, projectId: Optional[int] = None):
     pool = await get_pool()
     async with pool.acquire() as conn:
+        await _require_member_if_project_scoped(conn, projectId, userId)
         if projectId:
             rows = await conn.fetch(
                 "SELECT * FROM clash_assignments WHERE user_id = $1 AND project_key = $2 AND project_id = $3",
@@ -89,6 +100,7 @@ async def get_assignments(userId: str, projectKey: str, projectId: Optional[int]
 async def save_assignment(req: AssignmentRequest):
     pool = await get_pool()
     async with pool.acquire() as conn:
+        await _require_member_if_project_scoped(conn, req.projectId, req.userId)
         project_id = req.projectId
         if project_id is None and req.userId and str(req.userId).isdigit():
             project_id = await get_or_create_default_project(conn, int(req.userId))
@@ -109,6 +121,7 @@ async def save_report(req: SaveReportRequest):
     pool = await get_pool()
     summary = req.summary or {}
     async with pool.acquire() as conn:
+        await _require_member_if_project_scoped(conn, req.projectId, req.userId)
         project_id = req.projectId
         if project_id is None and req.userId and str(req.userId).isdigit():
             project_id = await get_or_create_default_project(conn, int(req.userId))
@@ -131,6 +144,7 @@ async def save_report(req: SaveReportRequest):
 async def get_reports(userId: str, projectId: Optional[int] = None):
     pool = await get_pool()
     async with pool.acquire() as conn:
+        await _require_member_if_project_scoped(conn, projectId, userId)
         if projectId:
             rows = await conn.fetch(
                 "SELECT * FROM clash_reports WHERE user_id = $1 AND project_id = $2 ORDER BY created_at DESC LIMIT 10",

@@ -16,6 +16,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from db import get_pool
+from services.project_helpers import require_project_member
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/connect", tags=["connect"])
@@ -228,6 +229,8 @@ async def get_queue(user_id: Optional[int] = None, project_id: Optional[int] = N
     """Return all pending queue items, high priority first, newest first."""
     pool = await get_pool()
     async with pool.acquire() as conn:
+        if project_id and user_id:
+            await require_project_member(conn, project_id, user_id)
         query = """
             SELECT id, module, type, title, detail, priority, pmis_target, status, created_at, project_id
             FROM connect_queue
@@ -284,6 +287,9 @@ async def push_queue_item(item_id: UUID, body: PushRequest = PushRequest()):
             raise HTTPException(404, "Queue item not found")
         item = dict(item)
 
+        if item.get("project_id") and body.user_id:
+            await require_project_member(conn, item["project_id"], body.user_id)
+
         target = item.get("pmis_target") or "procore"
         action_label = f"{item['type'].upper()} pushed to {target.capitalize()}"
 
@@ -329,6 +335,8 @@ async def get_log(user_id: Optional[int] = None, project_id: Optional[int] = Non
     """Return last N automation log entries."""
     pool = await get_pool()
     async with pool.acquire() as conn:
+        if project_id and user_id:
+            await require_project_member(conn, project_id, user_id)
         query = """SELECT cl.id, cl.action, cl.module, cl.status, cl.error_message, cl.created_at,
                           cq.title AS queue_title, cq.type AS queue_type
                    FROM connect_log cl
@@ -356,6 +364,8 @@ async def get_kpis(user_id: Optional[int] = None, project_id: Optional[int] = No
     pool = await get_pool()
     async with pool.acquire() as conn:
         if project_id:
+            if user_id:
+                await require_project_member(conn, project_id, user_id)
             pending_count = await conn.fetchval(
                 "SELECT COUNT(*) FROM connect_queue WHERE status='pending' AND (project_id=$1 OR project_id IS NULL)",
                 project_id,

@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import Optional
 from db import get_pool
+from services.project_helpers import require_project_member
 
 router = APIRouter(prefix="/api/marketplace", tags=["Marketplace"])
 
@@ -258,6 +259,7 @@ async def save_listing_to_project(listing_id: str, req: SaveToProjectRequest, us
         )
         if not project_exists:
             raise HTTPException(404, "Project not found")
+        await require_project_member(conn, req.projectId, userId)
 
         row = await conn.fetchrow(
             """INSERT INTO project_marketplace_saves (project_id, listing_id, saved_by_user_id)
@@ -278,6 +280,7 @@ async def get_project_saved_listings(project_id: int, userId: int):
     await _require_marketplace_license(userId)
     pool = await get_pool()
     async with pool.acquire() as conn:
+        await require_project_member(conn, project_id, userId)
         rows = await conn.fetch(
             """
             SELECT

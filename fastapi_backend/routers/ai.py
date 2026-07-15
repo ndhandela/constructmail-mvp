@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 from db import get_pool
 from services.ai_helpers import summarize_email_thread, extract_action_items, detect_signals, process_meeting_notes
-from services.project_helpers import get_or_create_default_project
+from services.project_helpers import get_or_create_default_project, require_project_member
 from routers.connect import enqueue_mail_signal
 
 router = APIRouter(prefix="/api", tags=["AI"])
@@ -71,6 +71,8 @@ async def summarize(req: SummarizeRequest):
     result = await summarize_email_thread(req.emailText)
     pool = await get_pool()
     async with pool.acquire() as conn:
+        if req.projectId:
+            await require_project_member(conn, req.projectId, req.userId)
         p_id = req.projectId or await get_or_create_default_project(conn, req.userId)
         row = await conn.fetchrow(
             "INSERT INTO email_threads (project_id, raw_text, summary, decisions) VALUES ($1,$2,$3,$4) RETURNING *",
@@ -94,6 +96,8 @@ async def extract_actions(req: ExtractActionsRequest):
     actions = await extract_action_items(req.emailText)
     pool = await get_pool()
     async with pool.acquire() as conn:
+        if req.projectId:
+            await require_project_member(conn, req.projectId, req.userId)
         p_id = req.projectId or await get_or_create_default_project(conn, req.userId)
         saved = []
         for action in actions:
@@ -112,6 +116,8 @@ async def process_meeting(req: ProcessMeetingRequest):
     result = await process_meeting_notes(req.notesText)
     pool = await get_pool()
     async with pool.acquire() as conn:
+        if req.projectId:
+            await require_project_member(conn, req.projectId, req.userId)
         p_id = req.projectId or await get_or_create_default_project(conn, req.userId)
         notes_row = await conn.fetchrow(
             "INSERT INTO meeting_notes (project_id, raw_text, attendees, decisions, action_items, open_issues, summary) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *",
@@ -146,6 +152,8 @@ async def detect_signals_route(req: DetectSignalsRequest):
     result = await detect_signals(req.emailText)
     pool = await get_pool()
     async with pool.acquire() as conn:
+        if req.projectId:
+            await require_project_member(conn, req.projectId, req.userId)
         p_id = req.projectId or await get_or_create_default_project(conn, req.userId)
         saved = []
         for signal in result.get("signals", []):
@@ -166,13 +174,16 @@ async def recent_summaries(userId: int, projectId: Optional[int] = None):
     pool = await get_pool()
     async with pool.acquire() as conn:
         if projectId:
+            await require_project_member(conn, projectId, userId)
             rows = await conn.fetch(
                 "SELECT * FROM email_threads WHERE project_id = $1 ORDER BY created_at DESC LIMIT 5",
                 projectId,
             )
         else:
             rows = await conn.fetch(
-                "SELECT * FROM email_threads WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1) ORDER BY created_at DESC LIMIT 5",
+                """SELECT et.* FROM email_threads et
+                   WHERE et.project_id IN (SELECT project_id FROM project_members WHERE user_id = $1)
+                   ORDER BY et.created_at DESC LIMIT 5""",
                 userId,
             )
     return [dict(r) for r in rows]
@@ -183,13 +194,16 @@ async def open_actions(userId: int, projectId: Optional[int] = None):
     pool = await get_pool()
     async with pool.acquire() as conn:
         if projectId:
+            await require_project_member(conn, projectId, userId)
             rows = await conn.fetch(
                 "SELECT * FROM action_items WHERE project_id = $1 AND status = 'open' ORDER BY due_date ASC LIMIT 10",
                 projectId,
             )
         else:
             rows = await conn.fetch(
-                "SELECT * FROM action_items WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1) AND status = 'open' ORDER BY due_date ASC LIMIT 10",
+                """SELECT ai.* FROM action_items ai
+                   WHERE ai.project_id IN (SELECT project_id FROM project_members WHERE user_id = $1)
+                   AND ai.status = 'open' ORDER BY ai.due_date ASC LIMIT 10""",
                 userId,
             )
     return [dict(r) for r in rows]
@@ -200,13 +214,16 @@ async def recent_signals(userId: int, projectId: Optional[int] = None):
     pool = await get_pool()
     async with pool.acquire() as conn:
         if projectId:
+            await require_project_member(conn, projectId, userId)
             rows = await conn.fetch(
                 "SELECT * FROM signals WHERE project_id = $1 ORDER BY created_at DESC LIMIT 5",
                 projectId,
             )
         else:
             rows = await conn.fetch(
-                "SELECT * FROM signals WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1) ORDER BY created_at DESC LIMIT 5",
+                """SELECT s.* FROM signals s
+                   WHERE s.project_id IN (SELECT project_id FROM project_members WHERE user_id = $1)
+                   ORDER BY s.created_at DESC LIMIT 5""",
                 userId,
             )
     return [dict(r) for r in rows]

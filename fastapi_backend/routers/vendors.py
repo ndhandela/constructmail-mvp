@@ -3,7 +3,9 @@ import io
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 from typing import Optional
+from db import get_pool
 from services import vendor_service
+from services.project_helpers import require_project_member
 
 router = APIRouter(prefix="/api/vendors", tags=["Vendors"])
 
@@ -39,6 +41,7 @@ class ClaimRequest(BaseModel):
 
 class LinkProjectRequest(BaseModel):
     projectId: int
+    userId: int
 
 
 @router.post("")
@@ -57,11 +60,18 @@ async def search_vendors(
     insurance_status: Optional[str] = None,
     min_rating: Optional[str] = None,
     project_id: Optional[int] = None,
+    userId: Optional[int] = None,
     sort: str = "newest",
     limit: int = 50,
     offset: int = 0,
 ):
     parsed_min_rating = float(min_rating) if min_rating else None
+    if project_id is not None:
+        if not userId:
+            raise HTTPException(400, "userId is required when filtering by project_id")
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            await require_project_member(conn, project_id, userId)
     filters = {k: v for k, v in {
         "search": search, "trade": trade, "city": city,
         "insurance_status": insurance_status, "min_rating": parsed_min_rating,
@@ -116,6 +126,9 @@ async def bulk_import(file: UploadFile = File(...), userId: int = Form(...)):
 
 @router.post("/{vendor_id}/link-project")
 async def link_vendor_to_project(vendor_id: int, req: LinkProjectRequest):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await require_project_member(conn, req.projectId, req.userId, roles=("owner", "contributor"))
     result = await vendor_service.link_vendor_to_project(vendor_id, req.projectId)
     if not result["success"]:
         raise HTTPException(404, result["error"])
