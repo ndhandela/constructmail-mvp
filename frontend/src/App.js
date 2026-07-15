@@ -204,7 +204,7 @@ function App() {
 if (userId && path === '/dashboard') {
   return (
     <ProjectProvider userId={userId}>
-      <Header userId={userId} onLogout={handleLogout} />
+      <Header userId={userId} onLogout={handleLogout} user={user} />
       <ProductDashboard user={user} userId={userId} onProductSelect={handleProductSelect} />
       <Footer />
     </ProjectProvider>
@@ -239,7 +239,7 @@ if (userId && path === '/dashboard') {
   if (currentProduct === 'constructmail') {
     return (
       <ProjectProvider userId={userId}>
-        <Header userId={userId} onLogout={handleLogout} />
+        <Header userId={userId} onLogout={handleLogout} user={user} />
         <ConstructMailApp user={user} userId={userId} onLogout={handleLogout} />
         <Footer />
       </ProjectProvider>
@@ -250,7 +250,7 @@ if (userId && path === '/dashboard') {
   if (currentProduct === 'clash') {
     return (
       <ProjectProvider userId={userId}>
-        <Header userId={userId} onLogout={handleLogout} />
+        <Header userId={userId} onLogout={handleLogout} user={user} />
         <ClashAnalyzer />
         <Footer />
       </ProjectProvider>
@@ -261,7 +261,7 @@ if (userId && path === '/dashboard') {
   if (currentProduct === 'vendors') {
     return (
       <ProjectProvider userId={userId}>
-        <Header userId={userId} onLogout={handleLogout} />
+        <Header userId={userId} onLogout={handleLogout} user={user} />
         <VendorsApp user={user} userId={userId} onLogout={handleLogout} />
         <Footer />
       </ProjectProvider>
@@ -272,7 +272,7 @@ if (userId && path === '/dashboard') {
   if (currentProduct === 'connect' || path === '/connect') {
     return (
       <ProjectProvider userId={userId}>
-        <Header userId={userId} onLogout={handleLogout} />
+        <Header userId={userId} onLogout={handleLogout} user={user} />
         <ConnectApp userId={userId} />
         <Footer />
       </ProjectProvider>
@@ -282,7 +282,7 @@ if (userId && path === '/dashboard') {
 if (currentProduct === 'dashboard' || path === '/dashboard') {
     return (
       <ProjectProvider userId={userId}>
-        <Header userId={userId} onLogout={handleLogout} />
+        <Header userId={userId} onLogout={handleLogout} user={user} />
         <ProductDashboard user={user} userId={userId} onProductSelect={handleProductSelect} />
         <Footer />
       </ProjectProvider>

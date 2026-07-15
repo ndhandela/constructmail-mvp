@@ -9,6 +9,7 @@ export const ProjectContext = createContext({
   currentProjectId: ALL_PROJECTS,
   setCurrentProjectId: () => {},
   loading: true,
+  refreshProjects: () => {},
 });
 
 function storageKey(userId) {
@@ -27,23 +28,26 @@ export function ProjectProvider({ userId, children }) {
     }
   }, [userId]);
 
-  useEffect(() => {
+  const fetchProjects = useCallback((selectProjectId) => {
     if (!userId) {
       setProjects([]);
       setCurrentProjectIdState(ALL_PROJECTS);
       setLoading(false);
-      return;
+      return Promise.resolve();
     }
 
-    let cancelled = false;
     setLoading(true);
 
-    fetch(`${API_BASE_URL}/api/projects?userId=${userId}`)
+    return fetch(`${API_BASE_URL}/api/projects?userId=${userId}`)
       .then((res) => res.json())
       .then((data) => {
-        if (cancelled) return;
         const list = data.projects || [];
         setProjects(list);
+
+        if (selectProjectId) {
+          setCurrentProjectId(String(selectProjectId));
+          return;
+        }
 
         const saved = localStorage.getItem(storageKey(userId));
         const savedIsValid = saved === ALL_PROJECTS || list.some((p) => String(p.id) === saved);
@@ -59,14 +63,23 @@ export function ProjectProvider({ userId, children }) {
         console.error('Fetch projects error:', err);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       });
+  }, [userId, setCurrentProjectId]);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchProjects().then(() => {
+      if (cancelled) return;
+    });
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  const refreshProjects = useCallback((selectProjectId) => fetchProjects(selectProjectId), [fetchProjects]);
+
   return (
-    <ProjectContext.Provider value={{ projects, currentProjectId, setCurrentProjectId, loading }}>
+    <ProjectContext.Provider value={{ projects, currentProjectId, setCurrentProjectId, loading, refreshProjects }}>
       {children}
     </ProjectContext.Provider>
   );

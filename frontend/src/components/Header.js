@@ -1,7 +1,13 @@
 import React, { useState, useRef, useContext } from 'react';
 import PomarLogo from './PomarLogo';
+import NewProjectModal from './NewProjectModal';
 import { ProjectContext, ALL_PROJECTS } from '../contexts/ProjectContext';
 import '../styles/Header.css';
+
+// Roles allowed to create new projects — mirrors PROJECT_CREATOR_ROLES in
+// fastapi_backend/routers/projects.py. Hiding the action here is just UX;
+// the server enforces this independently.
+const PROJECT_CREATOR_ROLES = ['GC', 'Owner'];
 
 function getDisplayName(user) {
   if (!user) return '';
@@ -15,12 +21,14 @@ export default function Header({ userId, onLogout, user }) {
   const [platformOpen, setPlatformOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [projectOpen, setProjectOpen] = useState(false);
+  const [showNewProject, setShowNewProject] = useState(false);
 
   const platformTimer = useRef(null);
   const profileTimer  = useRef(null);
   const projectTimer  = useRef(null);
 
-  const { projects, currentProjectId, setCurrentProjectId } = useContext(ProjectContext);
+  const { projects, currentProjectId, setCurrentProjectId, refreshProjects } = useContext(ProjectContext);
+  const canCreateProject = PROJECT_CREATOR_ROLES.includes(user?.role);
 
   // Platform dropdown handlers
   const onPlatformEnter = () => {
@@ -155,9 +163,31 @@ export default function Header({ userId, onLogout, user }) {
                     {p.name}
                   </button>
                 ))}
+                {canCreateProject && (
+                  <>
+                    <div className="profile-dropdown-divider" />
+                    <button
+                      className="project-dropdown-new-btn"
+                      onClick={() => { setProjectOpen(false); setShowNewProject(true); }}
+                    >
+                      + New project
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
+        )}
+
+        {showNewProject && (
+          <NewProjectModal
+            userId={userId}
+            onClose={() => setShowNewProject(false)}
+            onCreated={(project) => {
+              setShowNewProject(false);
+              refreshProjects(project.id);
+            }}
+          />
         )}
 
         {userId ? (
