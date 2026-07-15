@@ -542,6 +542,8 @@ async def init_db():
                 END IF;
             END
             $mig014$;
+
+            ALTER TABLE projects ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id);
         """)
 
         await _backfill_clash_project_ids(conn)

@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 from db import get_pool
 from services.ai_helpers import summarize_email_thread, extract_action_items, detect_signals, process_meeting_notes
-from services.project_helpers import get_or_create_default_project, require_project_member
+from services.project_helpers import get_or_create_personal_mail_project, require_project_member
 from routers.connect import enqueue_mail_signal
 
 router = APIRouter(prefix="/api", tags=["AI"])
@@ -73,7 +73,7 @@ async def summarize(req: SummarizeRequest):
     async with pool.acquire() as conn:
         if req.projectId:
             await require_project_member(conn, req.projectId, req.userId)
-        p_id = req.projectId or await get_or_create_default_project(conn, req.userId)
+        p_id = req.projectId or await get_or_create_personal_mail_project(conn, req.userId)
         row = await conn.fetchrow(
             "INSERT INTO email_threads (project_id, raw_text, summary, decisions) VALUES ($1,$2,$3,$4) RETURNING *",
             p_id, req.emailText, result["summary"], json.dumps(result.get("decisions")),
@@ -98,7 +98,7 @@ async def extract_actions(req: ExtractActionsRequest):
     async with pool.acquire() as conn:
         if req.projectId:
             await require_project_member(conn, req.projectId, req.userId)
-        p_id = req.projectId or await get_or_create_default_project(conn, req.userId)
+        p_id = req.projectId or await get_or_create_personal_mail_project(conn, req.userId)
         saved = []
         for action in actions:
             row = await conn.fetchrow(
@@ -118,7 +118,7 @@ async def process_meeting(req: ProcessMeetingRequest):
     async with pool.acquire() as conn:
         if req.projectId:
             await require_project_member(conn, req.projectId, req.userId)
-        p_id = req.projectId or await get_or_create_default_project(conn, req.userId)
+        p_id = req.projectId or await get_or_create_personal_mail_project(conn, req.userId)
         notes_row = await conn.fetchrow(
             "INSERT INTO meeting_notes (project_id, raw_text, attendees, decisions, action_items, open_issues, summary) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *",
             p_id, req.notesText,
@@ -154,7 +154,7 @@ async def detect_signals_route(req: DetectSignalsRequest):
     async with pool.acquire() as conn:
         if req.projectId:
             await require_project_member(conn, req.projectId, req.userId)
-        p_id = req.projectId or await get_or_create_default_project(conn, req.userId)
+        p_id = req.projectId or await get_or_create_personal_mail_project(conn, req.userId)
         saved = []
         for signal in result.get("signals", []):
             if signal.get("confidence", 0) >= 0.5:

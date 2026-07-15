@@ -19,6 +19,53 @@ async def require_project_member(conn, project_id: int, user_id: int, roles: tup
 
 
 async def get_or_create_default_project(conn, user_id: int) -> int:
+    """
+    Company-shared "Default Project" for Clash and the general project list.
+    Falls back to the legacy per-user behavior if the user has no company_id.
+    """
+    user = await conn.fetchrow("SELECT company_id, permission_level FROM users WHERE id = $1", user_id)
+    company_id = user["company_id"] if user else None
+
+    if not company_id:
+        row = await conn.fetchrow("SELECT id FROM projects WHERE user_id = $1 AND name = $2", user_id, "Default Project")
+        if row:
+            project_id = row["id"]
+        else:
+            row = await conn.fetchrow("INSERT INTO projects (user_id, name) VALUES ($1, $2) RETURNING id", user_id, "Default Project")
+            project_id = row["id"]
+        await conn.execute(
+            """INSERT INTO project_members (project_id, user_id, role) VALUES ($1, $2, 'owner')
+               ON CONFLICT (project_id, user_id) DO NOTHING""",
+            project_id, user_id,
+        )
+        return project_id
+
+    row = await conn.fetchrow("SELECT id FROM projects WHERE company_id = $1 AND name = $2", company_id, "Default Project")
+    if row:
+        project_id = row["id"]
+    else:
+        row = await conn.fetchrow(
+            "INSERT INTO projects (user_id, company_id, name) VALUES ($1, $2, $3) RETURNING id",
+            user_id, company_id, "Default Project",
+        )
+        project_id = row["id"]
+
+    role = "owner" if user["permission_level"] == "owner" else "contributor"
+    await conn.execute(
+        """INSERT INTO project_members (project_id, user_id, role) VALUES ($1, $2, $3)
+           ON CONFLICT (project_id, user_id) DO NOTHING""",
+        project_id, user_id, role,
+    )
+    return project_id
+
+
+async def get_or_create_personal_mail_project(conn, user_id: int) -> int:
+    """
+    Private per-user "Default Project" for Mail. Mail summaries/extracted
+    actions/signals are tied to one person's connected inbox and shouldn't be
+    visible to teammates by default, so this stays scoped to user_id alone
+    (the pre-company-sharing behavior of get_or_create_default_project).
+    """
     row = await conn.fetchrow("SELECT id FROM projects WHERE user_id = $1 AND name = $2", user_id, "Default Project")
     if row:
         project_id = row["id"]
