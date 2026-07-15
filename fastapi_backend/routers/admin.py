@@ -230,7 +230,11 @@ async def save_pricing(req: PricingRequest, admin: dict = Depends(require_super_
 async def get_pricing(admin: dict = Depends(require_super_admin)):
     pool = await get_pool()
     async with pool.acquire() as conn:
-        rows = await conn.fetch("SELECT * FROM module_pricing WHERE is_global = true ORDER BY module_name ASC")
+        rows = await conn.fetch(
+            """SELECT mp.*, c.name AS company_name FROM module_pricing mp
+               LEFT JOIN companies c ON c.id = mp.company_id
+               ORDER BY mp.is_global DESC, mp.module_name ASC"""
+        )
     return {"success": True, "pricing": [dict(r) for r in rows]}
 
 
@@ -254,7 +258,11 @@ async def get_feature_flags(admin: dict = Depends(require_super_admin)):
     pool = await get_pool()
     async with pool.acquire() as conn:
         rows = await conn.fetch(
-            "SELECT feature_key as key, feature_name as name, module, is_enabled as enabled FROM feature_flags WHERE is_global = true ORDER BY module, feature_name ASC"
+            """SELECT ff.feature_key AS key, ff.feature_name AS name, ff.module, ff.is_enabled AS enabled,
+                      ff.is_global, ff.company_id, c.name AS company_name
+               FROM feature_flags ff
+               LEFT JOIN companies c ON c.id = ff.company_id
+               ORDER BY ff.is_global DESC, ff.module, ff.feature_name ASC"""
         )
     return {"success": True, "flags": [dict(r) for r in rows]}
 

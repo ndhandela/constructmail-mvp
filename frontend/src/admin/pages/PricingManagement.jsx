@@ -169,7 +169,7 @@ export default function PricingManagement({ token, onNavigate }) {
                 <div className="pricing-details">
                   <strong>{item.module_name}</strong>
                   <span>${item.monthly_price}/mo</span>
-                  <span className="pricing-type">{item.is_global ? 'Global' : `Client: ${item.company_id}`}</span>
+                  <span className="pricing-type">{item.is_global ? 'Global' : `Client: ${item.company_name || item.company_id}`}</span>
                 </div>
               </div>
             ))}

@@ -170,7 +170,7 @@ export default function FeatureFlagsManagement({ token, onNavigate }) {
                   <span className={`flag-status ${flag.is_enabled ? 'enabled' : 'disabled'}`}>
                     {flag.is_enabled ? '✓ Enabled' : '✗ Disabled'}
                   </span>
-                  <span className="flag-type">{flag.is_global ? 'Global' : `Client: ${flag.company_id}`}</span>
+                  <span className="flag-type">{flag.is_global ? 'Global' : `Client: ${flag.company_name || flag.company_id}`}</span>
                 </div>
               </div>
             ))}
