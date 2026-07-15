@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
+import CompanyTeamSection from './CompanyTeamSection';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
@@ -7,7 +8,7 @@ function memberDisplayName(m) {
   return m.full_name || m.name || m.email;
 }
 
-export default function ProjectTeam({ userId }) {
+export default function ProjectTeam({ userId, permissionLevel }) {
   const { projects, currentProjectId } = useContext(ProjectContext);
   const [members, setMembers] = useState([]);
   const [pendingInvites, setPendingInvites] = useState([]);
@@ -19,7 +20,8 @@ export default function ProjectTeam({ userId }) {
 
   const hasProject = currentProjectId && currentProjectId !== ALL_PROJECTS;
   const currentProject = projects.find((p) => String(p.id) === String(currentProjectId));
-  const isOwner = currentProject?.member_role === 'owner';
+  const isProjectOwner = currentProject?.member_role === 'owner';
+  const isCompanyOwner = permissionLevel === 'owner';
 
   const fetchMembers = useCallback(async () => {
     if (!hasProject) {
@@ -81,80 +83,87 @@ export default function ProjectTeam({ userId }) {
     }
   };
 
-  if (!hasProject) {
-    return (
-      <div className="profile-card">
-        <p className="profile-readonly-note">
-          Select a project in the header switcher to see and manage its team.
-        </p>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return <div className="profile-card">Loading team…</div>;
-  }
-
   return (
-    <div className="profile-card">
-      <p className="profile-section-title">Members of {currentProject?.name}</p>
+    <>
+      <div className="profile-card">
+        <p className="profile-section-title">Project Team</p>
 
-      <div className="team-member-list">
-        {members.map((m) => (
-          <div className="team-member-row" key={m.user_id}>
-            <div>
-              <div className="team-member-name">{memberDisplayName(m)}</div>
-              <div className="team-member-email">{m.email}</div>
+        {!hasProject ? (
+          <p className="profile-readonly-note">
+            Select a project in the header switcher to see and manage its team.
+          </p>
+        ) : loading ? (
+          <p>Loading team…</p>
+        ) : (
+          <>
+            <p className="profile-section-title" style={{ marginTop: 8 }}>
+              Members of {currentProject?.name}
+            </p>
+
+            <div className="team-member-list">
+              {members.map((m) => (
+                <div className="team-member-row" key={m.user_id}>
+                  <div>
+                    <div className="team-member-name">{memberDisplayName(m)}</div>
+                    <div className="team-member-email">{m.email}</div>
+                  </div>
+                  <span className={`team-role-pill team-role-${m.role}`}>{m.role}</span>
+                </div>
+              ))}
+              {pendingInvites.map((inv) => (
+                <div className="team-member-row team-member-pending" key={inv.email}>
+                  <div>
+                    <div className="team-member-name">{inv.email}</div>
+                    <div className="team-member-email">Invite pending</div>
+                  </div>
+                  <span className={`team-role-pill team-role-${inv.role}`}>{inv.role}</span>
+                </div>
+              ))}
             </div>
-            <span className={`team-role-pill team-role-${m.role}`}>{m.role}</span>
-          </div>
-        ))}
-        {pendingInvites.map((inv) => (
-          <div className="team-member-row team-member-pending" key={inv.email}>
-            <div>
-              <div className="team-member-name">{inv.email}</div>
-              <div className="team-member-email">Invite pending</div>
-            </div>
-            <span className={`team-role-pill team-role-${inv.role}`}>{inv.role}</span>
-          </div>
-        ))}
+
+            {isProjectOwner ? (
+              <>
+                <p className="profile-section-title" style={{ marginTop: 24 }}>Invite a teammate</p>
+                <form onSubmit={handleInvite}>
+                  <div className="profile-form-row">
+                    <div className="profile-field">
+                      <label>Email</label>
+                      <input
+                        type="email"
+                        placeholder="teammate@company.com"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                      />
+                    </div>
+                    <div className="profile-field">
+                      <label>Role</label>
+                      <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}>
+                        <option value="contributor">Contributor</option>
+                        <option value="viewer">Viewer</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="profile-save-row">
+                    <button type="submit" className="profile-save-btn" disabled={inviting}>
+                      {inviting ? 'Sending…' : 'Send invite'}
+                    </button>
+                    {msg && <span className={`profile-msg ${msg.type}`}>{msg.text}</span>}
+                  </div>
+                </form>
+              </>
+            ) : (
+              <div className="profile-readonly-note" style={{ marginTop: 20 }}>
+                Only the project owner can invite teammates.
+              </div>
+            )}
+          </>
+        )}
       </div>
 
-      {isOwner ? (
-        <>
-          <p className="profile-section-title" style={{ marginTop: 24 }}>Invite a teammate</p>
-          <form onSubmit={handleInvite}>
-            <div className="profile-form-row">
-              <div className="profile-field">
-                <label>Email</label>
-                <input
-                  type="email"
-                  placeholder="teammate@company.com"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                />
-              </div>
-              <div className="profile-field">
-                <label>Role</label>
-                <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}>
-                  <option value="contributor">Contributor</option>
-                  <option value="viewer">Viewer</option>
-                </select>
-              </div>
-            </div>
-            <div className="profile-save-row">
-              <button type="submit" className="profile-save-btn" disabled={inviting}>
-                {inviting ? 'Sending…' : 'Send invite'}
-              </button>
-              {msg && <span className={`profile-msg ${msg.type}`}>{msg.text}</span>}
-            </div>
-          </form>
-        </>
-      ) : (
-        <div className="profile-readonly-note" style={{ marginTop: 20 }}>
-          Only the project owner can invite teammates.
-        </div>
-      )}
-    </div>
+      <div className="profile-card" style={{ marginTop: 24 }}>
+        <p className="profile-section-title">Company Team</p>
+        <CompanyTeamSection userId={userId} isOwner={isCompanyOwner} />
+      </div>
+    </>
   );
 }

@@ -106,14 +106,13 @@ export default function ProfileApp({ userId }) {
         {activeTab === 'company' && (
           <ProfileCompany
             company={company}
-            userRole={profile?.role}
             permissionLevel={profile?.permission_level}
             userId={userId}
             onCompanyUpdated={(updated) => setCompany(prev => ({ ...prev, ...updated }))}
           />
         )}
         {activeTab === 'team' && (
-          <ProjectTeam userId={userId} />
+          <ProjectTeam userId={userId} permissionLevel={profile?.permission_level} />
         )}
         {activeTab === 'security' && (
           <ProfileSecurity userId={userId} />
