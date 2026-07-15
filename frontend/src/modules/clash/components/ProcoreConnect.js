@@ -1,15 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export default function ProcoreConnect({ userId, onConnected, onRFISent, rfiData }) {
-  const [connected, setConnected] = useState(false);
-  const [projects, setProjects]   = useState([]);
-  const [projectId, setProjectId] = useState('');
-  const [sending, setSending]     = useState(false);
-  const [sent, setSent]           = useState(null);
-  const [error, setError]         = useState('');
-  const [checking, setChecking]   = useState(true);
+  const { currentProjectId } = useContext(ProjectContext);
+  const hasActiveProject = currentProjectId && currentProjectId !== ALL_PROJECTS;
+
+  const [connected, setConnected]           = useState(false);
+  const [projects, setProjects]             = useState([]);
+  const [projectId, setProjectId]           = useState('');
+  const [linkedProjectId, setLinkedProjectId] = useState(null);
+  const [sending, setSending]               = useState(false);
+  const [sent, setSent]                     = useState(null);
+  const [error, setError]                   = useState('');
+  const [checking, setChecking]             = useState(true);
+
+  const fetchProjectLink = async () => {
+    if (!hasActiveProject) return null;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/procore/project-link?projectId=${currentProjectId}`);
+      const data = await res.json();
+      if (data.procoreProjectId) {
+        setLinkedProjectId(data.procoreProjectId);
+        setProjectId(data.procoreProjectId);
+        return data.procoreProjectId;
+      }
+    } catch {
+      // non-fatal — picker just stays unlocked
+    }
+    return null;
+  };
 
   const checkStatus = async () => {
     if (!userId) { setChecking(false); return; }
@@ -17,7 +38,10 @@ export default function ProcoreConnect({ userId, onConnected, onRFISent, rfiData
       const res = await fetch(`${API_BASE_URL}/api/procore/status?userId=${userId}`);
       const data = await res.json();
       setConnected(data.connected);
-      if (data.connected) fetchProjects();
+      if (data.connected) {
+        const linked = await fetchProjectLink();
+        fetchProjects(linked);
+      }
     } catch {
       setConnected(false);
     } finally {
@@ -25,19 +49,36 @@ export default function ProcoreConnect({ userId, onConnected, onRFISent, rfiData
     }
   };
 
-  const fetchProjects = async () => {
+  const fetchProjects = async (linked) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/procore/projects?userId=${userId}`);
       const data = await res.json();
       setProjects(data.projects || []);
-      if (data.projects?.length > 0) setProjectId(String(data.projects[0].id));
+      if (!linked && data.projects?.length > 0) setProjectId(String(data.projects[0].id));
     } catch {
       setError('Could not load Procore projects.');
     }
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { checkStatus(); }, [userId]);
+  useEffect(() => { checkStatus(); }, [userId, currentProjectId]);
+
+  const handleProjectPick = async (e) => {
+    const newId = e.target.value;
+    setProjectId(newId);
+    if (hasActiveProject && newId) {
+      try {
+        await fetch(`${API_BASE_URL}/api/procore/project-link`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId: Number(currentProjectId), procoreProjectId: newId }),
+        });
+        setLinkedProjectId(newId);
+      } catch {
+        // non-fatal — the pick still works for this send, just won't persist
+      }
+    }
+  };
 
   useEffect(() => {
     const handler = (e) => {
@@ -139,7 +180,8 @@ export default function ProcoreConnect({ userId, onConnected, onRFISent, rfiData
             <select
               className="rfi-select"
               value={projectId}
-              onChange={e => setProjectId(e.target.value)}
+              onChange={handleProjectPick}
+              disabled={!!linkedProjectId}
               style={{ flex: 1 }}
             >
               <option value="">Select project…</option>
@@ -155,6 +197,9 @@ export default function ProcoreConnect({ userId, onConnected, onRFISent, rfiData
               {sending ? 'Sending…' : '🚀 Send to Procore'}
             </button>
           </div>
+          {linkedProjectId && (
+            <p className="procore-linked-note">🔒 Locked to this project's saved Procore mapping.</p>
+          )}
           <div className="procore-reconnect-row">
             <span className="procore-no-projects">
               {projects.length === 0 ? 'No projects found — try reconnecting.' : ''}

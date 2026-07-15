@@ -471,6 +471,15 @@ async def init_db():
                 END IF;
             END
             $mig011$;
+
+            -- Links a POMAR project to a Procore project, so Clash's Procore
+            -- project picker doesn't ask again once one is chosen (migration 012)
+            CREATE TABLE IF NOT EXISTS project_procore_links (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL UNIQUE REFERENCES projects(id) ON DELETE CASCADE,
+                procore_project_id TEXT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
         """)
 
         await _backfill_clash_project_ids(conn)

@@ -14,6 +14,11 @@ class CreateRFIRequest(BaseModel):
     rfiData: dict
 
 
+class ProjectLinkRequest(BaseModel):
+    projectId: int
+    procoreProjectId: str
+
+
 @router.get("/status")
 async def procore_status(userId: str):
     pool = await get_pool()
@@ -57,4 +62,30 @@ async def procore_disconnect(userId: str):
     pool = await get_pool()
     async with pool.acquire() as conn:
         await conn.execute("DELETE FROM procore_tokens WHERE user_id = $1", userId)
+    return {"success": True}
+
+
+@router.get("/project-link")
+async def get_project_link(projectId: int):
+    """The Procore project this POMAR project is mapped to, if any — lets
+    Clash's Procore picker pre-select/lock instead of asking every time."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT procore_project_id FROM project_procore_links WHERE project_id = $1",
+            projectId,
+        )
+    return {"procoreProjectId": row["procore_project_id"] if row else None}
+
+
+@router.post("/project-link")
+async def set_project_link(req: ProjectLinkRequest):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            """INSERT INTO project_procore_links (project_id, procore_project_id)
+               VALUES ($1, $2)
+               ON CONFLICT (project_id) DO UPDATE SET procore_project_id = EXCLUDED.procore_project_id""",
+            req.projectId, req.procoreProjectId,
+        )
     return {"success": True}
