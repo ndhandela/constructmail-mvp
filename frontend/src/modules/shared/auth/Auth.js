@@ -9,7 +9,7 @@ const PRODUCT_NAMES = {
   '/constructmail': 'POMAR Mail — Email Intelligence',
 };
 
-const ROLES = [
+export const ROLES = [
   { value: '',              label: 'Select your role...' },
   { value: 'GC',            label: 'General Contractor' },
   { value: 'Subcontractor', label: 'Subcontractor' },

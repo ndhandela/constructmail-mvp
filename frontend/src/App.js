@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ProjectProvider } from './contexts/ProjectContext';
 import Auth from './modules/shared/auth/Auth';
+import SelectRole from './modules/shared/auth/SelectRole';
 import LandingPage from './pages/LandingPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Contact from './pages/Contact';
@@ -198,6 +199,24 @@ function App() {
     sessionStorage.setItem('postLoginPath', path);
     window.location.href = '/login';
     return null;
+  }
+
+  // ── Magic-link users have no role yet — collect it before anything else ──
+  // (role gates project creation, so this has to happen before /dashboard or
+  // any other product route can render).
+  if (userId && user && !user.role && PRODUCT_PATHS.includes(path)) {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <SelectRole
+          userId={userId}
+          onRoleSelected={(role) => {
+            setUser((prev) => ({ ...prev, role }));
+          }}
+        />
+        <Footer />
+      </>
+    );
   }
 
   // ── Detect /dashboard path for logged-in users ──────────────────────────

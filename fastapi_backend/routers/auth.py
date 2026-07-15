@@ -13,6 +13,10 @@ router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://pomar.ai")
 
+# Mirrors the `value`s in frontend/src/modules/shared/auth/Auth.js's ROLES
+# (excluding the empty placeholder option).
+VALID_ROLES = ("GC", "Subcontractor", "Owner", "VDC", "Other")
+
 
 class MagicLinkRequest(BaseModel):
     email: str
@@ -53,6 +57,11 @@ class GmailCallbackRequest(BaseModel):
 class OutlookCallbackRequest(BaseModel):
     code: str
     userId: int
+
+
+class UpdateRoleRequest(BaseModel):
+    userId: int
+    role: str
 
 
 @router.post("/send-magic-link")
@@ -102,6 +111,26 @@ async def get_me(userId: int):
         if not row:
             raise HTTPException(401, "User not found")
     return dict(row)
+
+
+@router.patch("/role")
+async def update_role(req: UpdateRoleRequest):
+    """
+    Magic-link sign-in (verify_token) creates users with no role, since the
+    role is normally collected on the /register form. This lets the frontend
+    collect it afterward — required before the user can do anything
+    role-gated, like creating a project.
+    """
+    if req.role not in VALID_ROLES:
+        raise HTTPException(400, f"role must be one of: {', '.join(VALID_ROLES)}")
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "UPDATE users SET role = $1 WHERE id = $2 RETURNING id, role", req.role, req.userId
+        )
+        if not row:
+            raise HTTPException(404, "User not found")
+    return {"success": True, "role": row["role"]}
 
 
 @router.post("/register")
