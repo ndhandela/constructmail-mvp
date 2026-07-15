@@ -29,7 +29,7 @@ def create_token(admin: dict) -> str:
         "id": admin["id"],
         "email": admin["email"],
         "admin_level": admin["admin_level"],
-        "client_id": admin.get("client_id"),
+        "company_id": admin.get("company_id"),
         "exp": datetime.utcnow() + timedelta(hours=JWT_EXPIRY_HOURS),
     }
     return jwt.encode(payload, JWT_SECRET, algorithm="HS256")

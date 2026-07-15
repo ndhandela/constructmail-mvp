@@ -41,10 +41,10 @@ async def get_all_admin_users(limit: int = 50, offset: int = 0) -> dict:
     pool = await get_pool()
     async with pool.acquire() as conn:
         rows = await conn.fetch(
-            """SELECT a.id, a.email, a.admin_level, a.client_id, a.permissions,
+            """SELECT a.id, a.email, a.admin_level, a.company_id, a.permissions,
                       a.is_active, a.created_at, a.last_login,
-                      u.name as client_name, u.company as client_company
-               FROM admin_users a LEFT JOIN users u ON a.client_id = u.id
+                      c.name as client_name
+               FROM admin_users a LEFT JOIN companies c ON a.company_id = c.id
                ORDER BY a.created_at DESC LIMIT $1 OFFSET $2""",
             limit, offset,
         )
@@ -57,25 +57,25 @@ async def create_admin_user(data: dict) -> dict:
     email = data.get("email")
     password = data.get("password")
     admin_level = data.get("admin_level")
-    client_id = data.get("client_id")
+    company_id = data.get("company_id")
     permissions = data.get("permissions", {"pricing": True, "features": True, "users": True})
 
     if not email or not password or not admin_level:
         return {"success": False, "error": "Email, password, and admin_level required"}
     if admin_level not in ("super_admin", "client_admin"):
         return {"success": False, "error": "Invalid admin_level"}
-    if admin_level == "client_admin" and not client_id:
-        return {"success": False, "error": "client_id required for client_admin"}
+    if admin_level == "client_admin" and not company_id:
+        return {"success": False, "error": "company_id required for client_admin"}
 
     password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt(12)).decode()
 
     async with pool.acquire() as conn:
         try:
             row = await conn.fetchrow(
-                """INSERT INTO admin_users (email, password_hash, admin_level, client_id, permissions, is_active)
+                """INSERT INTO admin_users (email, password_hash, admin_level, company_id, permissions, is_active)
                    VALUES ($1,$2,$3,$4,$5,true)
-                   RETURNING id, email, admin_level, client_id, permissions, is_active, created_at""",
-                email, password_hash, admin_level, client_id, json.dumps(permissions),
+                   RETURNING id, email, admin_level, company_id, permissions, is_active, created_at""",
+                email, password_hash, admin_level, company_id, json.dumps(permissions),
             )
             return {"success": True, "admin": dict(row)}
         except Exception as e:

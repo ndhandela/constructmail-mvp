@@ -12,7 +12,7 @@ export default function PricingManagement({ token, onNavigate }) {
     module_name: 'mail',
     monthly_price: 0,
     is_global: true,
-    client_id: null
+    company_id: null
   });
 
   useEffect(() => {
@@ -79,7 +79,7 @@ export default function PricingManagement({ token, onNavigate }) {
           module_name: 'mail',
           monthly_price: 0,
           is_global: true,
-          client_id: null
+          company_id: null
         });
         setEditingId(null);
       }
@@ -148,7 +148,7 @@ export default function PricingManagement({ token, onNavigate }) {
             {!formData.is_global && (
               <div className="form-group">
                 <label>Client</label>
-                <select name="client_id" value={formData.client_id || ''} onChange={handleInputChange}>
+                <select name="company_id" value={formData.company_id || ''} onChange={handleInputChange}>
                   <option value="">Select a client</option>
                   {clients.map(client => (
                     <option key={client.id} value={client.id}>{client.name}</option>
@@ -169,7 +169,7 @@ export default function PricingManagement({ token, onNavigate }) {
                 <div className="pricing-details">
                   <strong>{item.module_name}</strong>
                   <span>${item.monthly_price}/mo</span>
-                  <span className="pricing-type">{item.is_global ? 'Global' : `Client: ${item.client_id}`}</span>
+                  <span className="pricing-type">{item.is_global ? 'Global' : `Client: ${item.company_id}`}</span>
                 </div>
               </div>
             ))}

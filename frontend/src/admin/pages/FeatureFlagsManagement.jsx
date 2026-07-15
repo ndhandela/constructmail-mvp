@@ -11,7 +11,7 @@ export default function FeatureFlagsManagement({ token, onNavigate }) {
     feature_name: 'mail_intelligence',
     is_enabled: true,
     is_global: true,
-    client_id: null
+    company_id: null
   });
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export default function FeatureFlagsManagement({ token, onNavigate }) {
           feature_name: 'mail_intelligence',
           is_enabled: true,
           is_global: true,
-          client_id: null
+          company_id: null
         });
       }
     } catch (err) {
@@ -147,7 +147,7 @@ export default function FeatureFlagsManagement({ token, onNavigate }) {
             {!formData.is_global && (
               <div className="form-group">
                 <label>Client</label>
-                <select name="client_id" value={formData.client_id || ''} onChange={handleInputChange}>
+                <select name="company_id" value={formData.company_id || ''} onChange={handleInputChange}>
                   <option value="">Select a client</option>
                   {clients.map(client => (
                     <option key={client.id} value={client.id}>{client.name}</option>
@@ -170,7 +170,7 @@ export default function FeatureFlagsManagement({ token, onNavigate }) {
                   <span className={`flag-status ${flag.is_enabled ? 'enabled' : 'disabled'}`}>
                     {flag.is_enabled ? '✓ Enabled' : '✗ Disabled'}
                   </span>
-                  <span className="flag-type">{flag.is_global ? 'Global' : `Client: ${flag.client_id}`}</span>
+                  <span className="flag-type">{flag.is_global ? 'Global' : `Client: ${flag.company_id}`}</span>
                 </div>
               </div>
             ))}

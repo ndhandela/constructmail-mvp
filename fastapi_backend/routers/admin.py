@@ -25,7 +25,7 @@ class CreateAdminRequest(BaseModel):
     email: str
     password: str
     admin_level: str
-    client_id: Optional[int] = None
+    company_id: Optional[int] = None
     permissions: Optional[dict] = None
 
 
@@ -39,7 +39,7 @@ class PricingRequest(BaseModel):
     monthly_price: Optional[float] = 0
     billing_cycle: Optional[str] = "monthly"
     is_global: Optional[bool] = False
-    client_id: Optional[int] = None
+    company_id: Optional[int] = None
 
 
 class FeatureFlagsRequest(BaseModel):
@@ -57,7 +57,7 @@ async def admin_login(req: AdminLoginRequest):
     pool = await get_pool()
     async with pool.acquire() as conn:
         admin = await conn.fetchrow(
-            "SELECT id, email, password_hash, admin_level, client_id, is_active FROM admin_users WHERE email = $1",
+            "SELECT id, email, password_hash, admin_level, company_id, is_active FROM admin_users WHERE email = $1",
             req.email.lower().strip(),
         )
     if not admin:
@@ -85,7 +85,7 @@ async def get_admin_me(admin: dict = Depends(get_current_admin)):
     pool = await get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT id, email, admin_level, client_id, is_active, created_at, last_login FROM admin_users WHERE id = $1",
+            "SELECT id, email, admin_level, company_id, is_active, created_at, last_login FROM admin_users WHERE id = $1",
             admin["id"],
         )
     if not row:
@@ -210,11 +210,11 @@ async def save_pricing(req: PricingRequest, admin: dict = Depends(require_super_
     pool = await get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            """INSERT INTO module_pricing (is_global, client_id, module_name, monthly_price, billing_cycle, is_active, updated_by_admin_id)
+            """INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active, updated_by_admin_id)
                VALUES ($1,$2,$3,$4,$5,true,$6)
                ON CONFLICT (module_name, is_global) DO UPDATE SET monthly_price=$4, billing_cycle=$5, updated_at=NOW(), updated_by_admin_id=$6
                RETURNING *""",
-            req.is_global or False, req.client_id, req.module_name, req.monthly_price or 0, req.billing_cycle or "monthly", admin["id"],
+            req.is_global or False, req.company_id, req.module_name, req.monthly_price or 0, req.billing_cycle or "monthly", admin["id"],
         )
     await user_service.log_admin_activity(admin["id"], "pricing_updated", "module_pricing", row["id"], {"module_name": req.module_name})
     return {"success": True, "pricing": dict(row)}
