@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
+import React, { useState, useEffect } from 'react';
 import '../styles/Dashboard.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
@@ -9,8 +8,6 @@ export default function Dashboard() {
   const [actions, setActions] = useState([]);
   const [signals, setSignals] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const { currentProjectId } = useContext(ProjectContext);
 
 const fetchData = async () => {
   try {
@@ -22,14 +19,10 @@ const fetchData = async () => {
       return;
     }
 
-    const projectParam = currentProjectId && currentProjectId !== ALL_PROJECTS
-      ? `&projectId=${currentProjectId}`
-      : '';
-
     const [summariesRes, actionsRes, signalsRes] = await Promise.all([
-      fetch(`${API_BASE_URL}/api/recent-summaries?userId=${userId}${projectParam}`),
-      fetch(`${API_BASE_URL}/api/open-actions?userId=${userId}${projectParam}`),
-      fetch(`${API_BASE_URL}/api/recent-signals?userId=${userId}${projectParam}`)
+      fetch(`${API_BASE_URL}/api/recent-summaries?userId=${userId}`),
+      fetch(`${API_BASE_URL}/api/open-actions?userId=${userId}`),
+      fetch(`${API_BASE_URL}/api/recent-signals?userId=${userId}`)
     ]);
 
     const summaries = await summariesRes.json();
@@ -49,7 +42,7 @@ const fetchData = async () => {
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentProjectId]);
+  }, []);
 
 
   if (loading) {

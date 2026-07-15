@@ -1,12 +1,10 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
 import '../styles/Summarizer.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export default function Summarizer({ userId, selectedEmailText, emailMeta, onDraftCreated }) {
-  const { currentProjectId } = useContext(ProjectContext);
   const [emailText, setEmailText] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -41,7 +39,6 @@ export default function Summarizer({ userId, selectedEmailText, emailMeta, onDra
       const response = await axios.post(`${API_BASE_URL}/api/summarize`, {
         emailText,
         userId: userId,
-        projectId: currentProjectId !== ALL_PROJECTS ? currentProjectId : undefined,
         provider: meta.provider,
         threadId: meta.threadId,
         sourceEmailId: meta.sourceEmailId,
