@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import secrets
 from datetime import datetime, timedelta
@@ -136,25 +137,30 @@ async def create_company(req: CreateCompanyRequest, admin: dict = Depends(requir
 
     invite_url = f"{FRONTEND_URL}/accept-invite?token={invite_token}"
     first_name = req.ownerFullName.strip().split(" ")[0]
-    await send_email(
-        to=owner_email,
-        subject="You're invited to POMAR",
-        html=f"""
-        <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
-          <h2 style="color: #0E1B2C;">Welcome to POMAR</h2>
-          <p>Hi {first_name},</p>
-          <p>You've been set up as the owner of <strong>{req.companyName.strip()}</strong> on POMAR. Set your password to get started.</p>
-          <a href="{invite_url}" style="display:inline-block;padding:12px 24px;background:#D97706;color:white;border-radius:100px;text-decoration:none;font-weight:600;margin:20px 0;">
-            Set Your Password
-          </a>
-          <p style="color:#666;font-size:13px;">This link expires in 7 days.</p>
-        </div>""",
-    )
+    try:
+        email_sent = await send_email(
+            to=owner_email,
+            subject="You're invited to POMAR",
+            html=f"""
+            <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+              <h2 style="color: #0E1B2C;">Welcome to POMAR</h2>
+              <p>Hi {first_name},</p>
+              <p>You've been set up as the owner of <strong>{req.companyName.strip()}</strong> on POMAR. Set your password to get started.</p>
+              <a href="{invite_url}" style="display:inline-block;padding:12px 24px;background:#D97706;color:white;border-radius:100px;text-decoration:none;font-weight:600;margin:20px 0;">
+                Set Your Password
+              </a>
+              <p style="color:#666;font-size:13px;">This link expires in 7 days.</p>
+            </div>""",
+        )
+    except Exception as e:
+        logging.error(f"create_company: invite email failed for {owner_email!r}: {e}")
+        email_sent = False
+
     await user_service.log_admin_activity(
         admin["id"], "company_created", "companies", company["id"],
         {"companyName": req.companyName, "ownerEmail": owner_email},
     )
-    return {"success": True, "companyId": company["id"], "userId": user["id"]}
+    return {"success": True, "companyId": company["id"], "userId": user["id"], "email_sent": email_sent}
 
 
 @router.get("/users")
