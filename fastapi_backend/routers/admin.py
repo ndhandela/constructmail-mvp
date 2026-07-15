@@ -216,16 +216,25 @@ async def get_activity_log(
 
 @router.post("/pricing")
 async def save_pricing(req: PricingRequest, admin: dict = Depends(require_super_admin)):
+    is_global = req.is_global or False
+    # module_pricing has two unique constraints: (module_name, is_global) dedupes
+    # global rows, (company_id, module_name) dedupes per-company rows. Which one
+    # applies depends on is_global, since company_id is NULL for global rows and
+    # Postgres never treats NULL = NULL as a conflict.
+    if not is_global and req.company_id is None:
+        raise HTTPException(400, "company_id is required when is_global is false")
+    company_id = req.company_id if not is_global else None
+    conflict_target = "(module_name, is_global)" if is_global else "(company_id, module_name)"
     pool = await get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            """INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active, updated_by_admin_id)
+            f"""INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active, updated_by_admin_id)
                VALUES ($1,$2,$3,$4,$5,true,$6)
-               ON CONFLICT (module_name, is_global) DO UPDATE SET monthly_price=$4, billing_cycle=$5, updated_at=NOW(), updated_by_admin_id=$6
+               ON CONFLICT {conflict_target} DO UPDATE SET company_id=$2, monthly_price=$4, billing_cycle=$5, updated_at=NOW(), updated_by_admin_id=$6
                RETURNING *""",
-            req.is_global or False, req.company_id, req.module_name, req.monthly_price or 0, req.billing_cycle or "monthly", admin["id"],
+            is_global, company_id, req.module_name, req.monthly_price or 0, req.billing_cycle or "monthly", admin["id"],
         )
-    await user_service.log_admin_activity(admin["id"], "pricing_updated", "module_pricing", row["id"], {"module_name": req.module_name})
+    await user_service.log_admin_activity(admin["id"], "pricing_updated", "module_pricing", row["id"], {"module_name": req.module_name, "is_global": is_global, "company_id": company_id})
     return {"success": True, "pricing": dict(row)}
 
 
