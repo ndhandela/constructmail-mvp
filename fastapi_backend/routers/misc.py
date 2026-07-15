@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from typing import Optional
 from db import get_pool
 from services.email_service import send_email
-from services.project_helpers import get_or_create_default_project
 
 router = APIRouter(tags=["Misc"])
 
@@ -63,18 +62,6 @@ async def debug_user_data(user_id: int):
     }
 
 
-@router.get("/api/projects")
-async def get_projects(userId: int):
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        await get_or_create_default_project(conn, userId)
-        rows = await conn.fetch(
-            "SELECT id, name, project_number, client_name FROM projects WHERE user_id = $1 ORDER BY created_at",
-            userId,
-        )
-    return {"success": True, "projects": [dict(r) for r in rows]}
-
-
 @router.get("/api/activity/feed")
 async def get_activity_feed(userId: int, limit: int = 20):
     """
@@ -86,7 +73,12 @@ async def get_activity_feed(userId: int, limit: int = 20):
     async with pool.acquire() as conn:
         project_names = {
             r["id"]: r["name"]
-            for r in await conn.fetch("SELECT id, name FROM projects WHERE user_id = $1", userId)
+            for r in await conn.fetch(
+                """SELECT p.id, p.name FROM projects p
+                   JOIN project_members pm ON pm.project_id = p.id
+                   WHERE pm.user_id = $1""",
+                userId,
+            )
         }
 
         mail_summaries = await conn.fetch(

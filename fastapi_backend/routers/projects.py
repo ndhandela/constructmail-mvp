@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 from db import get_pool
+from services.project_helpers import get_or_create_default_project
 
 router = APIRouter(prefix="/api/projects", tags=["Projects"])
 
@@ -16,6 +17,22 @@ class CreateProjectRequest(BaseModel):
     name: str
     project_number: Optional[str] = None
     client_name: Optional[str] = None
+
+
+@router.get("")
+async def get_projects(userId: int):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await get_or_create_default_project(conn, userId)
+        rows = await conn.fetch(
+            """SELECT p.id, p.name, p.project_number, p.client_name, pm.role AS member_role
+               FROM projects p
+               JOIN project_members pm ON pm.project_id = p.id
+               WHERE pm.user_id = $1
+               ORDER BY p.created_at""",
+            userId,
+        )
+    return {"success": True, "projects": [dict(r) for r in rows]}
 
 
 @router.post("")
