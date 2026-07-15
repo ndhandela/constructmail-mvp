@@ -1,6 +1,11 @@
 import React from 'react';
 import PomarLogo from './../components/PomarLogo';
+import { getProductById } from '../config/products';
 import '../styles/LandingPage.css';
+
+const goToMarketing = (id) => {
+  window.location.href = getProductById(id).marketingPath;
+};
 
 export default function LandingPage({ onProductSelect }) {
   return (
@@ -94,7 +99,7 @@ export default function LandingPage({ onProductSelect }) {
       <section className="products">
         <div className="section-inner">
           <div className="products-header">
-            <div className="section-eyebrow">The Product Family</div>
+            <div className="section-eyebrow">Platform</div>
             <h2 className="section-h2">One platform. Built one problem at a time.</h2>
             <p className="section-body centered">
               Start with one tool. Add the next when you're ready. Same login, same brand,
@@ -103,28 +108,36 @@ export default function LandingPage({ onProductSelect }) {
           </div>
 
           <div className="product-grid">
-            <div className="product-card live" onClick={() => onProductSelect && onProductSelect('constructmail')}>
+            <div className="product-card live" onClick={() => goToMarketing('constructmail')}>
               <span className="product-badge badge-live">Live Now</span>
               <h3>POMAR Mail</h3>
               <div className="product-tagline">Email Intelligence</div>
               <p>AI triage for project email. Summarize threads, extract action items, detect RFI and change order signals — straight from your Gmail or Outlook inbox.</p>
-              <span className="product-link">Try it free →</span>
+              <span className="product-link">Learn more →</span>
             </div>
 
-            <div className="product-card live" onClick={() => onProductSelect && onProductSelect('clash')}>
+            <div className="product-card live" onClick={() => goToMarketing('clash')}>
               <span className="product-badge badge-live">Live Now</span>
               <h3>POMAR Clash</h3>
               <div className="product-tagline">BIM Clash Intelligence</div>
               <p>Upload a Navisworks clash report. Get severity scoring, top clashing element pairs, and AI-drafted RFIs ready to paste into Procore or Kahua — in seconds.</p>
-              <span className="product-link">Try it free →</span>
+              <span className="product-link">Learn more →</span>
             </div>
 
-            <div className="product-card live" onClick={() => onProductSelect && onProductSelect('vendors')}>
+            <div className="product-card live" onClick={() => goToMarketing('vendors')}>
               <span className="product-badge badge-live">Live Now</span>
               <h3>POMAR Vendors</h3>
               <div className="product-tagline">Vendor Intelligence</div>
               <p>Find, vet, and track trusted subcontractors and suppliers. Insurance verification, star ratings across 5 trade categories, and one-click CSV or PDF export.</p>
-              <span className="product-link">Explore →</span>
+              <span className="product-link">Learn more →</span>
+            </div>
+
+            <div className="product-card live" onClick={() => goToMarketing('marketplace')}>
+              <span className="product-badge badge-live">Live Now</span>
+              <h3>POMAR Marketplace</h3>
+              <div className="product-tagline">Vendor Network Intelligence</div>
+              <p>Opt in to share vendors from your own directory and browse listings shared by other GCs — every listing backed by real reviews from contractors who've actually worked with them.</p>
+              <span className="product-link">Learn more →</span>
             </div>
 
             <div className="product-card soon">

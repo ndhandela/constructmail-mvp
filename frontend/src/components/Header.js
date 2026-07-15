@@ -2,6 +2,7 @@ import React, { useState, useRef, useContext } from 'react';
 import PomarLogo from './PomarLogo';
 import NewProjectModal from './NewProjectModal';
 import { ProjectContext, ALL_PROJECTS } from '../contexts/ProjectContext';
+import { getProductById } from '../config/products';
 import '../styles/Header.css';
 
 // Roles allowed to create new projects — mirrors PROJECT_CREATOR_ROLES in
@@ -26,6 +27,10 @@ const PRODUCT_NAV = [
   { path: '/vendors',       label: 'Vendors' },
   { path: '/marketplace',   label: 'Marketplace' },
 ];
+
+// Platform dropdown shown to logged-out visitors — links to public marketing
+// pages (product.marketingPath), never to the authenticated app routes above.
+const PLATFORM_DROPDOWN_IDS = ['constructmail', 'clash', 'vendors', 'marketplace'];
 
 export default function Header({ userId, onLogout, user }) {
   const isLoggedIn = !!userId;
@@ -126,27 +131,18 @@ export default function Header({ userId, onLogout, user }) {
             </button>
             {platformOpen && (
               <div className="dropdown-menu">
-                <a href="/constructmail" className="dropdown-item">
-                  <span className="dropdown-item-tag">Live</span>
-                  <div>
-                    <div className="dropdown-item-title">POMAR Mail <span className="dropdown-item-lock">🔒</span></div>
-                    <div className="dropdown-item-sub">POMAR Mail</div>
-                  </div>
-                </a>
-                <a href="/clash" className="dropdown-item">
-                  <span className="dropdown-item-tag">Live</span>
-                  <div>
-                    <div className="dropdown-item-title">POMAR Clash <span className="dropdown-item-lock">🔒</span></div>
-                    <div className="dropdown-item-sub">BIM Clash Report Analyzer</div>
-                  </div>
-                </a>
-                <a href="/vendors" className="dropdown-item">
-                  <span className="dropdown-item-tag">Live</span>
-                  <div>
-                    <div className="dropdown-item-title">POMAR Vendors <span className="dropdown-item-lock">🔒</span></div>
-                    <div className="dropdown-item-sub">Find trusted contractors</div>
-                  </div>
-                </a>
+                {PLATFORM_DROPDOWN_IDS.map((id) => {
+                  const product = getProductById(id);
+                  return (
+                    <a key={id} href={product.marketingPath} className="dropdown-item">
+                      <span className="dropdown-item-tag">Live</span>
+                      <div>
+                        <div className="dropdown-item-title">{product.name}</div>
+                        <div className="dropdown-item-sub">{product.description}</div>
+                      </div>
+                    </a>
+                  );
+                })}
               </div>
             )}
           </div>

@@ -1,0 +1,68 @@
+/* ============================================
+   POMAR Product Marketing Pages
+   Reuses tokens/classes from LandingPage.css (hero, section-*, product-*)
+   ============================================ */
+
+.marketing-page {
+  background: white;
+  color: var(--inkwell);
+}
+
+.marketing-hero {
+  padding: 160px 60px 100px;
+}
+
+.marketing-body {
+  padding: 100px 60px;
+}
+
+.marketing-howitworks {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 40px;
+  display: grid;
+  gap: 20px;
+  max-width: 720px;
+}
+
+.marketing-howitworks li {
+  position: relative;
+  padding: 20px 24px 20px 64px;
+  background: var(--parchment);
+  border-radius: var(--radius-lg);
+  border-left: 3px solid var(--saffron);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--inkwell);
+}
+
+.marketing-howitworks li::before {
+  content: attr(data-step);
+  position: absolute;
+  left: 22px;
+  top: 18px;
+  color: var(--saffron);
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.marketing-cta-section {
+  text-align: center;
+  padding: 100px 60px;
+  background: var(--parchment);
+}
+
+@media (max-width: 768px) {
+  .marketing-hero {
+    padding: 90px 24px 60px;
+  }
+
+  .marketing-body {
+    padding: 60px 24px;
+  }
+
+  .marketing-cta-section {
+    padding: 60px 24px;
+  }
+}

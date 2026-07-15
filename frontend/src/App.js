@@ -7,6 +7,10 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import Contact from './pages/Contact';
 import Pricing from './pages/Pricing';
 import Demo from './pages/Demo';
+import MailMarketing from './pages/marketing/MailMarketing';
+import ClashMarketing from './pages/marketing/ClashMarketing';
+import VendorsMarketing from './pages/marketing/VendorsMarketing';
+import MarketplaceMarketing from './pages/marketing/MarketplaceMarketing';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import AboutUs from './pages/AboutUs';
@@ -182,6 +186,47 @@ function App() {
       <>
         <Header userId={userId} onLogout={handleLogout} user={user} />
         <Demo />
+        <Footer />
+      </>
+    );
+  }
+
+  // ── Public product marketing pages (no auth required) ────────────────────
+  if (path === '/mail') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <MailMarketing />
+        <Footer />
+      </>
+    );
+  }
+
+  if (path === '/clash-info') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <ClashMarketing />
+        <Footer />
+      </>
+    );
+  }
+
+  if (path === '/vendors-info') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <VendorsMarketing />
+        <Footer />
+      </>
+    );
+  }
+
+  if (path === '/marketplace-info') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <MarketplaceMarketing />
         <Footer />
       </>
     );
