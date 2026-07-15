@@ -5,7 +5,7 @@ import secrets
 from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional
 from db import get_pool
 from services.admin_auth import get_current_admin, require_super_admin, create_token, hash_password, verify_password
 from services.email_service import send_email
@@ -44,7 +44,10 @@ class PricingRequest(BaseModel):
 
 
 class FeatureFlagsRequest(BaseModel):
-    flags: List[dict]
+    feature_name: str
+    is_enabled: bool = True
+    is_global: bool = True
+    company_id: Optional[int] = None
 
 
 class CreateCompanyRequest(BaseModel):
@@ -240,17 +243,27 @@ async def get_pricing(admin: dict = Depends(require_super_admin)):
 
 @router.post("/feature-flags")
 async def save_feature_flags(req: FeatureFlagsRequest, admin: dict = Depends(require_super_admin)):
+    # feature_flags has two unique constraints: (feature_key, is_global) dedupes
+    # global rows, (company_id, feature_key) dedupes per-company rows. Which one
+    # applies depends on is_global, since company_id is NULL for global rows and
+    # Postgres never treats NULL = NULL as a conflict.
+    if not req.is_global and req.company_id is None:
+        raise HTTPException(400, "company_id is required when is_global is false")
+    company_id = req.company_id if not req.is_global else None
+    conflict_target = "(feature_key, is_global)" if req.is_global else "(company_id, feature_key)"
     pool = await get_pool()
     async with pool.acquire() as conn:
-        for flag in req.flags:
-            await conn.execute(
-                """INSERT INTO feature_flags (is_global, feature_key, feature_name, module, is_enabled, updated_by_admin_id)
-                   VALUES (true,$1,$2,$3,$4,$5)
-                   ON CONFLICT (feature_key, is_global) DO UPDATE SET is_enabled=$4, updated_by_admin_id=$5, updated_at=NOW()""",
-                flag["key"], flag["name"], flag["module"], flag["enabled"], admin["id"],
-            )
-    await user_service.log_admin_activity(admin["id"], "feature_flags_updated", "feature_flags", None, {"count": len(req.flags)})
-    return {"success": True, "message": "Feature flags updated"}
+        await conn.execute(
+            f"""INSERT INTO feature_flags (is_global, company_id, feature_key, feature_name, is_enabled, updated_by_admin_id)
+               VALUES ($1,$2,$3,$4,$5,$6)
+               ON CONFLICT {conflict_target} DO UPDATE SET is_enabled=$5, updated_by_admin_id=$6, updated_at=NOW()""",
+            req.is_global, company_id, req.feature_name, req.feature_name, req.is_enabled, admin["id"],
+        )
+    await user_service.log_admin_activity(
+        admin["id"], "feature_flags_updated", "feature_flags", None,
+        {"feature_name": req.feature_name, "is_global": req.is_global, "company_id": company_id},
+    )
+    return {"success": True, "message": "Feature flag updated"}
 
 
 @router.get("/feature-flags")
