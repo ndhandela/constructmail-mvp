@@ -139,16 +139,20 @@ async def register(req: RegisterRequest):
         raise HTTPException(400, "Password must be at least 8 characters.")
     pool = await get_pool()
     async with pool.acquire() as conn:
-        existing = await conn.fetchrow("SELECT id FROM users WHERE email = $1", req.email.lower().strip())
-        if existing:
-            raise HTTPException(400, "An account with this email already exists. Please sign in.")
-        password_hash = bcrypt.hashpw(req.password.encode(), bcrypt.gensalt(12)).decode()
-        email = req.email.lower().strip()
-        row = await conn.fetchrow(
-            "INSERT INTO users (email, name, full_name, company, role, password_hash, created_at) VALUES ($1,$2,$3,$4,$5,$6,NOW()) RETURNING id",
-            email, req.fullName.strip(), req.fullName.strip(), req.company.strip(), req.role, password_hash,
-        )
-        await accept_pending_invites(conn, row["id"], email)
+        async with conn.transaction():
+            existing = await conn.fetchrow("SELECT id FROM users WHERE email = $1", req.email.lower().strip())
+            if existing:
+                raise HTTPException(400, "An account with this email already exists. Please sign in.")
+            password_hash = bcrypt.hashpw(req.password.encode(), bcrypt.gensalt(12)).decode()
+            email = req.email.lower().strip()
+            row = await conn.fetchrow(
+                "INSERT INTO users (email, name, full_name, company, role, password_hash, created_at) VALUES ($1,$2,$3,$4,$5,$6,NOW()) RETURNING id",
+                email, req.fullName.strip(), req.fullName.strip(), req.company.strip(), req.role, password_hash,
+            )
+            # Same transaction as the user insert — an invite that already
+            # exists for this email should never be left dangling as pending
+            # if account creation itself succeeds.
+            await accept_pending_invites(conn, row["id"], email)
     return {"success": True, "userId": row["id"]}
 
 
