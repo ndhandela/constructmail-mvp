@@ -12,6 +12,7 @@ class ContactRequest(BaseModel):
     email: str
     message: str
     company: Optional[str] = None
+    source: Optional[str] = "contact"  # "contact" or "demo"
 
 
 @router.get("/api/health")
@@ -32,11 +33,12 @@ async def root():
 async def contact(req: ContactRequest):
     if not req.name or not req.email or not req.message:
         raise HTTPException(400, "Name, email and message are required")
+    label = "Demo Request" if req.source == "demo" else "Consultation Request"
     await send_email(
         to="connect@techdensolutions.com",
-        subject=f"New Consultation Request - {req.company or 'No Company'} - {req.name}",
+        subject=f"New {label} - {req.company or 'No Company'} - {req.name}",
         html=f"""
-        <h2 style="color: #002e4a;">New Consultation Request</h2>
+        <h2 style="color: #002e4a;">New {label}</h2>
         <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
           <tr><td style="padding:12px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Name</td><td style="padding:12px;border:1px solid #ddd;">{req.name}</td></tr>
           <tr><td style="padding:12px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Email</td><td style="padding:12px;border:1px solid #ddd;">{req.email}</td></tr>

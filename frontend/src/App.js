@@ -5,6 +5,8 @@ import SelectRole from './modules/shared/auth/SelectRole';
 import LandingPage from './pages/LandingPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Contact from './pages/Contact';
+import Pricing from './pages/Pricing';
+import Demo from './pages/Demo';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import AboutUs from './pages/AboutUs';
@@ -160,6 +162,26 @@ function App() {
       <>
         <Header userId={userId} onLogout={handleLogout} user={user} />
         <Contact />
+        <Footer />
+      </>
+    );
+  }
+
+  if (path === '/pricing') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <Pricing />
+        <Footer />
+      </>
+    );
+  }
+
+  if (path === '/demo') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <Demo />
         <Footer />
       </>
     );

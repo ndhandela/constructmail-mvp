@@ -1,0 +1,244 @@
+.demo-container {
+  min-height: 100vh;
+  background: white;
+}
+
+.demo-hero {
+  background: var(--inkwell);
+  color: var(--parchment);
+  padding: 120px 60px 100px;
+  text-align: center;
+}
+
+.demo-eyebrow {
+  color: var(--saffron);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
+.demo-hero h1 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 56px;
+  line-height: 1.15;
+  margin-bottom: 20px;
+  letter-spacing: -1px;
+}
+
+.demo-hero h1 em {
+  font-style: italic;
+  color: var(--saffron);
+}
+
+.demo-hero-sub {
+  font-size: 18px;
+  color: rgba(250, 247, 242, 0.7);
+  margin: 0;
+}
+
+.demo-body-wrap {
+  background: var(--parchment);
+  padding: 100px 60px;
+}
+
+.demo-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  max-width: 1100px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+.demo-section-eyebrow {
+  color: var(--saffron);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.demo-info h2 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 40px;
+  color: var(--inkwell);
+  margin-bottom: 24px;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+}
+
+.demo-info > p {
+  color: var(--text-light);
+  line-height: 1.8;
+  margin-bottom: 40px;
+  font-size: 17px;
+}
+
+.demo-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.demo-detail {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  color: var(--inkwell);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.demo-icon-pill {
+  background: var(--saffron);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.demo-form-wrapper {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  box-shadow: var(--shadow-md);
+  border-top: 4px solid var(--saffron);
+}
+
+.demo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--inkwell);
+  letter-spacing: 0.3px;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 12px 14px;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+  background: var(--parchment);
+  color: var(--inkwell);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--saffron);
+  background: white;
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.demo-btn {
+  padding: 14px 28px;
+  background: var(--saffron);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.demo-btn:hover:not(:disabled) {
+  background: var(--saffron-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(217, 119, 6, 0.3);
+}
+
+.demo-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.demo-error {
+  background: #fef2f2;
+  color: var(--error);
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  border-left: 3px solid var(--error);
+}
+
+.demo-success {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.success-mark {
+  width: 64px;
+  height: 64px;
+  background: var(--saffron-soft);
+  color: var(--saffron);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 auto 24px;
+}
+
+.demo-success h3 {
+  color: var(--inkwell);
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 400;
+  margin-bottom: 12px;
+}
+
+.demo-success p {
+  color: var(--text-light);
+  margin-bottom: 28px;
+}
+
+@media (max-width: 768px) {
+  .demo-hero {
+    padding: 80px 24px 60px;
+  }
+  .demo-hero h1 {
+    font-size: 36px;
+  }
+  .demo-body-wrap {
+    padding: 60px 24px;
+  }
+  .demo-body {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .demo-info h2 {
+    font-size: 30px;
+  }
+  .demo-form-wrapper {
+    padding: 28px;
+  }
+}
