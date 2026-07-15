@@ -10,10 +10,10 @@ const ALL_MODULES = [
   { key: 'marketplace', label: 'Marketplace' },
 ];
 
-function ModuleToggles({ client, token, onModulesUpdated }) {
+function ModuleToggles({ company, token, onModulesUpdated }) {
   const [modules, setModules] = useState({
     mail: false, clash: false, vendors: false, marketplace: false,
-    ...(client.active_modules || {}),
+    ...(company.active_modules || {}),
   });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -27,7 +27,7 @@ function ModuleToggles({ client, token, onModulesUpdated }) {
     setSaving(true);
     setMsg(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/clients/${client.id}/modules`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/companies/${company.id}/modules`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -38,7 +38,7 @@ function ModuleToggles({ client, token, onModulesUpdated }) {
       const data = await res.json();
       if (data.success) {
         setMsg({ type: 'success', text: 'Saved!' });
-        if (onModulesUpdated) onModulesUpdated(client.id, data.active_modules);
+        if (onModulesUpdated) onModulesUpdated(company.id, data.active_modules);
         setTimeout(() => setMsg(null), 2500);
       } else {
         setMsg({ type: 'error', text: data.detail || 'Save failed.' });
@@ -79,46 +79,124 @@ function ModuleToggles({ client, token, onModulesUpdated }) {
   );
 }
 
+function AddCompanyModal({ token, onClose, onCreated }) {
+  const [form, setForm] = useState({ companyName: '', ownerFullName: '', ownerEmail: '' });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleChange = (e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/companies`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccess(true);
+        onCreated();
+      } else {
+        setError(data.detail || 'Could not create company.');
+      }
+    } catch {
+      setError('Network error. Try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="add-company-modal-overlay" onClick={onClose}>
+      <div className="add-company-modal" onClick={e => e.stopPropagation()}>
+        {success ? (
+          <div>
+            <h3>Company created</h3>
+            <p>An invite email has been sent to {form.ownerEmail} to set their password.</p>
+            <button className="save-modules-btn" onClick={onClose}>Done</button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <h3>Add Company</h3>
+            <div className="add-company-field">
+              <label>Company Name</label>
+              <input name="companyName" value={form.companyName} onChange={handleChange} required disabled={saving} />
+            </div>
+            <div className="add-company-field">
+              <label>Owner Full Name</label>
+              <input name="ownerFullName" value={form.ownerFullName} onChange={handleChange} required disabled={saving} />
+            </div>
+            <div className="add-company-field">
+              <label>Owner Email</label>
+              <input type="email" name="ownerEmail" value={form.ownerEmail} onChange={handleChange} required disabled={saving} />
+            </div>
+            {error && <div className="modules-msg modules-msg--error">{error}</div>}
+            <div className="add-company-actions">
+              <button type="button" className="back-btn" onClick={onClose} disabled={saving}>Cancel</button>
+              <button type="submit" className="save-modules-btn" disabled={saving}>
+                {saving ? 'Creating…' : 'Create & Send Invite'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ClientsManagement({ token, onNavigate }) {
-  const [clients, setClients] = useState([]);
+  const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ offset: 0, limit: 20, total: 0 });
   const [expandedId, setExpandedId] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
-    fetchClients();
+    fetchCompanies();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.offset]);
 
-  const fetchClients = async () => {
+  const fetchCompanies = async () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/admin/clients?limit=${pagination.limit}&offset=${pagination.offset}`,
+        `${API_BASE_URL}/api/admin/companies?limit=${pagination.limit}&offset=${pagination.offset}`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       const data = await response.json();
       if (data.success) {
-        setClients(data.clients);
+        setCompanies(data.companies);
         setPagination(prev => ({ ...prev, total: data.total }));
       }
     } catch (err) {
-      console.error('Fetch clients error:', err);
+      console.error('Fetch companies error:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleModulesUpdated = (clientId, newModules) => {
-    setClients(prev =>
-      prev.map(c => c.id === clientId ? { ...c, active_modules: newModules } : c)
+  const handleModulesUpdated = (companyId, newModules) => {
+    setCompanies(prev =>
+      prev.map(c => c.id === companyId ? { ...c, active_modules: newModules } : c)
     );
+  };
+
+  const handleCompanyCreated = () => {
+    fetchCompanies();
   };
 
   const handleNextPage = () => setPagination(prev => ({ ...prev, offset: prev.offset + prev.limit }));
   const handlePrevPage = () => setPagination(prev => ({ ...prev, offset: Math.max(0, prev.offset - prev.limit) }));
 
-  if (loading) return <div className="clients-loading">Loading clients...</div>;
+  if (loading) return <div className="clients-loading">Loading companies...</div>;
 
   const hasNextPage = pagination.offset + pagination.limit < pagination.total;
   const hasPrevPage = pagination.offset > 0;
@@ -128,12 +206,17 @@ export default function ClientsManagement({ token, onNavigate }) {
       <div className="clients-header">
         <div className="clients-header-content">
           <div>
-            <h2>GC Clients</h2>
-            <p>Manage General Contractor accounts and subscriptions</p>
+            <h2>Companies</h2>
+            <p>Manage General Contractor companies and their module access</p>
           </div>
-          <button className="back-btn" onClick={() => onNavigate('dashboard')}>
-            ← Back to Dashboard
-          </button>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button className="save-modules-btn" onClick={() => setShowAddModal(true)}>
+              + Add Company
+            </button>
+            <button className="back-btn" onClick={() => onNavigate('dashboard')}>
+              ← Back to Dashboard
+            </button>
+          </div>
         </div>
       </div>
 
@@ -142,58 +225,52 @@ export default function ClientsManagement({ token, onNavigate }) {
           <table className="clients-table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Email</th>
                 <th>Company</th>
-                <th>Projects</th>
+                <th>Owner Email</th>
+                <th>Team Size</th>
                 <th>Status</th>
                 <th>Joined</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {clients.map(client => (
-                <React.Fragment key={client.id}>
+              {companies.map(company => (
+                <React.Fragment key={company.id}>
                   <tr className="client-row">
-                    <td className="client-name">{client.name || 'N/A'}</td>
-                    <td className="client-email">{client.email}</td>
-                    <td className="client-company">{client.company || 'N/A'}</td>
-                    <td className="client-projects">{client.project_count}</td>
+                    <td className="client-name">{company.name || 'N/A'}</td>
+                    <td className="client-email">{company.owner_email || 'N/A'}</td>
+                    <td className="client-projects">{company.team_size}</td>
                     <td className="client-status">
-                      <span className="status-badge active">Active</span>
+                      <span className="status-badge active">{company.status || 'Active'}</span>
                     </td>
                     <td className="client-joined">
-                      {new Date(client.created_at).toLocaleDateString()}
+                      {new Date(company.created_at).toLocaleDateString()}
                     </td>
                     <td className="client-action">
                       <button
                         className="expand-btn"
-                        onClick={() => setExpandedId(expandedId === client.id ? null : client.id)}
+                        onClick={() => setExpandedId(expandedId === company.id ? null : company.id)}
                       >
-                        {expandedId === client.id ? '▼' : '▶'}
+                        {expandedId === company.id ? '▼' : '▶'}
                       </button>
                     </td>
                   </tr>
 
-                  {expandedId === client.id && (
+                  {expandedId === company.id && (
                     <tr className="client-details-row">
-                      <td colSpan="7">
+                      <td colSpan="6">
                         <div className="client-details">
                           <div className="detail-item">
-                            <span className="detail-label">Client ID:</span>
-                            <span className="detail-value">{client.id}</span>
+                            <span className="detail-label">Company ID:</span>
+                            <span className="detail-value">{company.id}</span>
                           </div>
                           <div className="detail-item">
-                            <span className="detail-label">Subscription Date:</span>
-                            <span className="detail-value">
-                              {client.subscription_date
-                                ? new Date(client.subscription_date).toLocaleDateString()
-                                : 'Not subscribed'}
-                            </span>
+                            <span className="detail-label">Team Size:</span>
+                            <span className="detail-value">{company.team_size}</span>
                           </div>
                           <div className="detail-item detail-item--full">
                             <ModuleToggles
-                              client={client}
+                              company={company}
                               token={token}
                               onModulesUpdated={handleModulesUpdated}
                             />
@@ -221,6 +298,14 @@ export default function ClientsManagement({ token, onNavigate }) {
           </button>
         </div>
       </div>
+
+      {showAddModal && (
+        <AddCompanyModal
+          token={token}
+          onClose={() => setShowAddModal(false)}
+          onCreated={handleCompanyCreated}
+        />
+      )}
     </div>
   );
 }

@@ -15,6 +15,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import AboutUs from './pages/AboutUs';
 import ResetPassword from './pages/ResetPassword';
+import AcceptInvite from './pages/AcceptInvite';
 import AdminPortal from './admin/pages/AdminPortal';
 import VendorsApp from './modules/vendors/pages/VendorsApp';
 import ConnectApp from './modules/connect/pages/ConnectApp';
@@ -258,6 +259,16 @@ function App() {
     </>
   );
 }
+
+  if (path === '/accept-invite') {
+    return (
+      <>
+        <Header userId={null} onLogout={null} />
+        <AcceptInvite />
+        <Footer />
+      </>
+    );
+  }
 
   // ── Logged-out user hitting a product route — redirect to login ──────────
   if (!userId && PRODUCT_PATHS.includes(path)) {

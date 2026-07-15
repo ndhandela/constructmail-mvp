@@ -73,9 +73,9 @@ export default function AdminDashboard({ token, admin, onLogout, onNavigate }) {
 
           <div className="admin-section">
             <div className="section-icon">👥</div>
-            <h3>GC Clients</h3>
-            <p>View and manage General Contractor accounts</p>
-            <button className="section-button" onClick={() => onNavigate('clients')}>View Clients</button>
+            <h3>Companies</h3>
+            <p>View and manage General Contractor companies</p>
+            <button className="section-button" onClick={() => onNavigate('clients')}>View Companies</button>
           </div>
 
           <div className="admin-section">

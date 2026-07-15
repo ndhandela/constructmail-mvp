@@ -480,6 +480,23 @@ async def init_db():
                 procore_project_id TEXT NOT NULL,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
+
+            -- Invite-only accounts: companies become the unit of module access,
+            -- replacing per-user client_subscriptions (migration 013)
+            CREATE TABLE IF NOT EXISTS companies (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                active_modules JSONB DEFAULT '{"mail": false, "clash": false, "vendors": false, "marketplace": false}',
+                status VARCHAR(50) DEFAULT 'active',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE CASCADE;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS permission_level VARCHAR(20) DEFAULT 'member';
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS invite_token VARCHAR(255);
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS invite_token_expires TIMESTAMP;
+            ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
         """)
 
         await _backfill_clash_project_ids(conn)

@@ -3,39 +3,38 @@ import bcrypt
 from db import get_pool
 
 
-async def get_all_clients(limit: int = 50, offset: int = 0) -> dict:
+async def get_all_companies(limit: int = 50, offset: int = 0) -> dict:
     pool = await get_pool()
     async with pool.acquire() as conn:
         rows = await conn.fetch(
-            """SELECT u.id, u.email, u.name, u.company, u.created_at,
-                      COUNT(DISTINCT p.id) as project_count,
-                      cs.active_modules, cs.created_at as subscription_date
-               FROM users u
-               LEFT JOIN projects p ON u.id = p.user_id
-               LEFT JOIN client_subscriptions cs ON u.id = cs.client_id
-               GROUP BY u.id, cs.id
-               ORDER BY u.created_at DESC LIMIT $1 OFFSET $2""",
+            """SELECT c.id, c.name, c.status, c.active_modules, c.created_at,
+                      COUNT(DISTINCT u.id) as team_size,
+                      MAX(u.email) FILTER (WHERE u.permission_level = 'owner') as owner_email
+               FROM companies c
+               LEFT JOIN users u ON u.company_id = c.id
+               GROUP BY c.id
+               ORDER BY c.created_at DESC LIMIT $1 OFFSET $2""",
             limit, offset,
         )
-        total = await conn.fetchval("SELECT COUNT(*) FROM users")
-        return {"success": True, "clients": [dict(r) for r in rows], "total": total}
+        total = await conn.fetchval("SELECT COUNT(*) FROM companies")
+        return {"success": True, "companies": [dict(r) for r in rows], "total": total}
 
 
-async def get_client(client_id: int) -> dict:
+async def get_company(company_id: int) -> dict:
     pool = await get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            """SELECT u.id, u.email, u.name, u.company, u.created_at,
-                      COUNT(DISTINCT p.id) as project_count, cs.active_modules
-               FROM users u
-               LEFT JOIN projects p ON u.id = p.user_id
-               LEFT JOIN client_subscriptions cs ON u.id = cs.client_id
-               WHERE u.id = $1 GROUP BY u.id, cs.id""",
-            client_id,
+            """SELECT c.id, c.name, c.status, c.active_modules, c.created_at,
+                      COUNT(DISTINCT u.id) as team_size,
+                      MAX(u.email) FILTER (WHERE u.permission_level = 'owner') as owner_email
+               FROM companies c
+               LEFT JOIN users u ON u.company_id = c.id
+               WHERE c.id = $1 GROUP BY c.id""",
+            company_id,
         )
         if not row:
-            return {"success": False, "error": "Client not found"}
-        return {"success": True, "client": dict(row)}
+            return {"success": False, "error": "Company not found"}
+        return {"success": True, "company": dict(row)}
 
 
 async def get_all_admin_users(limit: int = 50, offset: int = 0) -> dict:

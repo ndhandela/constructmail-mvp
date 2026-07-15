@@ -14,7 +14,9 @@ async def _has_marketplace_license(user_id: int) -> bool:
     pool = await get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT active_modules FROM client_subscriptions WHERE client_id = $1",
+            """SELECT c.active_modules FROM companies c
+               JOIN users u ON u.company_id = c.id
+               WHERE u.id = $1""",
             user_id,
         )
     if not row or not row["active_modules"]:
@@ -28,7 +30,7 @@ async def _has_marketplace_license(user_id: int) -> bool:
 
 
 async def _require_marketplace_license(user_id: int):
-    """Raise 403 if the user's client does not have marketplace = true."""
+    """Raise 403 if the user's company does not have marketplace = true."""
     if not await _has_marketplace_license(user_id):
         raise HTTPException(403, "Marketplace license required")
 

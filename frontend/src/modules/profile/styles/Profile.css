@@ -320,6 +320,7 @@
 .team-role-owner       { background: #FEF3C7; color: #92400E; }
 .team-role-contributor { background: #DBEAFE; color: #1E40AF; }
 .team-role-viewer      { background: #E5E7EB; color: #374151; }
+.team-role-member      { background: #DBEAFE; color: #1E40AF; }
 
 @media (max-width: 600px) {
   .profile-form-row { grid-template-columns: 1fr; }

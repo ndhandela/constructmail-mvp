@@ -304,3 +304,63 @@
 
 .modules-msg--success { color: #10B981; }
 .modules-msg--error   { color: #DC2626; }
+
+/* Add Company modal */
+.add-company-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 27, 44, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.add-company-modal {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 32px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-sm);
+}
+
+.add-company-modal h3 {
+  margin: 0 0 20px 0;
+  color: var(--inkwell);
+}
+
+.add-company-field {
+  margin-bottom: 16px;
+}
+
+.add-company-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.add-company-field input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.add-company-field input:focus {
+  outline: none;
+  border-color: var(--saffron);
+}
+
+.add-company-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}

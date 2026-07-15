@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from db import init_db
-from routers import ai, auth, gmail, outlook, clash, procore, vendors, admin, misc, marketplace, profile, mail, projects
+from routers import ai, auth, gmail, outlook, clash, procore, vendors, admin, misc, marketplace, profile, mail, projects, team
 from routers import connect as connect_router
 
 
@@ -39,5 +39,6 @@ app.include_router(procore.router)
 app.include_router(vendors.router)
 app.include_router(marketplace.router)
 app.include_router(profile.router)
+app.include_router(team.router)
 app.include_router(admin.router)
 app.include_router(connect_router.router)

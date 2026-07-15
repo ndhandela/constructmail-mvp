@@ -107,6 +107,7 @@ export default function ProfileApp({ userId }) {
           <ProfileCompany
             company={company}
             userRole={profile?.role}
+            permissionLevel={profile?.permission_level}
             userId={userId}
             onCompanyUpdated={(updated) => setCompany(prev => ({ ...prev, ...updated }))}
           />

@@ -54,17 +54,19 @@ async def get_profile(userId: int):
         )
 
     profile = {
-        "id":         user["id"],
-        "email":      user["email"],
-        "name":       user["name"],
-        "full_name":  user["full_name"],
-        "first_name": user["first_name"],
-        "last_name":  user["last_name"],
-        "phone":      user["phone"],
-        "job_title":  user["job_title"],
-        "avatar_url": user["avatar_url"],
-        "role":       user["role"],
-        "company":    user["company"],
+        "id":               user["id"],
+        "email":            user["email"],
+        "name":             user["name"],
+        "full_name":        user["full_name"],
+        "first_name":       user["first_name"],
+        "last_name":        user["last_name"],
+        "phone":            user["phone"],
+        "job_title":        user["job_title"],
+        "avatar_url":       user["avatar_url"],
+        "role":             user["role"],
+        "company":          user["company"],
+        "company_id":       user["company_id"],
+        "permission_level": user["permission_level"],
     }
 
     company_data = dict(company) if company else {

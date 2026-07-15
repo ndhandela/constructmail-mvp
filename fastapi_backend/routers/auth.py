@@ -26,14 +26,6 @@ class VerifyTokenRequest(BaseModel):
     token: str
 
 
-class RegisterRequest(BaseModel):
-    fullName: str
-    email: str
-    company: str
-    role: str
-    password: str
-
-
 class LoginRequest(BaseModel):
     email: str
     password: str
@@ -44,6 +36,11 @@ class ForgotPasswordRequest(BaseModel):
 
 
 class ResetPasswordRequest(BaseModel):
+    token: str
+    password: str
+
+
+class AcceptInviteRequest(BaseModel):
     token: str
     password: str
 
@@ -116,10 +113,9 @@ async def get_me(userId: int):
 @router.patch("/role")
 async def update_role(req: UpdateRoleRequest):
     """
-    Magic-link sign-in (verify_token) creates users with no role, since the
-    role is normally collected on the /register form. This lets the frontend
-    collect it afterward — required before the user can do anything
-    role-gated, like creating a project.
+    Magic-link sign-in (verify_token) creates users with no role. This lets
+    the frontend collect it afterward — required before the user can do
+    anything role-gated, like creating a project.
     """
     if req.role not in VALID_ROLES:
         raise HTTPException(400, f"role must be one of: {', '.join(VALID_ROLES)}")
@@ -133,27 +129,23 @@ async def update_role(req: UpdateRoleRequest):
     return {"success": True, "role": row["role"]}
 
 
-@router.post("/register")
-async def register(req: RegisterRequest):
+@router.post("/accept-invite")
+async def accept_invite(req: AcceptInviteRequest):
     if len(req.password) < 8:
         raise HTTPException(400, "Password must be at least 8 characters.")
     pool = await get_pool()
     async with pool.acquire() as conn:
-        async with conn.transaction():
-            existing = await conn.fetchrow("SELECT id FROM users WHERE email = $1", req.email.lower().strip())
-            if existing:
-                raise HTTPException(400, "An account with this email already exists. Please sign in.")
-            password_hash = bcrypt.hashpw(req.password.encode(), bcrypt.gensalt(12)).decode()
-            email = req.email.lower().strip()
-            row = await conn.fetchrow(
-                "INSERT INTO users (email, name, full_name, company, role, password_hash, created_at) VALUES ($1,$2,$3,$4,$5,$6,NOW()) RETURNING id",
-                email, req.fullName.strip(), req.fullName.strip(), req.company.strip(), req.role, password_hash,
-            )
-            # Same transaction as the user insert — an invite that already
-            # exists for this email should never be left dangling as pending
-            # if account creation itself succeeds.
-            await accept_pending_invites(conn, row["id"], email)
-    return {"success": True, "userId": row["id"]}
+        user = await conn.fetchrow(
+            "SELECT id FROM users WHERE invite_token = $1 AND invite_token_expires > NOW()", req.token
+        )
+        if not user:
+            raise HTTPException(400, "Invalid or expired invite link. Please ask your company owner to resend it.")
+        password_hash = bcrypt.hashpw(req.password.encode(), bcrypt.gensalt(12)).decode()
+        await conn.execute(
+            "UPDATE users SET password_hash = $1, invite_token = NULL, invite_token_expires = NULL WHERE id = $2",
+            password_hash, user["id"],
+        )
+    return {"success": True, "userId": user["id"]}
 
 
 @router.post("/login")

@@ -40,15 +40,15 @@ export default function AdminUsersManagement({ token, onNavigate }) {
 
   const fetchClients = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/clients?limit=100`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/companies?limit=100`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
       if (data.success) {
-        setClients(data.clients);
+        setClients(data.companies);
       }
     } catch (err) {
-      console.error('Fetch clients error:', err);
+      console.error('Fetch companies error:', err);
     }
   };
 
@@ -216,7 +216,7 @@ export default function AdminUsersManagement({ token, onNavigate }) {
                     <option value="">Select a client</option>
                     {clients.map(client => (
                       <option key={client.id} value={client.id}>
-                        {client.name} ({client.email})
+                        {client.name}{client.owner_email ? ` (${client.owner_email})` : ''}
                       </option>
                     ))}
                   </select>

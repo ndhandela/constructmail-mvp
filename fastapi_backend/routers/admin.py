@@ -1,12 +1,19 @@
 import json
+import os
+import secrets
+from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List
 from db import get_pool
 from services.admin_auth import get_current_admin, require_super_admin, create_token, hash_password, verify_password
+from services.email_service import send_email
+from services.project_helpers import accept_pending_invites
 from services import user_service
 
 router = APIRouter(prefix="/api/admin", tags=["Admin"])
+
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://pomar.ai")
 
 
 class AdminLoginRequest(BaseModel):
@@ -37,6 +44,12 @@ class PricingRequest(BaseModel):
 
 class FeatureFlagsRequest(BaseModel):
     flags: List[dict]
+
+
+class CreateCompanyRequest(BaseModel):
+    companyName: str
+    ownerEmail: str
+    ownerFullName: str
 
 
 @router.post("/auth/login")
@@ -80,20 +93,68 @@ async def get_admin_me(admin: dict = Depends(get_current_admin)):
     return {"success": True, "admin": dict(row)}
 
 
-@router.get("/clients")
-async def get_clients(limit: int = 50, offset: int = 0, admin: dict = Depends(require_super_admin)):
-    result = await user_service.get_all_clients(limit, offset)
+@router.get("/companies")
+async def get_companies(limit: int = 50, offset: int = 0, admin: dict = Depends(require_super_admin)):
+    result = await user_service.get_all_companies(limit, offset)
     if not result["success"]:
         raise HTTPException(400, result["error"])
     return result
 
 
-@router.get("/clients/{client_id}")
-async def get_client(client_id: int, admin: dict = Depends(require_super_admin)):
-    result = await user_service.get_client(client_id)
+@router.get("/companies/{company_id}")
+async def get_company(company_id: int, admin: dict = Depends(require_super_admin)):
+    result = await user_service.get_company(company_id)
     if not result["success"]:
         raise HTTPException(404, result["error"])
     return result
+
+
+@router.post("/companies")
+async def create_company(req: CreateCompanyRequest, admin: dict = Depends(require_super_admin)):
+    owner_email = req.ownerEmail.lower().strip()
+    invite_token = secrets.token_hex(32)
+    invite_expires = datetime.utcnow() + timedelta(days=7)
+
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.transaction():
+            existing = await conn.fetchrow("SELECT id FROM users WHERE email = $1", owner_email)
+            if existing:
+                raise HTTPException(400, "An account with this email already exists.")
+            company = await conn.fetchrow(
+                "INSERT INTO companies (name) VALUES ($1) RETURNING id", req.companyName.strip(),
+            )
+            user = await conn.fetchrow(
+                """INSERT INTO users (email, name, full_name, company, company_id, permission_level,
+                                       password_hash, invite_token, invite_token_expires, created_at)
+                   VALUES ($1,$2,$3,$4,$5,'owner',NULL,$6,$7,NOW())
+                   RETURNING id""",
+                owner_email, req.ownerFullName.strip(), req.ownerFullName.strip(), req.companyName.strip(),
+                company["id"], invite_token, invite_expires,
+            )
+            await accept_pending_invites(conn, user["id"], owner_email)
+
+    invite_url = f"{FRONTEND_URL}/accept-invite?token={invite_token}"
+    first_name = req.ownerFullName.strip().split(" ")[0]
+    await send_email(
+        to=owner_email,
+        subject="You're invited to POMAR",
+        html=f"""
+        <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+          <h2 style="color: #0E1B2C;">Welcome to POMAR</h2>
+          <p>Hi {first_name},</p>
+          <p>You've been set up as the owner of <strong>{req.companyName.strip()}</strong> on POMAR. Set your password to get started.</p>
+          <a href="{invite_url}" style="display:inline-block;padding:12px 24px;background:#D97706;color:white;border-radius:100px;text-decoration:none;font-weight:600;margin:20px 0;">
+            Set Your Password
+          </a>
+          <p style="color:#666;font-size:13px;">This link expires in 7 days.</p>
+        </div>""",
+    )
+    await user_service.log_admin_activity(
+        admin["id"], "company_created", "companies", company["id"],
+        {"companyName": req.companyName, "ownerEmail": owner_email},
+    )
+    return {"success": True, "companyId": company["id"], "userId": user["id"]}
 
 
 @router.get("/users")
@@ -223,44 +284,31 @@ class UpdateModulesRequest(BaseModel):
     modules: dict  # e.g. {"mail": true, "marketplace": true}
 
 
-@router.put("/clients/{client_id}/modules")
-async def update_client_modules(
-    client_id: int,
+@router.put("/companies/{company_id}/modules")
+async def update_company_modules(
+    company_id: int,
     req: UpdateModulesRequest,
     admin: dict = Depends(require_super_admin),
 ):
-    """Enable or disable individual modules for a client."""
+    """Enable or disable individual modules for a company."""
     pool = await get_pool()
     async with pool.acquire() as conn:
-        existing = await conn.fetchrow(
-            "SELECT id, active_modules FROM client_subscriptions WHERE client_id = $1",
-            client_id,
-        )
+        existing = await conn.fetchrow("SELECT id, active_modules FROM companies WHERE id = $1", company_id)
         if not existing:
-            # Create subscription row if it doesn't exist yet
-            row = await conn.fetchrow(
-                """
-                INSERT INTO client_subscriptions (client_id, active_modules)
-                VALUES ($1, $2::jsonb)
-                RETURNING id, active_modules
-                """,
-                client_id,
-                json.dumps({"mail": False, "clash": False, "vendors": False, "marketplace": False, **req.modules}),
-            )
-        else:
-            merged = {**(existing["active_modules"] or {}), **req.modules}
-            row = await conn.fetchrow(
-                """
-                UPDATE client_subscriptions
-                SET active_modules = $1::jsonb, updated_at = NOW()
-                WHERE client_id = $2
-                RETURNING id, active_modules
-                """,
-                json.dumps(merged),
-                client_id,
-            )
+            raise HTTPException(404, "Company not found")
+        merged = {**(existing["active_modules"] or {}), **req.modules}
+        row = await conn.fetchrow(
+            """
+            UPDATE companies
+            SET active_modules = $1::jsonb, updated_at = NOW()
+            WHERE id = $2
+            RETURNING id, active_modules
+            """,
+            json.dumps(merged),
+            company_id,
+        )
     await user_service.log_admin_activity(
-        admin["id"], "modules_updated", "client_subscriptions", row["id"],
-        {"client_id": client_id, "modules": req.modules},
+        admin["id"], "modules_updated", "companies", row["id"],
+        {"company_id": company_id, "modules": req.modules},
     )
     return {"success": True, "active_modules": row["active_modules"]}

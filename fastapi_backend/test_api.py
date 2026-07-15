@@ -4,10 +4,17 @@ Run from fastapi_backend/ with the server already running on :3001:
     python test_api.py
 """
 
+import asyncio
+import os
 import requests
 import json
 import sys
 import time
+import asyncpg
+import bcrypt
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE = "http://localhost:3001"
 PASS = "✅"
@@ -57,20 +64,35 @@ print("\n━━━ HEALTH & ROOT ━━━")
 test("GET  /",                   "GET",  "/",           200, check_keys=["message"])
 test("GET  /api/health",         "GET",  "/api/health", 200, check_keys=["status"])
 
+async def _create_test_user(email, password):
+    """
+    Accounts are invite-only now (no /register endpoint), so this smoke test
+    seeds a test user directly via the DB instead of going through the API —
+    the point of this block is just to get a logged-in user_id for the
+    endpoints below, not to exercise account creation itself.
+    """
+    conn = await asyncpg.connect(dsn=os.getenv("DATABASE_URL"))
+    try:
+        password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt(12)).decode()
+        row = await conn.fetchrow(
+            """INSERT INTO users (email, name, full_name, company, role, password_hash, created_at)
+               VALUES ($1,$2,$3,$4,$5,$6,NOW()) RETURNING id""",
+            email, "Test User", "Test User", "ACME", "GC", password_hash,
+        )
+        return row["id"]
+    finally:
+        await conn.close()
+
+
 # ─────────────────────────────────────────────
-print("\n━━━ AUTH — register + login ━━━")
+print("\n━━━ AUTH — seed user + login ━━━")
 ts = int(time.time())
 email = f"testuser_{ts}@example.com"
 password = "TestPass123!"
 
-reg = test("POST /api/auth/register",     "POST", "/api/auth/register", 200,
-           json_body={"fullName": "Test User", "email": email, "company": "ACME", "role": "GC", "password": password},
-           check_keys=["userId"])
-
-user_id = reg.get("userId")
-
-test("POST /api/auth/register (dup)",     "POST", "/api/auth/register", 400,
-     json_body={"fullName": "Test User", "email": email, "company": "ACME", "role": "GC", "password": password})
+user_id = asyncio.run(_create_test_user(email, password))
+print(f"  {PASS}  seeded test user {email} (id={user_id})")
+results.append(("Seed test user", True, "OK", "OK"))
 
 test("POST /api/auth/login",              "POST", "/api/auth/login", 200,
      json_body={"email": email, "password": password},

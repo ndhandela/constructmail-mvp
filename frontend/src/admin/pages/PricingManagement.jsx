@@ -39,15 +39,15 @@ export default function PricingManagement({ token, onNavigate }) {
 
   const fetchClients = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/clients?limit=100`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/companies?limit=100`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
       if (data.success) {
-        setClients(data.clients);
+        setClients(data.companies);
       }
     } catch (err) {
-      console.error('Fetch clients error:', err);
+      console.error('Fetch companies error:', err);
     }
   }, [token]);
 

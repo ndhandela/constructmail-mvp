@@ -19,18 +19,9 @@ export const ROLES = [
 ];
 
 export default function Auth({ onLoginSuccess, defaultMode = 'login' }) {
-  const [mode, setMode]               = useState(defaultMode);
+  const [mode, setMode]               = useState(defaultMode === 'register' ? 'login' : defaultMode);
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState('');
-
-  // Register
-  const [fullName, setFullName]       = useState('');
-  const [email, setEmail]             = useState('');
-  const [company, setCompany]         = useState('');
-  const [role, setRole]               = useState('');
-  const [password, setPassword]       = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
   // Login
   const [loginEmail, setLoginEmail]   = useState('');
@@ -46,31 +37,6 @@ export default function Auth({ onLoginSuccess, defaultMode = 'login' }) {
 
   const resetForm = () => { setError(''); };
   const switchMode = (m) => { resetForm(); setMode(m); };
-
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    if (!role)                          { setError('Please select your role.'); return; }
-    if (password.length < 8)           { setError('Password must be at least 8 characters.'); return; }
-    if (password !== confirmPassword)  { setError('Passwords do not match.'); return; }
-    setLoading(true); setError('');
-    try {
-      const res = await axios.post(`${API_BASE_URL}/api/auth/register`, {
-        fullName, email, company, role, password,
-      });
-      if (res.data.success) {
-        if (onLoginSuccess) onLoginSuccess(res.data.userId);
-        const dest = sessionStorage.getItem('postLoginPath') || '/dashboard';
-        sessionStorage.removeItem('postLoginPath');
-        window.location.href = dest;
-      } else {
-        setError(res.data.error || 'Registration failed.');
-      }
-    } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -130,58 +96,6 @@ export default function Auth({ onLoginSuccess, defaultMode = 'login' }) {
           </div>
         )}
 
-        {mode !== 'forgot' && (
-          <div className="auth-toggle">
-            <button className={`auth-toggle-btn ${mode === 'register' ? 'active' : ''}`} onClick={() => switchMode('register')} type="button">
-              Create account
-            </button>
-            <button className={`auth-toggle-btn ${mode === 'login' ? 'active' : ''}`} onClick={() => switchMode('login')} type="button">
-              Sign in
-            </button>
-          </div>
-        )}
-
-        {/* ── REGISTER ── */}
-        {mode === 'register' && (
-          <div>
-            <p className="auth-sub">Free access — no credit card needed.</p>
-            <form onSubmit={handleRegister} className="auth-form">
-              <div className="auth-field">
-                <label className="auth-label">Full Name</label>
-                <input type="text" className="auth-input" placeholder="John Smith" value={fullName} onChange={e => setFullName(e.target.value)} required disabled={loading} />
-              </div>
-              <div className="auth-field">
-                <label className="auth-label">Work Email</label>
-                <input type="email" className="auth-input" placeholder="john@yourcompany.com" value={email} onChange={e => setEmail(e.target.value)} required disabled={loading} />
-              </div>
-              <div className="auth-field">
-                <label className="auth-label">Company Name</label>
-                <input type="text" className="auth-input" placeholder="Smith Construction Co." value={company} onChange={e => setCompany(e.target.value)} required disabled={loading} />
-              </div>
-              <div className="auth-field">
-                <label className="auth-label">Your Role</label>
-                <select className="auth-input auth-select" value={role} onChange={e => setRole(e.target.value)} disabled={loading}>
-                  {ROLES.map(r => <option key={r.value} value={r.value} disabled={r.value === ''}>{r.label}</option>)}
-                </select>
-              </div>
-              <div className="auth-field">
-                <label className="auth-label">Password</label>
-                <div className="auth-password-wrap">
-                  <input type={showPassword ? 'text' : 'password'} className="auth-input" placeholder="Min. 8 characters" value={password} onChange={e => setPassword(e.target.value)} required disabled={loading} />
-                  <button type="button" className="auth-toggle-pw" onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button>
-                </div>
-              </div>
-              <div className="auth-field">
-                <label className="auth-label">Confirm Password</label>
-                <input type={showPassword ? 'text' : 'password'} className="auth-input" placeholder="Repeat password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required disabled={loading} />
-              </div>
-              {error && <div className="auth-error">{error}</div>}
-              <button type="submit" className="auth-submit" disabled={loading}>{loading ? 'Creating account...' : 'Get Free Access'}</button>
-            </form>
-            <p className="auth-switch">Already have an account? <button type="button" onClick={() => switchMode('login')}>Sign in</button></p>
-          </div>
-        )}
-
         {/* ── LOGIN ── */}
         {mode === 'login' && (
           <div>
@@ -203,7 +117,7 @@ export default function Auth({ onLoginSuccess, defaultMode = 'login' }) {
             <p className="auth-switch">
               <button type="button" onClick={() => switchMode('forgot')}>Forgot password?</button>
               {' · '}
-              New to POMAR? <button type="button" onClick={() => switchMode('register')}>Create a free account</button>
+              New to POMAR? <a href="/demo">Request a demo</a>
             </p>
           </div>
         )}
