@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ProfileInfo from '../components/ProfileInfo';
 import ProfileCompany from '../components/ProfileCompany';
 import ProfileSecurity from '../components/ProfileSecurity';
+import ProjectTeam from '../components/ProjectTeam';
 import '../styles/Profile.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
@@ -9,6 +10,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 const TABS = [
   { key: 'info',     label: 'My Information' },
   { key: 'company',  label: 'Company' },
+  { key: 'team',     label: 'Project Team' },
   { key: 'security', label: 'Security' },
 ];
 
@@ -108,6 +110,9 @@ export default function ProfileApp({ userId }) {
             userId={userId}
             onCompanyUpdated={(updated) => setCompany(prev => ({ ...prev, ...updated }))}
           />
+        )}
+        {activeTab === 'team' && (
+          <ProjectTeam userId={userId} />
         )}
         {activeTab === 'security' && (
           <ProfileSecurity userId={userId} />
