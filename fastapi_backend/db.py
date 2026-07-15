@@ -430,10 +430,21 @@ async def init_db():
             -- Connect project scoping (migration 008)
             ALTER TABLE connect_queue ADD COLUMN IF NOT EXISTS project_id INT REFERENCES projects(id);
             ALTER TABLE connect_log   ADD COLUMN IF NOT EXISTS project_id INT REFERENCES projects(id);
+
+            -- Project membership (migration 009)
+            CREATE TABLE IF NOT EXISTS project_members (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                role VARCHAR(20) NOT NULL DEFAULT 'contributor' CHECK (role IN ('owner', 'contributor', 'viewer')),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                UNIQUE(project_id, user_id)
+            );
         """)
 
         await _backfill_clash_project_ids(conn)
         await _backfill_vendor_and_connect_project_ids(conn)
+        await _backfill_project_members(conn)
 
     print("✓ Database initialized")
 
@@ -513,3 +524,17 @@ async def _backfill_vendor_and_connect_project_ids(conn):
             "UPDATE connect_log SET project_id = $1 WHERE user_id = $2 AND project_id IS NULL",
             project_id, uid,
         )
+
+
+async def _backfill_project_members(conn):
+    """
+    One-time (idempotent) backfill for migration 009. project_members didn't exist
+    before this migration, so every project's current owning user_id (projects.user_id)
+    is inserted as that project's 'owner' — otherwise every pre-existing project would
+    vanish from GET /api/projects once it switches to a project_members-based query.
+    """
+    await conn.execute(
+        """INSERT INTO project_members (project_id, user_id, role)
+           SELECT id, user_id, 'owner' FROM projects
+           ON CONFLICT (project_id, user_id) DO NOTHING"""
+    )
