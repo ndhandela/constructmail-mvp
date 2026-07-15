@@ -447,11 +447,30 @@ async def init_db():
                 project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
                 email VARCHAR(255) NOT NULL,
                 role VARCHAR(20) NOT NULL DEFAULT 'contributor' CHECK (role IN ('contributor', 'viewer')),
+                accepted BOOLEAN NOT NULL DEFAULT false,
                 invited_by INT REFERENCES users(id),
-                status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted')),
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 UNIQUE(project_id, email)
             );
+
+            -- migration 011: project_invites.status -> accepted boolean.
+            -- CREATE TABLE IF NOT EXISTS above is a no-op on a pre-existing
+            -- table, so the new column has to be added explicitly before the
+            -- backfill/drop below (which is itself guarded to be a no-op once
+            -- `status` has already been dropped).
+            ALTER TABLE project_invites ADD COLUMN IF NOT EXISTS accepted BOOLEAN NOT NULL DEFAULT false;
+
+            DO $mig011$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'project_invites' AND column_name = 'status'
+                ) THEN
+                    UPDATE project_invites SET accepted = true WHERE status = 'accepted';
+                    ALTER TABLE project_invites DROP COLUMN status;
+                END IF;
+            END
+            $mig011$;
         """)
 
         await _backfill_clash_project_ids(conn)

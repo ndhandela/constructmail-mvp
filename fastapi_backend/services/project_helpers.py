@@ -40,7 +40,7 @@ async def accept_pending_invites(conn, user_id: int, email: str):
     email before the account existed into real project_members rows.
     """
     invites = await conn.fetch(
-        "SELECT project_id, role FROM project_invites WHERE email = $1 AND status = 'pending'",
+        "SELECT project_id, role FROM project_invites WHERE email = $1 AND accepted = false",
         email,
     )
     for invite in invites:
@@ -51,6 +51,6 @@ async def accept_pending_invites(conn, user_id: int, email: str):
         )
     if invites:
         await conn.execute(
-            "UPDATE project_invites SET status = 'accepted' WHERE email = $1 AND status = 'pending'",
+            "UPDATE project_invites SET accepted = true WHERE email = $1 AND accepted = false",
             email,
         )

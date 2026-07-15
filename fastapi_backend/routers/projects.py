@@ -99,7 +99,7 @@ async def get_project_members(project_id: int, userId: int):
             project_id,
         )
         pending_invites = await conn.fetch(
-            "SELECT email, role, created_at FROM project_invites WHERE project_id = $1 AND status = 'pending'",
+            "SELECT email, role, created_at FROM project_invites WHERE project_id = $1 AND accepted = false",
             project_id,
         )
     return {
@@ -144,7 +144,7 @@ async def invite_to_project(project_id: int, req: InviteRequest):
             await conn.execute(
                 """INSERT INTO project_invites (project_id, email, role, invited_by)
                    VALUES ($1, $2, $3, $4)
-                   ON CONFLICT (project_id, email) DO UPDATE SET role = EXCLUDED.role, status = 'pending'""",
+                   ON CONFLICT (project_id, email) DO UPDATE SET role = EXCLUDED.role, accepted = false""",
                 project_id, email, req.role, req.invitedBy,
             )
             status = "invited"
