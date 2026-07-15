@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from typing import Optional
 from db import get_pool
 from services.email_service import send_email
+from services.project_helpers import accept_pending_invites
 import os
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
@@ -87,6 +88,7 @@ async def verify_token(req: VerifyTokenRequest):
         user_id = user["id"]
         await conn.execute("UPDATE users SET last_login = NOW() WHERE id = $1", user_id)
         await conn.execute("UPDATE sessions SET is_verified = TRUE WHERE magic_token = $1", req.token)
+        await accept_pending_invites(conn, user_id, email)
     return {"success": True, "userId": user_id, "email": email}
 
 
@@ -112,10 +114,12 @@ async def register(req: RegisterRequest):
         if existing:
             raise HTTPException(400, "An account with this email already exists. Please sign in.")
         password_hash = bcrypt.hashpw(req.password.encode(), bcrypt.gensalt(12)).decode()
+        email = req.email.lower().strip()
         row = await conn.fetchrow(
             "INSERT INTO users (email, name, full_name, company, role, password_hash, created_at) VALUES ($1,$2,$3,$4,$5,$6,NOW()) RETURNING id",
-            req.email.lower().strip(), req.fullName.strip(), req.fullName.strip(), req.company.strip(), req.role, password_hash,
+            email, req.fullName.strip(), req.fullName.strip(), req.company.strip(), req.role, password_hash,
         )
+        await accept_pending_invites(conn, row["id"], email)
     return {"success": True, "userId": row["id"]}
 
 

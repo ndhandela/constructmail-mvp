@@ -440,6 +440,18 @@ async def init_db():
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 UNIQUE(project_id, user_id)
             );
+
+            -- Project invites for emails without an account yet (migration 010)
+            CREATE TABLE IF NOT EXISTS project_invites (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                email VARCHAR(255) NOT NULL,
+                role VARCHAR(20) NOT NULL DEFAULT 'contributor' CHECK (role IN ('contributor', 'viewer')),
+                invited_by INT REFERENCES users(id),
+                status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted')),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                UNIQUE(project_id, email)
+            );
         """)
 
         await _backfill_clash_project_ids(conn)
