@@ -18,7 +18,7 @@ export const ROLES = [
   { value: 'Other',         label: 'Other' },
 ];
 
-export default function Auth({ onLoginSuccess, defaultMode = 'register' }) {
+export default function Auth({ onLoginSuccess, defaultMode = 'login' }) {
   const [mode, setMode]               = useState(defaultMode);
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState('');
