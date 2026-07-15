@@ -40,6 +40,7 @@ export default function VendorsApp({ user, userId, onLogout }) {
         });
         if (currentProjectId && currentProjectId !== ALL_PROJECTS) {
           queryParams.set('project_id', currentProjectId);
+          queryParams.set('userId', userId);
         }
 
         const response = await fetch(
@@ -64,7 +65,7 @@ export default function VendorsApp({ user, userId, onLogout }) {
       } finally {
         setLoading(false);
       }
-    }, [filters, pagination.limit, pagination.offset, currentProjectId]);
+    }, [filters, pagination.limit, pagination.offset, currentProjectId, userId]);
 
   useEffect(() => {
     searchVendors();
