@@ -86,8 +86,8 @@ async def get_assignments(userId: str, projectKey: str, projectId: Optional[int]
         await _require_member_if_project_scoped(conn, projectId, userId)
         if projectId:
             rows = await conn.fetch(
-                "SELECT * FROM clash_assignments WHERE user_id = $1 AND project_key = $2 AND project_id = $3",
-                userId, projectKey, projectId,
+                "SELECT * FROM clash_assignments WHERE project_key = $1 AND project_id = $2",
+                projectKey, projectId,
             )
         else:
             rows = await conn.fetch(
@@ -147,8 +147,8 @@ async def get_reports(userId: str, projectId: Optional[int] = None):
         await _require_member_if_project_scoped(conn, projectId, userId)
         if projectId:
             rows = await conn.fetch(
-                "SELECT * FROM clash_reports WHERE user_id = $1 AND project_id = $2 ORDER BY created_at DESC LIMIT 10",
-                userId, projectId,
+                "SELECT * FROM clash_reports WHERE project_id = $1 ORDER BY created_at DESC LIMIT 10",
+                projectId,
             )
         else:
             rows = await conn.fetch(
