@@ -39,6 +39,20 @@ export const PRODUCTS = [
     color: '#D97706',
     status: 'live'
   },
+  {
+    id: 'marketplace',
+    name: 'POMAR Marketplace',
+    description: 'Shared vendor network across the POMAR client base',
+    icon: '🛒',
+    path: '/marketplace',
+    logo: '/logos/pomar.png',
+    color: '#D97706',
+    status: 'live',
+    // Actual availability depends on the user's client_subscriptions
+    // .active_modules — the dashboard checks GET /api/marketplace/license
+    // and renders a locked card instead of omitting this entry when disabled.
+    licenseGated: true
+  },
 ];
 
 export const getProductById = (id) => PRODUCTS.find(p => p.id === id);

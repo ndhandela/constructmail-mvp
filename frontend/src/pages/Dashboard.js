@@ -87,6 +87,15 @@ const PRODUCT_ICONS = {
       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
     </svg>
   ),
+  marketplace: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 3h18l-1.5 9h-15z"/>
+      <path d="M3 3 2 3"/>
+      <circle cx="9" cy="20" r="1.5"/>
+      <circle cx="17" cy="20" r="1.5"/>
+      <path d="M5.5 12 5 3"/>
+    </svg>
+  ),
 };
 
 const SOON_ICONS = {
@@ -125,6 +134,16 @@ export default function ProductDashboard({ user, userId, onProductSelect }) {
   const company = user?.company || '';
   const role    = user?.role    || '';
 
+  const [marketplaceLicensed, setMarketplaceLicensed] = useState(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    fetch(`${API_BASE_URL}/api/marketplace/license?userId=${userId}`)
+      .then((res) => res.json())
+      .then((data) => setMarketplaceLicensed(!!data.licensed))
+      .catch(() => setMarketplaceLicensed(false));
+  }, [userId]);
+
   return (
     <div className="pd-container">
       <div className="pd-welcome">
@@ -138,23 +157,28 @@ export default function ProductDashboard({ user, userId, onProductSelect }) {
 
       <div className="pd-section-label">Your tools</div>
       <div className="pd-grid">
-        {PRODUCTS.filter(p => p.status === 'live').map(product => (
-          <div
-            key={product.id}
-            className="pd-card"
-            onClick={() => window.location.href = product.path}
-            style={{ '--product-color': product.color }}
-          >
-            <div className="pd-card-icon" style={{ color: product.color }}>
-              {PRODUCT_ICONS[product.id]}
+        {PRODUCTS.filter(p => p.status === 'live').map(product => {
+          const locked = product.licenseGated && marketplaceLicensed !== true;
+          return (
+            <div
+              key={product.id}
+              className={`pd-card ${locked ? 'pd-card-soon' : ''}`}
+              onClick={() => { if (!locked) window.location.href = product.path; }}
+              style={{ '--product-color': product.color }}
+            >
+              <div className="pd-card-icon" style={{ color: locked ? 'var(--slate)' : product.color }}>
+                {PRODUCT_ICONS[product.id]}
+              </div>
+              <div className="pd-card-body">
+                <h3 className="pd-card-title">{product.name}</h3>
+                <p className="pd-card-desc">{product.description}</p>
+              </div>
+              {locked
+                ? <div className="pd-card-badge">🔒 Upgrade</div>
+                : <div className="pd-card-arrow">→</div>}
             </div>
-            <div className="pd-card-body">
-              <h3 className="pd-card-title">{product.name}</h3>
-              <p className="pd-card-desc">{product.description}</p>
-            </div>
-            <div className="pd-card-arrow">→</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="pd-section-label" style={{ marginTop: 40 }}>Coming soon</div>

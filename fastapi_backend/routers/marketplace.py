@@ -1,3 +1,4 @@
+import json
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import Optional
@@ -9,15 +10,26 @@ router = APIRouter(prefix="/api/marketplace", tags=["Marketplace"])
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-async def _require_marketplace_license(user_id: int):
-    """Raise 403 if the user's client does not have marketplace = true."""
+async def _has_marketplace_license(user_id: int) -> bool:
     pool = await get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
             "SELECT active_modules FROM client_subscriptions WHERE client_id = $1",
             user_id,
         )
-    if not row or not (row["active_modules"] or {}).get("marketplace"):
+    if not row or not row["active_modules"]:
+        return False
+    # asyncpg returns jsonb columns as raw JSON text (no codec registered on
+    # this pool), not a dict.
+    active_modules = row["active_modules"]
+    if isinstance(active_modules, str):
+        active_modules = json.loads(active_modules)
+    return bool(active_modules.get("marketplace"))
+
+
+async def _require_marketplace_license(user_id: int):
+    """Raise 403 if the user's client does not have marketplace = true."""
+    if not await _has_marketplace_license(user_id):
         raise HTTPException(403, "Marketplace license required")
 
 
@@ -44,6 +56,13 @@ class SaveToProjectRequest(BaseModel):
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+
+@router.get("/license")
+async def get_marketplace_license(userId: int):
+    """Self-service license check — lets the dashboard render Marketplace as
+    a locked card instead of guessing via a 403 probe."""
+    return {"success": True, "licensed": await _has_marketplace_license(userId)}
+
 
 @router.get("/types")
 async def get_listing_types():
