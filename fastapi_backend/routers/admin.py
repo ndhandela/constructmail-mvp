@@ -302,7 +302,12 @@ async def update_company_modules(
         existing = await conn.fetchrow("SELECT id, active_modules FROM companies WHERE id = $1", company_id)
         if not existing:
             raise HTTPException(404, "Company not found")
-        merged = {**(existing["active_modules"] or {}), **req.modules}
+        # asyncpg returns jsonb columns as raw JSON text (no codec registered
+        # on this pool), not a dict.
+        existing_modules = existing["active_modules"] or {}
+        if isinstance(existing_modules, str):
+            existing_modules = json.loads(existing_modules)
+        merged = {**existing_modules, **req.modules}
         row = await conn.fetchrow(
             """
             UPDATE companies
@@ -317,4 +322,7 @@ async def update_company_modules(
         admin["id"], "modules_updated", "companies", row["id"],
         {"company_id": company_id, "modules": req.modules},
     )
-    return {"success": True, "active_modules": row["active_modules"]}
+    active_modules = row["active_modules"]
+    if isinstance(active_modules, str):
+        active_modules = json.loads(active_modules)
+    return {"success": True, "active_modules": active_modules}
