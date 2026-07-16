@@ -217,38 +217,23 @@ export default function Header({ userId, onLogout, user }) {
           />
         )}
 
-        {isLoggedIn && user && (
-          /* ── User identity block (informational, not clickable) ── */
-          <div className="header-user-info">
-            <div className="header-user-badge">{getInitials(displayName)}</div>
-            <div className="header-user-text">
-              <div className="header-user-name">{displayName}</div>
-              {user.company && <div className="header-user-company">{user.company}</div>}
-            </div>
-          </div>
-        )}
-
         {isLoggedIn ? (
-          /* ── Profile avatar + dropdown ── */
+          /* ── Identity block (initials badge + name/company) + profile dropdown ── */
           <div
             className="header-dropdown header-profile-dropdown"
             onMouseEnter={onProfileEnter}
             onMouseLeave={onProfileLeave}
           >
             <button
-              className="header-avatar-btn"
+              className="header-user-info"
               aria-label="Open profile menu"
               aria-expanded={profileOpen}
             >
-              {user?.avatar_url
-                ? <img src={user.avatar_url} alt={displayName} className="header-avatar-img" />
-                : (
-                  <svg className="header-avatar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="8" r="4" fill="white"/>
-                    <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                )
-              }
+              <div className="header-user-badge">{getInitials(displayName)}</div>
+              <div className="header-user-text">
+                <div className="header-user-name">{displayName}</div>
+                {user?.company && <div className="header-user-company">{user.company}</div>}
+              </div>
             </button>
 
             {profileOpen && (

@@ -229,6 +229,18 @@
   align-items: center;
   gap: 10px;
   margin-right: 6px;
+  padding: 6px 12px 6px 6px;
+  border-radius: var(--radius-pill);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.2s ease;
+}
+
+.header-user-info:hover {
+  background: var(--parchment);
 }
 
 .header-user-badge {
@@ -269,44 +281,10 @@
   text-overflow: ellipsis;
 }
 
-/* ── Profile Avatar ───────────────────────────────────────────────────────── */
+/* ── Profile Dropdown ─────────────────────────────────────────────────────── */
 
 .header-profile-dropdown {
   position: relative;
-}
-
-.header-avatar-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--inkwell);
-  border: 2px solid var(--border-light);
-  cursor: pointer;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.header-avatar-btn:hover {
-  border-color: var(--saffron);
-  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
-}
-
-.header-avatar-initials {
-  font-size: 14px;
-  font-weight: 700;
-  color: white;
-  line-height: 1;
-  pointer-events: none;
-}
-
-.header-avatar-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 /* Profile dropdown panel */
@@ -382,12 +360,6 @@
 .profile-logout-btn:hover {
   color: var(--error);
   background: #fef2f2;
-}
-
-.header-avatar-icon {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
 }
 
 /* ── Project switcher ─────────────────────────────────────────────────────── */
