@@ -16,6 +16,7 @@ class InviteTeammateRequest(BaseModel):
     userId: int
     email: str
     fullName: str
+    projectIds: list[int] = []
 
 
 @router.post("/invite")
@@ -50,6 +51,18 @@ async def invite_teammate(req: InviteTeammateRequest):
                 company["name"] if company else None, owner["company_id"], invite_token, invite_expires,
             )
             await accept_pending_invites(conn, user["id"], email)
+
+            if req.projectIds:
+                valid_projects = await conn.fetch(
+                    "SELECT id FROM projects WHERE id = ANY($1::int[]) AND company_id = $2",
+                    req.projectIds, owner["company_id"],
+                )
+                for project in valid_projects:
+                    await conn.execute(
+                        """INSERT INTO project_members (project_id, user_id, role) VALUES ($1, $2, 'contributor')
+                           ON CONFLICT (project_id, user_id) DO NOTHING""",
+                        project["id"], user["id"],
+                    )
 
     invite_url = f"{FRONTEND_URL}/accept-invite?token={invite_token}"
     first_name = req.fullName.strip().split(" ")[0]
@@ -87,3 +100,71 @@ async def list_team(userId: int):
             requester["company_id"],
         )
     return {"success": True, "team": [dict(r) for r in rows]}
+
+
+@router.get("/{member_user_id}/projects")
+async def get_member_projects(member_user_id: int, requesterId: int):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        requester = await conn.fetchrow(
+            "SELECT company_id, permission_level FROM users WHERE id = $1", requesterId
+        )
+        member = await conn.fetchrow(
+            "SELECT company_id FROM users WHERE id = $1", member_user_id
+        )
+        if not requester or not member or requester["company_id"] != member["company_id"]:
+            raise HTTPException(403, "Not authorized")
+        if requester["permission_level"] != "owner":
+            raise HTTPException(403, "Only the company owner can view this")
+        rows = await conn.fetch(
+            """SELECT p.id, p.name, (pm.user_id IS NOT NULL) AS has_access
+               FROM projects p
+               LEFT JOIN project_members pm ON pm.project_id = p.id AND pm.user_id = $1
+               WHERE p.company_id = $2 ORDER BY p.created_at""",
+            member_user_id, requester["company_id"],
+        )
+    return {"success": True, "projects": [dict(r) for r in rows]}
+
+
+class UpdateMemberProjectsRequest(BaseModel):
+    requesterId: int
+    projectIds: list[int]
+
+
+@router.put("/{member_user_id}/projects")
+async def update_member_projects(member_user_id: int, req: UpdateMemberProjectsRequest):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        requester = await conn.fetchrow(
+            "SELECT company_id, permission_level FROM users WHERE id = $1", req.requesterId
+        )
+        member = await conn.fetchrow(
+            "SELECT company_id, permission_level FROM users WHERE id = $1", member_user_id
+        )
+        if not requester or not member or requester["company_id"] != member["company_id"]:
+            raise HTTPException(403, "Not authorized")
+        if requester["permission_level"] != "owner":
+            raise HTTPException(403, "Only the company owner can change this")
+
+        async with conn.transaction():
+            valid_ids = await conn.fetch(
+                "SELECT id FROM projects WHERE company_id = $1 AND id = ANY($2::int[])",
+                requester["company_id"], req.projectIds,
+            )
+            valid_ids = [r["id"] for r in valid_ids]
+
+            await conn.execute(
+                """DELETE FROM project_members
+                   WHERE user_id = $1 AND project_id IN (
+                       SELECT id FROM projects WHERE company_id = $2
+                   ) AND NOT (project_id = ANY($3::int[]))""",
+                member_user_id, requester["company_id"], valid_ids,
+            )
+            role = "owner" if member["permission_level"] == "owner" else "contributor"
+            for pid in valid_ids:
+                await conn.execute(
+                    """INSERT INTO project_members (project_id, user_id, role)
+                       VALUES ($1, $2, $3) ON CONFLICT DO NOTHING""",
+                    pid, member_user_id, role,
+                )
+    return {"success": True}

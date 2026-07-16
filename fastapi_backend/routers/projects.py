@@ -91,6 +91,17 @@ async def create_project(req: CreateProjectRequest):
     return {"success": True, "project": dict(project)}
 
 
+@router.get("/company/{company_id}")
+async def get_company_projects(company_id: int):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT id, name, project_number, client_name FROM projects WHERE company_id = $1 ORDER BY created_at",
+            company_id,
+        )
+    return {"success": True, "projects": [dict(r) for r in rows]}
+
+
 @router.get("/{project_id}/members")
 async def get_project_members(project_id: int, userId: int):
     pool = await get_pool()

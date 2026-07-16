@@ -8,7 +8,7 @@ function memberDisplayName(m) {
   return m.full_name || m.name || m.email;
 }
 
-export default function ProjectTeam({ userId, permissionLevel }) {
+export default function ProjectTeam({ userId, permissionLevel, companyId }) {
   const { projects, currentProjectId } = useContext(ProjectContext);
   const [members, setMembers] = useState([]);
   const [pendingInvites, setPendingInvites] = useState([]);
@@ -162,7 +162,7 @@ export default function ProjectTeam({ userId, permissionLevel }) {
 
       <div className="profile-card" style={{ marginTop: 24 }}>
         <p className="profile-section-title">Company Team</p>
-        <CompanyTeamSection userId={userId} isOwner={isCompanyOwner} />
+        <CompanyTeamSection userId={userId} isOwner={isCompanyOwner} companyId={companyId} />
       </div>
     </>
   );

@@ -112,7 +112,7 @@ export default function ProfileApp({ userId }) {
           />
         )}
         {activeTab === 'team' && (
-          <ProjectTeam userId={userId} permissionLevel={profile?.permission_level} />
+          <ProjectTeam userId={userId} permissionLevel={profile?.permission_level} companyId={profile?.company_id} />
         )}
         {activeTab === 'security' && (
           <ProfileSecurity userId={userId} />
