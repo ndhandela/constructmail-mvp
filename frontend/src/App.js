@@ -32,7 +32,7 @@ import './styles/components.css';
 import './App.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-const PRODUCT_PATHS = ['/clash', '/constructmail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile'];
+const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile'];
 
 function App() {
   const [userId, setUserId] = useState(null);
@@ -99,7 +99,7 @@ function App() {
 
   useEffect(() => {
     if (userId) {
-      if (path.includes('/constructmail')) setCurrentProduct('constructmail');
+      if (path === '/mail') setCurrentProduct('constructmail');
       if (path === '/clash') setCurrentProduct('clash');
       if (path === '/vendors') setCurrentProduct('vendors');
       if (path === '/dashboard') setCurrentProduct('dashboard');
@@ -192,8 +192,14 @@ function App() {
     );
   }
 
+  // ── Legacy path redirect ─────────────────────────────────────────────────
+  if (path === '/constructmail') {
+    window.location.href = '/mail' + window.location.search + window.location.hash;
+    return null;
+  }
+
   // ── Public product marketing pages (no auth required) ────────────────────
-  if (path === '/mail') {
+  if (path === '/mail-info') {
     return (
       <>
         <Header userId={userId} onLogout={handleLogout} user={user} />

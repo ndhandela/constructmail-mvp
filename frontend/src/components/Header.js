@@ -22,7 +22,7 @@ function getDisplayName(user) {
 // plan — unlicensed modules (e.g. Marketplace) render their own upgrade/lock
 // prompt rather than being hidden from nav, matching the dashboard's pattern.
 const PRODUCT_NAV = [
-  { path: '/constructmail', label: 'Mail' },
+  { path: '/mail',          label: 'Mail' },
   { path: '/clash',         label: 'Clash' },
   { path: '/vendors',       label: 'Vendors' },
   { path: '/marketplace',   label: 'Marketplace' },
@@ -100,6 +100,11 @@ export default function Header({ userId, onLogout, user }) {
         <a href={isLoggedIn ? '/dashboard' : '/'} className="header-logo-link" aria-label={isLoggedIn ? 'POMAR dashboard' : 'POMAR home'}>
           <PomarLogo variant="light" height={32} />
         </a>
+        {isLoggedIn && user && (
+          <span className="header-identity">
+            {user.company ? `${user.company} · ` : ''}{displayName}
+          </span>
+        )}
       </div>
 
       {isLoggedIn ? (

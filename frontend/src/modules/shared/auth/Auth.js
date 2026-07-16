@@ -5,8 +5,8 @@ import './styles/Auth.css';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 const PRODUCT_NAMES = {
-  '/clash':         'POMAR Clash — BIM Clash Analyzer',
-  '/constructmail': 'POMAR Mail — Email Intelligence',
+  '/clash': 'POMAR Clash — BIM Clash Analyzer',
+  '/mail':  'POMAR Mail — Email Intelligence',
 };
 
 export const ROLES = [

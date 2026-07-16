@@ -19,6 +19,19 @@
   text-decoration: none;
 }
 
+.header-identity {
+  margin-left: 16px;
+  padding-left: 16px;
+  border-left: 1px solid var(--border-light);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--slate);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
 .header-nav {
   display: flex;
   align-items: center;
@@ -214,6 +227,10 @@
   }
 
   .header-logout {
+    display: none;
+  }
+
+  .header-identity {
     display: none;
   }
 }

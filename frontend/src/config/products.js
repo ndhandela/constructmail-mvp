@@ -5,8 +5,8 @@ export const PRODUCTS = [
     description: 'AI-powered email intelligence for General Contractors',
     detailedDescription: "GCs live in their inbox, and critical information gets buried fast. POMAR Mail connects to your existing email and reads every incoming thread in real time. It automatically summarizes long back-and-forth conversations so you don't have to scroll through 40 replies to find the decision that was made. It extracts action items and assigns them so nothing gets lost between the PM, the super, and the sub. Most importantly, it detects RFI and change-order signals hidden inside ordinary email language before they escalate into schedule or cost problems.",
     icon: '📧',
-    path: '/constructmail',
-    marketingPath: '/mail',
+    path: '/mail',
+    marketingPath: '/mail-info',
     logo: '/logos/constructmail.png',
     color: '#D97706',
     status: 'live'
