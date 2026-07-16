@@ -280,7 +280,7 @@ async def get_feature_flags(admin: dict = Depends(require_super_admin)):
     pool = await get_pool()
     async with pool.acquire() as conn:
         rows = await conn.fetch(
-            """SELECT ff.feature_key AS key, ff.feature_name AS name, ff.module, ff.is_enabled AS enabled,
+            """SELECT ff.feature_key, ff.feature_name, ff.module, ff.is_enabled,
                       ff.is_global, ff.company_id, c.name AS company_name
                FROM feature_flags ff
                LEFT JOIN companies c ON c.id = ff.company_id
