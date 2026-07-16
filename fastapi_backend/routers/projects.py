@@ -3,17 +3,11 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 from db import get_pool
-from services.project_helpers import get_or_create_default_project
 from services.email_service import send_email
 
 router = APIRouter(prefix="/api/projects", tags=["Projects"])
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://pomar.ai")
-
-# Roles allowed to create new projects. Ownership of a project is tied to a
-# single user account (see projects.user_id), so only roles that plausibly
-# hold the prime contract get to originate one.
-PROJECT_CREATOR_ROLES = ("GC", "Owner")
 
 INVITE_ROLES = ("contributor", "viewer")
 
@@ -35,7 +29,6 @@ class InviteRequest(BaseModel):
 async def get_projects(userId: int):
     pool = await get_pool()
     async with pool.acquire() as conn:
-        await get_or_create_default_project(conn, userId)
         rows = await conn.fetch(
             """SELECT p.id, p.name, p.project_number, p.client_name, pm.role AS member_role
                FROM projects p
@@ -54,27 +47,46 @@ async def create_project(req: CreateProjectRequest):
 
     pool = await get_pool()
     async with pool.acquire() as conn:
-        user = await conn.fetchrow("SELECT role FROM users WHERE id = $1", req.userId)
+        user = await conn.fetchrow(
+            "SELECT company_id, permission_level FROM users WHERE id = $1", req.userId
+        )
         if not user:
             raise HTTPException(404, "User not found")
-        if user["role"] not in PROJECT_CREATOR_ROLES:
+        if user["permission_level"] != "owner":
             raise HTTPException(
                 403,
-                "Only General Contractors or Owners can create projects. "
-                "Ask your GC or Owner to create the project and invite you.",
+                "Only the company owner can create projects. "
+                "Ask your company owner to create the project and invite you.",
             )
+
+        company_id = user["company_id"]
 
         async with conn.transaction():
             project = await conn.fetchrow(
-                """INSERT INTO projects (user_id, name, project_number, client_name)
-                   VALUES ($1, $2, $3, $4)
+                """INSERT INTO projects (user_id, company_id, name, project_number, client_name)
+                   VALUES ($1, $2, $3, $4, $5)
                    RETURNING id, name, project_number, client_name""",
-                req.userId, req.name.strip(), req.project_number, req.client_name,
+                req.userId, company_id, req.name.strip(), req.project_number, req.client_name,
             )
             await conn.execute(
                 "INSERT INTO project_members (project_id, user_id, role) VALUES ($1, $2, 'owner')",
                 project["id"], req.userId,
             )
+
+            # Share membership with the rest of the company, same as
+            # get_or_create_default_project's sharing rule.
+            if company_id:
+                teammates = await conn.fetch(
+                    "SELECT id, permission_level FROM users WHERE company_id = $1 AND id != $2",
+                    company_id, req.userId,
+                )
+                for teammate in teammates:
+                    role = "owner" if teammate["permission_level"] == "owner" else "contributor"
+                    await conn.execute(
+                        """INSERT INTO project_members (project_id, user_id, role) VALUES ($1, $2, $3)
+                           ON CONFLICT (project_id, user_id) DO NOTHING""",
+                        project["id"], teammate["id"], role,
+                    )
 
     return {"success": True, "project": dict(project)}
 

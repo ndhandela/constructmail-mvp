@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import Optional, List, Any
 from db import get_pool
 from services.clash_helpers import analyze_clash_report, draft_clash_rfi
-from services.project_helpers import get_or_create_default_project, require_project_member
+from services.project_helpers import require_project_member
 from routers.connect import enqueue_clash_report
 
 
@@ -17,6 +17,24 @@ async def _require_member_if_project_scoped(conn, project_id: Optional[int], use
     if not user_id or not str(user_id).isdigit():
         raise HTTPException(403, "You do not have access to this project")
     await require_project_member(conn, project_id, int(user_id))
+
+
+async def _resolve_project_or_require_one(conn, user_id: int) -> int:
+    """
+    When no projectId is passed, fall back to the user's most recent project
+    instead of silently creating a "Default Project". Raises if they have none.
+    """
+    row = await conn.fetchrow(
+        """SELECT p.id FROM projects p
+           JOIN project_members pm ON pm.project_id = p.id
+           WHERE pm.user_id = $1
+           ORDER BY p.created_at DESC
+           LIMIT 1""",
+        user_id,
+    )
+    if not row:
+        raise HTTPException(400, "Create a project first before using Clash.")
+    return row["id"]
 
 router = APIRouter(prefix="/api/clash", tags=["Clash"])
 
@@ -103,7 +121,7 @@ async def save_assignment(req: AssignmentRequest):
         await _require_member_if_project_scoped(conn, req.projectId, req.userId)
         project_id = req.projectId
         if project_id is None and req.userId and str(req.userId).isdigit():
-            project_id = await get_or_create_default_project(conn, int(req.userId))
+            project_id = await _resolve_project_or_require_one(conn, int(req.userId))
         row = await conn.fetchrow(
             """INSERT INTO clash_assignments (user_id, project_key, project_id, clash_name, assigned_to, discipline, notes, status, updated_at)
                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())
@@ -124,7 +142,7 @@ async def save_report(req: SaveReportRequest):
         await _require_member_if_project_scoped(conn, req.projectId, req.userId)
         project_id = req.projectId
         if project_id is None and req.userId and str(req.userId).isdigit():
-            project_id = await get_or_create_default_project(conn, int(req.userId))
+            project_id = await _resolve_project_or_require_one(conn, int(req.userId))
         row = await conn.fetchrow(
             """INSERT INTO clash_reports (user_id, test_name, file_name, total_clashes, new_clashes, active_clashes, reviewed_clashes, critical_clashes, high_clashes, project_key, project_id, created_at)
                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW()) RETURNING *""",

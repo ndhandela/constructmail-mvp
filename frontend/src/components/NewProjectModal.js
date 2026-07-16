@@ -4,7 +4,7 @@ import '../styles/Header.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-export default function NewProjectModal({ userId, onClose, onCreated }) {
+export default function NewProjectModal({ userId, onClose, onCreated, dismissible = true }) {
   const [name, setName] = useState('');
   const [projectNumber, setProjectNumber] = useState('');
   const [clientName, setClientName] = useState('');
@@ -12,10 +12,11 @@ export default function NewProjectModal({ userId, onClose, onCreated }) {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (!dismissible) return;
     const handler = (e) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [onClose]);
+  }, [onClose, dismissible]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,7 +52,7 @@ export default function NewProjectModal({ userId, onClose, onCreated }) {
   };
 
   return createPortal(
-    <div className="new-project-overlay" onClick={onClose}>
+    <div className="new-project-overlay" onClick={dismissible ? onClose : undefined}>
       <div
         className="new-project-modal"
         onClick={(e) => e.stopPropagation()}
@@ -61,7 +62,9 @@ export default function NewProjectModal({ userId, onClose, onCreated }) {
       >
         <div className="new-project-header">
           <h3>New project</h3>
-          <button className="new-project-close-btn" onClick={onClose} aria-label="Close">✕</button>
+          {dismissible && (
+            <button className="new-project-close-btn" onClick={onClose} aria-label="Close">✕</button>
+          )}
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -102,7 +105,9 @@ export default function NewProjectModal({ userId, onClose, onCreated }) {
           {error && <p className="new-project-error">{error}</p>}
 
           <div className="new-project-actions">
-            <button type="button" className="new-project-btn-secondary" onClick={onClose}>Cancel</button>
+            {dismissible && (
+              <button type="button" className="new-project-btn-secondary" onClick={onClose}>Cancel</button>
+            )}
             <button type="submit" className="new-project-btn-primary" disabled={saving}>
               {saving ? 'Creating…' : 'Create project'}
             </button>

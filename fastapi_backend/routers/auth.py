@@ -103,7 +103,7 @@ async def get_me(userId: int):
     pool = await get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT id, email, name, full_name, company, role FROM users WHERE id = $1", userId
+            "SELECT id, email, name, full_name, company, role, permission_level FROM users WHERE id = $1", userId
         )
         if not row:
             raise HTTPException(401, "User not found")

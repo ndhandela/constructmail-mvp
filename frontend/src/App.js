@@ -13,6 +13,7 @@ import VendorsMarketing from './pages/marketing/VendorsMarketing';
 import MarketplaceMarketing from './pages/marketing/MarketplaceMarketing';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import ProjectGate from './components/ProjectGate';
 import AboutUs from './pages/AboutUs';
 import ResetPassword from './pages/ResetPassword';
 import AcceptInvite from './pages/AcceptInvite';
@@ -306,7 +307,9 @@ if (userId && path === '/dashboard') {
   return (
     <ProjectProvider userId={userId}>
       <Header userId={userId} onLogout={handleLogout} user={user} />
-      <ProductDashboard user={user} userId={userId} onProductSelect={handleProductSelect} />
+      <ProjectGate userId={userId} user={user}>
+        <ProductDashboard user={user} userId={userId} onProductSelect={handleProductSelect} />
+      </ProjectGate>
       <Footer />
     </ProjectProvider>
   );
@@ -341,7 +344,9 @@ if (userId && path === '/dashboard') {
     return (
       <ProjectProvider userId={userId}>
         <Header userId={userId} onLogout={handleLogout} user={user} />
-        <ConstructMailApp user={user} userId={userId} onLogout={handleLogout} />
+        <ProjectGate userId={userId} user={user}>
+          <ConstructMailApp user={user} userId={userId} onLogout={handleLogout} />
+        </ProjectGate>
         <Footer />
       </ProjectProvider>
     );
@@ -352,7 +357,9 @@ if (userId && path === '/dashboard') {
     return (
       <ProjectProvider userId={userId}>
         <Header userId={userId} onLogout={handleLogout} user={user} />
-        <ClashAnalyzer />
+        <ProjectGate userId={userId} user={user}>
+          <ClashAnalyzer />
+        </ProjectGate>
         <Footer />
       </ProjectProvider>
     );
@@ -363,7 +370,9 @@ if (userId && path === '/dashboard') {
     return (
       <ProjectProvider userId={userId}>
         <Header userId={userId} onLogout={handleLogout} user={user} />
-        <VendorsApp user={user} userId={userId} onLogout={handleLogout} />
+        <ProjectGate userId={userId} user={user}>
+          <VendorsApp user={user} userId={userId} onLogout={handleLogout} />
+        </ProjectGate>
         <Footer />
       </ProjectProvider>
     );
@@ -374,7 +383,9 @@ if (userId && path === '/dashboard') {
     return (
       <ProjectProvider userId={userId}>
         <Header userId={userId} onLogout={handleLogout} user={user} />
-        <ConnectApp userId={userId} />
+        <ProjectGate userId={userId} user={user}>
+          <ConnectApp userId={userId} />
+        </ProjectGate>
         <Footer />
       </ProjectProvider>
     );
@@ -384,7 +395,9 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
     return (
       <ProjectProvider userId={userId}>
         <Header userId={userId} onLogout={handleLogout} user={user} />
-        <ProductDashboard user={user} userId={userId} onProductSelect={handleProductSelect} />
+        <ProjectGate userId={userId} user={user}>
+          <ProductDashboard user={user} userId={userId} onProductSelect={handleProductSelect} />
+        </ProjectGate>
         <Footer />
       </ProjectProvider>
     );
@@ -406,7 +419,9 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
     return (
       <ProjectProvider userId={userId}>
         <Header userId={userId} onLogout={handleLogout} user={user} />
-        <MarketplaceApp user={user} userId={userId} />
+        <ProjectGate userId={userId} user={user}>
+          <MarketplaceApp user={user} userId={userId} />
+        </ProjectGate>
         <Footer />
       </ProjectProvider>
     );
