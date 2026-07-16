@@ -26,7 +26,7 @@ const INSURANCE_STATUS = [
   { value: 'verified', label: 'Verified' }
 ];
 
-export default function AddVendorForm({ onVendorAdded }) {
+export default function AddVendorForm({ userId, onVendorAdded }) {
   const [formData, setFormData] = useState({
     name: '',
     trade: '',
@@ -76,7 +76,7 @@ export default function AddVendorForm({ onVendorAdded }) {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({ ...formData, userId })
       });
 
       const data = await response.json();
@@ -106,7 +106,7 @@ export default function AddVendorForm({ onVendorAdded }) {
           }
         }, 1500);
       } else {
-        setMessage(`❌ ${data.error || 'Failed to add vendor'}`);
+        setMessage(`❌ ${data.detail || 'Failed to add vendor'}`);
       }
     } catch (err) {
       console.error('Submit error:', err);

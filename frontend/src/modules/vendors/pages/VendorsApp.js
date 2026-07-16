@@ -12,6 +12,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 export default function VendorsApp({ user, userId, onLogout }) {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchError, setSearchError] = useState('');
   const [showAddSection, setShowAddSection] = useState(false);
   const [hasMarketplaceLicense, setHasMarketplaceLicense] = useState(false);
   const [filters, setFilters] = useState({
@@ -32,15 +33,16 @@ export default function VendorsApp({ user, userId, onLogout }) {
 
   const searchVendors = useCallback(async () => {
       setLoading(true);
+      setSearchError('');
       try {
         const queryParams = new URLSearchParams({
           ...filters,
           limit: pagination.limit,
           offset: pagination.offset
         });
+        if (userId) queryParams.set('userId', userId);
         if (currentProjectId && currentProjectId !== ALL_PROJECTS) {
           queryParams.set('project_id', currentProjectId);
-          queryParams.set('userId', userId);
         }
 
         const response = await fetch(
@@ -58,10 +60,12 @@ export default function VendorsApp({ user, userId, onLogout }) {
           setVendors(data.vendors);
           setPagination(prev => ({ ...prev, total: data.total }));
         } else {
-          console.error('Search error:', data.error);
+          setSearchError(data.detail || 'Could not load vendors.');
+          setVendors([]);
         }
       } catch (err) {
         console.error('Fetch vendors error:', err);
+        setSearchError('Network error. Try again.');
       } finally {
         setLoading(false);
       }
@@ -131,7 +135,7 @@ export default function VendorsApp({ user, userId, onLogout }) {
                 ⚡ Connect
               </button>
             </a>
-            <VendorExport filters={filters} />
+            <VendorExport filters={filters} userId={userId} />
             {!showAddSection && (
               <button
                 className="add-vendor-btn"
@@ -157,7 +161,7 @@ export default function VendorsApp({ user, userId, onLogout }) {
             </div>
 
             <div className="add-vendor-options">
-              <AddVendorForm onVendorAdded={handleVendorAdded} />
+              <AddVendorForm userId={userId} onVendorAdded={handleVendorAdded} />
               <div className="divider">OR</div>
               <CSVImport userId={userId} onImportComplete={handleVendorAdded} />
             </div>
@@ -165,16 +169,20 @@ export default function VendorsApp({ user, userId, onLogout }) {
         )}
 
         {/* Vendors List */}
-        <VendorListTable
-          vendors={vendors}
-          loading={loading}
-          pagination={pagination}
-          onNextPage={handleNextPage}
-          onPrevPage={handlePrevPage}
-          userId={userId}
-          onVendorUpdated={searchVendors}
-          hasMarketplaceLicense={hasMarketplaceLicense}
-        />
+        {searchError ? (
+          <div className="vendors-search-error">{searchError}</div>
+        ) : (
+          <VendorListTable
+            vendors={vendors}
+            loading={loading}
+            pagination={pagination}
+            onNextPage={handleNextPage}
+            onPrevPage={handlePrevPage}
+            userId={userId}
+            onVendorUpdated={searchVendors}
+            hasMarketplaceLicense={hasMarketplaceLicense}
+          />
+        )}
       </div>
     </div>
   );

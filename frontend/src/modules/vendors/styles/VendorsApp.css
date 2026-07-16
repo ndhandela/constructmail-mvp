@@ -45,6 +45,16 @@
   margin: 0 auto;
 }
 
+.vendors-search-error {
+  background-color: white;
+  border-radius: var(--radius-md);
+  padding: 60px 40px;
+  text-align: center;
+  color: var(--error);
+  font-size: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
 /* Top Bar with Search and Add Button */
 .vendors-top-bar {
   display: flex;

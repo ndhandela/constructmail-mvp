@@ -159,6 +159,7 @@ export default function ClashAnalyzer() {
               report={report}
               fileName={fileName}
               onReset={handleReset}
+              userId={userId}
             />
           )}
 

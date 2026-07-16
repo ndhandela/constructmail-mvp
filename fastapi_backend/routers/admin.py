@@ -126,7 +126,9 @@ async def create_company(req: CreateCompanyRequest, admin: dict = Depends(requir
             if existing:
                 raise HTTPException(400, "An account with this email already exists.")
             company = await conn.fetchrow(
-                "INSERT INTO companies (name) VALUES ($1) RETURNING id", req.companyName.strip(),
+                """INSERT INTO companies (name, active_modules) VALUES ($1, $2::jsonb) RETURNING id""",
+                req.companyName.strip(),
+                '{"mail": true, "clash": true, "vendors": true, "marketplace": false}',
             )
             user = await conn.fetchrow(
                 """INSERT INTO users (email, name, full_name, company, company_id, permission_level,
@@ -137,6 +139,19 @@ async def create_company(req: CreateCompanyRequest, admin: dict = Depends(requir
                 company["id"], invite_token, invite_expires,
             )
             await accept_pending_invites(conn, user["id"], owner_email)
+
+            # Mail/Clash/Vendors are free and on by default (matches active_modules
+            # above); Marketplace stays opt-in. Seeded here so nothing needs to be
+            # manually configured after company creation.
+            await conn.execute(
+                """INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
+                   VALUES
+                     ($1, 'mail_intelligence', 'Mail Intelligence', 'mail', true, false),
+                     ($1, 'clash_detection', 'Clash Detection', 'clash', true, false),
+                     ($1, 'vendor_search', 'Vendor Search', 'vendors', true, false)
+                   ON CONFLICT (company_id, feature_key) DO NOTHING""",
+                company["id"],
+            )
 
     invite_url = f"{FRONTEND_URL}/accept-invite?token={invite_token}"
     first_name = req.ownerFullName.strip().split(" ")[0]

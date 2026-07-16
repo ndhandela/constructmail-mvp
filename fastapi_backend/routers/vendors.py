@@ -6,11 +6,13 @@ from typing import Optional
 from db import get_pool
 from services import vendor_service
 from services.project_helpers import require_project_member
+from services.access_control import require_module_access, require_feature_flag
 
 router = APIRouter(prefix="/api/vendors", tags=["Vendors"])
 
 
 class CreateVendorRequest(BaseModel):
+    userId: int
     name: str
     trade: str
     phone: Optional[str] = None
@@ -46,7 +48,10 @@ class LinkProjectRequest(BaseModel):
 
 @router.post("")
 async def create_vendor(req: CreateVendorRequest):
-    result = await vendor_service.create_vendor(req.dict())
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await require_module_access(conn, req.userId, "vendors")
+    result = await vendor_service.create_vendor(req.dict(exclude={"userId"}))
     if not result["success"]:
         raise HTTPException(400, result["error"])
     return {"success": True, "vendor": result["vendor"]}
@@ -54,23 +59,23 @@ async def create_vendor(req: CreateVendorRequest):
 
 @router.get("")
 async def search_vendors(
+    userId: int,
     search: Optional[str] = None,
     trade: Optional[str] = None,
     city: Optional[str] = None,
     insurance_status: Optional[str] = None,
     min_rating: Optional[str] = None,
     project_id: Optional[int] = None,
-    userId: Optional[int] = None,
     sort: str = "newest",
     limit: int = 50,
     offset: int = 0,
 ):
     parsed_min_rating = float(min_rating) if min_rating else None
-    if project_id is not None:
-        if not userId:
-            raise HTTPException(400, "userId is required when filtering by project_id")
-        pool = await get_pool()
-        async with pool.acquire() as conn:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await require_module_access(conn, userId, "vendors")
+        await require_feature_flag(conn, userId, "vendor_search")
+        if project_id is not None:
             await require_project_member(conn, project_id, userId)
     filters = {k: v for k, v in {
         "search": search, "trade": trade, "city": city,

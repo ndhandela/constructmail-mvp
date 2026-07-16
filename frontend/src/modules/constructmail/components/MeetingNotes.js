@@ -35,7 +35,7 @@ const handleSubmit = async (e) => {
     setResult(response.data);
     setNotesText('');
   } catch (err) {
-    const errorMsg = err.response?.data?.error || err.message || 'Unknown error occurred';
+    const errorMsg = err.response?.data?.detail || err.message || 'Unknown error occurred';
     setError(errorMsg);
   } finally {
     setLoading(false);

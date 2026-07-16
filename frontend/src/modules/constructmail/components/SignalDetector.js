@@ -35,7 +35,7 @@ try {
     setSignals(response.data);
     setEmailText('');
   } catch (err) {
-    const errorMsg = err.response?.data?.error || err.message || 'Unknown error occurred';
+    const errorMsg = err.response?.data?.detail || err.message || 'Unknown error occurred';
     setError(errorMsg);
   } finally {
     setLoading(false);

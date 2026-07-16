@@ -6,7 +6,16 @@ from typing import Optional, List, Any
 from db import get_pool
 from services.clash_helpers import analyze_clash_report, draft_clash_rfi
 from services.project_helpers import require_project_member
+from services.access_control import require_module_access, require_feature_flag
 from routers.connect import enqueue_clash_report
+
+
+async def _require_module_if_numeric(conn, user_id: str, module: str):
+    """clash_assignments/clash_reports carry userId as a legacy TEXT column (see
+    _require_member_if_project_scoped below) — only real numeric user ids can be
+    resolved to a company, so non-numeric legacy ids are let through unchecked."""
+    if user_id and str(user_id).isdigit():
+        await require_module_access(conn, int(user_id), module)
 
 
 async def _require_member_if_project_scoped(conn, project_id: Optional[int], user_id: str):
@@ -40,6 +49,7 @@ router = APIRouter(prefix="/api/clash", tags=["Clash"])
 
 
 class AnalyzeRequest(BaseModel):
+    userId: int
     summary: dict
     topClashes: list
     testName: str
@@ -85,6 +95,10 @@ class AgendaPDFRequest(BaseModel):
 
 @router.post("/analyze")
 async def analyze(req: AnalyzeRequest):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await require_module_access(conn, req.userId, "clash")
+        await require_feature_flag(conn, req.userId, "clash_detection")
     analysis = await analyze_clash_report(req.summary, req.topClashes, req.testName)
     return {"analysis": analysis}
 
@@ -118,6 +132,7 @@ async def get_assignments(userId: str, projectKey: str, projectId: Optional[int]
 async def save_assignment(req: AssignmentRequest):
     pool = await get_pool()
     async with pool.acquire() as conn:
+        await _require_module_if_numeric(conn, req.userId, "clash")
         await _require_member_if_project_scoped(conn, req.projectId, req.userId)
         project_id = req.projectId
         if project_id is None and req.userId and str(req.userId).isdigit():
@@ -139,6 +154,7 @@ async def save_report(req: SaveReportRequest):
     pool = await get_pool()
     summary = req.summary or {}
     async with pool.acquire() as conn:
+        await _require_module_if_numeric(conn, req.userId, "clash")
         await _require_member_if_project_scoped(conn, req.projectId, req.userId)
         project_id = req.projectId
         if project_id is None and req.userId and str(req.userId).isdigit():

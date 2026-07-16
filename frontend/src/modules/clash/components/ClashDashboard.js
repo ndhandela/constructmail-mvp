@@ -6,7 +6,7 @@ import '../styles/ClashAnalyzer.css';
 const STATUS_TABS = ['All', 'Critical', 'New', 'Active', 'Reviewed', 'Resolved'];
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-export default function ClashDashboard({ report, fileName, onReset }) {
+export default function ClashDashboard({ report, fileName, onReset, userId }) {
   const { testName, summary, clashes } = report;
 
   const [activeTab, setActiveTab]       = useState('All');
@@ -51,10 +51,14 @@ export default function ClashDashboard({ report, fileName, onReset }) {
       const res = await fetch(`${API_BASE_URL}/api/clash/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ summary, topClashes, testName }),
+        body: JSON.stringify({ userId, summary, topClashes, testName }),
       });
       const data = await res.json();
-      setAiResult(data.analysis || 'No analysis returned.');
+      if (!res.ok) {
+        setAiError(data.detail || 'AI analysis unavailable — check backend connection.');
+      } else {
+        setAiResult(data.analysis || 'No analysis returned.');
+      }
     } catch {
       setAiError('AI analysis unavailable — check backend connection.');
     } finally {

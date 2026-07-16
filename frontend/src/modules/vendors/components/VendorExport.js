@@ -19,17 +19,18 @@ const EXPORT_COLUMNS = [
   { key: 'created_at',       label: 'Date Added'        },
 ];
 
-async function fetchAllVendors(filters) {
+async function fetchAllVendors(filters, userId) {
   const queryParams = new URLSearchParams({
     ...filters,
     limit: 10000,
     offset: 0,
+    userId,
   });
   const response = await fetch(`${API_BASE_URL}/api/vendors?${queryParams}`, {
     headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` }
   });
   const data = await response.json();
-  if (!data.success) throw new Error(data.error || 'Failed to fetch vendors');
+  if (!data.success) throw new Error(data.detail || 'Failed to fetch vendors');
   return data.vendors;
 }
 
@@ -160,7 +161,7 @@ function buildFilterLabel(filters) {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export default function VendorExport({ filters }) {
+export default function VendorExport({ filters, userId }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(null); // 'csv' | 'pdf' | null
   const [error, setError] = useState('');
@@ -178,7 +179,7 @@ export default function VendorExport({ filters }) {
     setLoading(type);
     setError('');
     try {
-      const vendors = await fetchAllVendors(filters);
+      const vendors = await fetchAllVendors(filters, userId);
       const label = buildFilterLabel(filters);
       if (type === 'csv') {
         downloadCSV(vendors, label);
@@ -187,7 +188,7 @@ export default function VendorExport({ filters }) {
       }
     } catch (err) {
       console.error('Export error:', err);
-      setError('Export failed. Please try again.');
+      setError(err.message || 'Export failed. Please try again.');
     } finally {
       setLoading(null);
     }

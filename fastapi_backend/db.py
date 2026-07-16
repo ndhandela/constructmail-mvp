@@ -585,6 +585,27 @@ async def init_db():
                 user_email VARCHAR(255),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+
+            -- Module access (Mail/Clash/Vendors) and feature flags are now
+            -- actually enforced (migration 018) instead of being cosmetic, and
+            -- fail closed by design. Companies created before this change only
+            -- have the untouched all-false column default and no feature_flags
+            -- rows, so without a backfill they'd suddenly lose access to
+            -- everything they were already using. Only touches companies still
+            -- sitting at the untouched default — anything already manually
+            -- configured differently is left alone.
+            UPDATE companies SET active_modules = '{"mail": true, "clash": true, "vendors": true, "marketplace": false}'::jsonb
+            WHERE active_modules = '{"mail": false, "clash": false, "vendors": false, "marketplace": false}'::jsonb;
+
+            INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
+            SELECT id, 'mail_intelligence', 'Mail Intelligence', 'mail', true, false FROM companies
+            ON CONFLICT (company_id, feature_key) DO NOTHING;
+            INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
+            SELECT id, 'clash_detection', 'Clash Detection', 'clash', true, false FROM companies
+            ON CONFLICT (company_id, feature_key) DO NOTHING;
+            INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
+            SELECT id, 'vendor_search', 'Vendor Search', 'vendors', true, false FROM companies
+            ON CONFLICT (company_id, feature_key) DO NOTHING;
         """)
 
         await _backfill_clash_project_ids(conn)
