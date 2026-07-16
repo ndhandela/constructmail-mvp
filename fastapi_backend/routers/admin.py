@@ -224,7 +224,7 @@ async def save_pricing(req: PricingRequest, admin: dict = Depends(require_super_
     if not is_global and req.company_id is None:
         raise HTTPException(400, "company_id is required when is_global is false")
     company_id = req.company_id if not is_global else None
-    conflict_target = "(module_name, is_global)" if is_global else "(company_id, module_name)"
+    conflict_target = "(module_name) WHERE is_global = true" if is_global else "(company_id, module_name)"
     pool = await get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
@@ -259,7 +259,7 @@ async def save_feature_flags(req: FeatureFlagsRequest, admin: dict = Depends(req
     if not req.is_global and req.company_id is None:
         raise HTTPException(400, "company_id is required when is_global is false")
     company_id = req.company_id if not req.is_global else None
-    conflict_target = "(feature_key, is_global)" if req.is_global else "(company_id, feature_key)"
+    conflict_target = "(feature_key) WHERE is_global = true" if req.is_global else "(company_id, feature_key)"
     pool = await get_pool()
     async with pool.acquire() as conn:
         await conn.execute(

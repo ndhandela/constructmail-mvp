@@ -544,6 +544,23 @@ async def init_db():
             $mig014$;
 
             ALTER TABLE projects ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id);
+
+            -- UNIQUE(module_name, is_global) / UNIQUE(feature_key, is_global) let
+            -- any two non-global rows for the same module/feature collide with
+            -- each other regardless of company, since is_global is false for
+            -- both - blocking a second company from saving pricing/flags on a
+            -- module/feature a different company already has (migration 015).
+            -- Per-company uniqueness is already covered by
+            -- UNIQUE(company_id, module_name) / UNIQUE(company_id, feature_key),
+            -- so these are replaced with partial indexes that only dedupe among
+            -- global rows.
+            ALTER TABLE module_pricing DROP CONSTRAINT IF EXISTS module_pricing_module_name_is_global_key;
+            ALTER TABLE feature_flags DROP CONSTRAINT IF EXISTS feature_flags_feature_key_is_global_key;
+
+            CREATE UNIQUE INDEX IF NOT EXISTS module_pricing_global_unique
+                ON module_pricing (module_name) WHERE is_global = true;
+            CREATE UNIQUE INDEX IF NOT EXISTS feature_flags_global_unique
+                ON feature_flags (feature_key) WHERE is_global = true;
         """)
 
         await _backfill_clash_project_ids(conn)
