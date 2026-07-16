@@ -208,6 +208,59 @@
   font-weight: 600;
 }
 
+.flag-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.flag-toggle-btn {
+  background: var(--inkwell);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.flag-toggle-btn:hover:not(:disabled) {
+  background: var(--saffron);
+}
+
+.flag-delete-btn {
+  background: none;
+  border: none;
+  color: var(--error);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 5px 6px;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.flag-delete-btn:hover:not(:disabled) {
+  color: #a51c1c;
+}
+
+.flag-toggle-btn:disabled,
+.flag-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.flag-row-error {
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--error);
+}
+
 .flags-loading {
   padding: 60px 40px;
   text-align: center;

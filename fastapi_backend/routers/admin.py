@@ -295,13 +295,24 @@ async def get_feature_flags(admin: dict = Depends(require_super_admin)):
     pool = await get_pool()
     async with pool.acquire() as conn:
         rows = await conn.fetch(
-            """SELECT ff.feature_key, ff.feature_name, ff.module, ff.is_enabled,
+            """SELECT ff.id, ff.feature_key, ff.feature_name, ff.module, ff.is_enabled,
                       ff.is_global, ff.company_id, c.name AS company_name
                FROM feature_flags ff
                LEFT JOIN companies c ON c.id = ff.company_id
                ORDER BY ff.is_global DESC, ff.module, ff.feature_name ASC"""
         )
     return {"success": True, "flags": [dict(r) for r in rows]}
+
+
+@router.delete("/feature-flags/{flag_id}")
+async def delete_feature_flag(flag_id: int, admin: dict = Depends(require_super_admin)):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow("DELETE FROM feature_flags WHERE id = $1 RETURNING id", flag_id)
+    if not row:
+        raise HTTPException(404, "Feature flag not found")
+    await user_service.log_admin_activity(admin["id"], "feature_flag_deleted", "feature_flags", flag_id, {})
+    return {"success": True}
 
 
 @router.get("/analytics")

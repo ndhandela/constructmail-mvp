@@ -7,12 +7,17 @@ export default function FeatureFlagsManagement({ token, onNavigate }) {
   const [flags, setFlags] = useState([]);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [rowState, setRowState] = useState({});
   const [formData, setFormData] = useState({
     feature_name: 'mail_intelligence',
     is_enabled: true,
     is_global: true,
     company_id: null
   });
+
+  const setRow = (id, patch) => {
+    setRowState(prev => ({ ...prev, [id]: { ...prev[id], ...patch } }));
+  };
 
   useEffect(() => {
     fetchFlags();
@@ -83,6 +88,63 @@ export default function FeatureFlagsManagement({ token, onNavigate }) {
       }
     } catch (err) {
       console.error('Submit flags error:', err);
+    }
+  };
+
+  const handleToggle = async (flag) => {
+    setRow(flag.id, { toggling: true, error: '' });
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/feature-flags`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          // The backend upserts on (company_id, feature_key) — or
+          // (feature_key) for globals — and writes this "feature_name"
+          // field into *both* the feature_key and feature_name columns.
+          // Sending the display-only feature_name here (which can differ
+          // from feature_key for flags seeded outside this form) would
+          // miss the conflict target and insert a stray duplicate row
+          // instead of updating this one.
+          feature_name: flag.feature_key,
+          is_global: flag.is_global,
+          company_id: flag.company_id,
+          is_enabled: !flag.is_enabled
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        await fetchFlags();
+        setRow(flag.id, { toggling: false });
+      } else {
+        setRow(flag.id, { toggling: false, error: data.detail || 'Could not update flag.' });
+      }
+    } catch (err) {
+      console.error('Toggle flag error:', err);
+      setRow(flag.id, { toggling: false, error: 'Network error.' });
+    }
+  };
+
+  const handleDelete = async (flag) => {
+    if (!window.confirm(`Delete the "${flag.feature_name}" flag?`)) return;
+    setRow(flag.id, { deleting: true, error: '' });
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/feature-flags/${flag.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        await fetchFlags();
+        setRow(flag.id, { deleting: false });
+      } else {
+        setRow(flag.id, { deleting: false, error: data.detail || 'Could not delete flag.' });
+      }
+    } catch (err) {
+      console.error('Delete flag error:', err);
+      setRow(flag.id, { deleting: false, error: 'Network error.' });
     }
   };
 
@@ -163,17 +225,37 @@ export default function FeatureFlagsManagement({ token, onNavigate }) {
         <div className="flags-list">
           <h3>Current Flags</h3>
           <div className="flags-items">
-            {flags.map(flag => (
-              <div key={flag.id} className="flag-item">
-                <div className="flag-details">
-                  <strong>{flag.feature_name}</strong>
-                  <span className={`flag-status ${flag.is_enabled ? 'enabled' : 'disabled'}`}>
-                    {flag.is_enabled ? '✓ Enabled' : '✗ Disabled'}
-                  </span>
-                  <span className="flag-type">{flag.is_global ? 'Global' : `Client: ${flag.company_name || flag.company_id}`}</span>
+            {flags.map(flag => {
+              const state = rowState[flag.id] || {};
+              return (
+                <div key={flag.id} className="flag-item">
+                  <div className="flag-details">
+                    <strong>{flag.feature_name}</strong>
+                    <span className={`flag-status ${flag.is_enabled ? 'enabled' : 'disabled'}`}>
+                      {flag.is_enabled ? '✓ Enabled' : '✗ Disabled'}
+                    </span>
+                    <span className="flag-type">{flag.is_global ? 'Global' : `Client: ${flag.company_name || flag.company_id}`}</span>
+                    <div className="flag-actions">
+                      <button
+                        className="flag-toggle-btn"
+                        onClick={() => handleToggle(flag)}
+                        disabled={state.toggling || state.deleting}
+                      >
+                        {state.toggling ? 'Updating…' : 'Toggle'}
+                      </button>
+                      <button
+                        className="flag-delete-btn"
+                        onClick={() => handleDelete(flag)}
+                        disabled={state.toggling || state.deleting}
+                      >
+                        {state.deleting ? 'Deleting…' : 'Delete'}
+                      </button>
+                    </div>
+                  </div>
+                  {state.error && <div className="flag-row-error">{state.error}</div>}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
