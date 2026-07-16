@@ -591,11 +591,12 @@ async def init_db():
             -- fail closed by design. Companies created before this change only
             -- have the untouched all-false column default and no feature_flags
             -- rows, so without a backfill they'd suddenly lose access to
-            -- everything they were already using. Only touches companies still
-            -- sitting at the untouched default — anything already manually
-            -- configured differently is left alone.
-            UPDATE companies SET active_modules = '{"mail": true, "clash": true, "vendors": true, "marketplace": false}'::jsonb
-            WHERE active_modules = '{"mail": false, "clash": false, "vendors": false, "marketplace": false}'::jsonb;
+            -- everything they were already using. Mail/Clash/Vendors are free
+            -- tools this migration turns on unconditionally for every company
+            -- (an equality match against the untouched all-false default would
+            -- silently skip any company with even one unrelated field already
+            -- toggled); marketplace is intentionally left untouched.
+            UPDATE companies SET active_modules = active_modules || '{"mail": true, "clash": true, "vendors": true}'::jsonb;
 
             INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
             SELECT id, 'mail_intelligence', 'Mail Intelligence', 'mail', true, false FROM companies
