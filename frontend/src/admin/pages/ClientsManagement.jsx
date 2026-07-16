@@ -81,7 +81,7 @@ function ModuleToggles({ company, token, onModulesUpdated }) {
 
 const ADD_COMPANY_TIMEOUT_MS = 15000;
 
-function AddCompanyModal({ token, onClose, onCreated }) {
+function AddCompanyForm({ token, onCreated, onCancel }) {
   const [form, setForm] = useState({ companyName: '', ownerFullName: '', ownerEmail: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -128,61 +128,84 @@ function AddCompanyModal({ token, onClose, onCreated }) {
     }
   };
 
+  if (success) {
+    return (
+      <div>
+        <h3>Company created</h3>
+        {emailSent ? (
+          <p>An invite email has been sent to {form.ownerEmail} to set their password.</p>
+        ) : (
+          <p className="modules-msg modules-msg--error">
+            Company created, but invite email failed to send. You'll need to resend the invite to {form.ownerEmail} manually.
+          </p>
+        )}
+        <button
+          className="save-modules-btn"
+          onClick={() => {
+            if (onCancel) {
+              onCancel();
+            } else {
+              setSuccess(false);
+              setForm({ companyName: '', ownerFullName: '', ownerEmail: '' });
+            }
+          }}
+        >
+          {onCancel ? 'Done' : 'Add Another Company'}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h3>Add Company</h3>
+      <div className="add-company-field">
+        <label>Company Name</label>
+        <input name="companyName" value={form.companyName} onChange={handleChange} required disabled={saving} />
+      </div>
+      <div className="add-company-field">
+        <label>Owner Full Name</label>
+        <input name="ownerFullName" value={form.ownerFullName} onChange={handleChange} required disabled={saving} />
+      </div>
+      <div className="add-company-field">
+        <label>Owner Email</label>
+        <input type="email" name="ownerEmail" value={form.ownerEmail} onChange={handleChange} required disabled={saving} />
+      </div>
+      {error && <div className="modules-msg modules-msg--error">{error}</div>}
+      <div className="add-company-actions">
+        {onCancel && (
+          <button type="button" className="back-btn" onClick={onCancel} disabled={saving}>Cancel</button>
+        )}
+        <button type="submit" className="save-modules-btn" disabled={saving}>
+          {saving ? 'Creating…' : 'Create & Send Invite'}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function AddCompanyModal({ token, onClose, onCreated }) {
   return (
     <div className="add-company-modal-overlay" onClick={onClose}>
       <div className="add-company-modal" onClick={e => e.stopPropagation()}>
-        {success ? (
-          <div>
-            <h3>Company created</h3>
-            {emailSent ? (
-              <p>An invite email has been sent to {form.ownerEmail} to set their password.</p>
-            ) : (
-              <p className="modules-msg modules-msg--error">
-                Company created, but invite email failed to send. You'll need to resend the invite to {form.ownerEmail} manually.
-              </p>
-            )}
-            <button className="save-modules-btn" onClick={onClose}>Done</button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <h3>Add Company</h3>
-            <div className="add-company-field">
-              <label>Company Name</label>
-              <input name="companyName" value={form.companyName} onChange={handleChange} required disabled={saving} />
-            </div>
-            <div className="add-company-field">
-              <label>Owner Full Name</label>
-              <input name="ownerFullName" value={form.ownerFullName} onChange={handleChange} required disabled={saving} />
-            </div>
-            <div className="add-company-field">
-              <label>Owner Email</label>
-              <input type="email" name="ownerEmail" value={form.ownerEmail} onChange={handleChange} required disabled={saving} />
-            </div>
-            {error && <div className="modules-msg modules-msg--error">{error}</div>}
-            <div className="add-company-actions">
-              <button type="button" className="back-btn" onClick={onClose} disabled={saving}>Cancel</button>
-              <button type="submit" className="save-modules-btn" disabled={saving}>
-                {saving ? 'Creating…' : 'Create & Send Invite'}
-              </button>
-            </div>
-          </form>
-        )}
+        <AddCompanyForm token={token} onCreated={onCreated} onCancel={onClose} />
       </div>
     </div>
   );
 }
 
-export default function ClientsManagement({ token, onNavigate }) {
+export default function ClientsManagement({ token, admin, onNavigate }) {
+  const isSuperAdmin = admin?.admin_level === 'super_admin';
   const [companies, setCompanies] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isSuperAdmin);
   const [pagination, setPagination] = useState({ offset: 0, limit: 20, total: 0 });
   const [expandedId, setExpandedId] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
-    fetchCompanies();
+    if (isSuperAdmin) fetchCompanies();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.offset]);
+  }, [pagination.offset, isSuperAdmin]);
 
   const fetchCompanies = async () => {
     setLoading(true);
@@ -210,11 +233,35 @@ export default function ClientsManagement({ token, onNavigate }) {
   };
 
   const handleCompanyCreated = () => {
-    fetchCompanies();
+    if (isSuperAdmin) fetchCompanies();
   };
 
   const handleNextPage = () => setPagination(prev => ({ ...prev, offset: prev.offset + prev.limit }));
   const handlePrevPage = () => setPagination(prev => ({ ...prev, offset: Math.max(0, prev.offset - prev.limit) }));
+
+  if (!isSuperAdmin) {
+    return (
+      <div className="clients-management">
+        <div className="clients-header">
+          <div className="clients-header-content">
+            <div>
+              <h2>Add Company</h2>
+              <p>Create a new General Contractor company</p>
+            </div>
+            <button className="back-btn" onClick={() => onNavigate('dashboard')}>
+              ← Back to Dashboard
+            </button>
+          </div>
+        </div>
+
+        <div className="clients-container">
+          <div className="add-company-modal add-company-inline">
+            <AddCompanyForm token={token} onCreated={handleCompanyCreated} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) return <div className="clients-loading">Loading companies...</div>;
 

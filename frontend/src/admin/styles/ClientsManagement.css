@@ -364,3 +364,8 @@
   gap: 12px;
   margin-top: 24px;
 }
+
+.add-company-inline {
+  margin: 0;
+  max-width: 480px;
+}

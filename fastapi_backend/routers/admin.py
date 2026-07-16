@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
 from db import get_pool
-from services.admin_auth import get_current_admin, require_super_admin, create_token, hash_password, verify_password
+from services.admin_auth import get_current_admin, require_super_admin, require_admin, create_token, hash_password, verify_password
 from services.email_service import send_email
 from services.project_helpers import accept_pending_invites
 from services import user_service
@@ -114,7 +114,7 @@ async def get_company(company_id: int, admin: dict = Depends(require_super_admin
 
 
 @router.post("/companies")
-async def create_company(req: CreateCompanyRequest, admin: dict = Depends(require_super_admin)):
+async def create_company(req: CreateCompanyRequest, admin: dict = Depends(require_admin)):
     owner_email = req.ownerEmail.lower().strip()
     invite_token = secrets.token_hex(32)
     invite_expires = datetime.utcnow() + timedelta(days=7)
@@ -205,7 +205,7 @@ async def delete_admin_user(admin_id: int, admin: dict = Depends(require_super_a
 async def get_activity_log(
     limit: int = 100, offset: int = 0,
     admin_id: Optional[int] = None, action: Optional[str] = None, resource_type: Optional[str] = None,
-    admin: dict = Depends(require_super_admin),
+    admin: dict = Depends(require_admin),
 ):
     filters = {k: v for k, v in {"admin_id": admin_id, "action": action, "resource_type": resource_type}.items() if v}
     result = await user_service.get_activity_log(limit, offset, filters)

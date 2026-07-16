@@ -53,3 +53,10 @@ async def require_super_admin(credentials: HTTPAuthorizationCredentials = Securi
     if admin.get("admin_level") != "super_admin":
         raise HTTPException(status_code=403, detail="Super admin access required")
     return admin
+
+
+async def require_admin(credentials: HTTPAuthorizationCredentials = Security(security)) -> dict:
+    admin = decode_token(credentials.credentials)
+    if admin.get("admin_level") not in ("admin", "super_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return admin

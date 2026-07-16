@@ -1,8 +1,11 @@
+import logging
+import traceback
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from db import init_db
-from routers import ai, auth, gmail, outlook, clash, procore, vendors, admin, misc, marketplace, profile, mail, projects, team
+from fastapi.responses import PlainTextResponse
+from db import init_db, get_pool
+from routers import ai, auth, gmail, outlook, clash, procore, vendors, admin, misc, marketplace, profile, mail, projects, team, logs
 from routers import connect as connect_router
 
 
@@ -41,4 +44,19 @@ app.include_router(marketplace.router)
 app.include_router(profile.router)
 app.include_router(team.router)
 app.include_router(admin.router)
+app.include_router(logs.router)
 app.include_router(connect_router.router)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    try:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
+                "INSERT INTO system_logs (source, level, message, detail) VALUES ('server', 'error', $1, $2)",
+                str(exc), traceback.format_exc(),
+            )
+    except Exception:
+        logging.exception("Failed to log unhandled exception to system_logs")
+    return PlainTextResponse("Internal Server Error", status_code=500)

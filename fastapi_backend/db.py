@@ -561,6 +561,30 @@ async def init_db():
                 ON module_pricing (module_name) WHERE is_global = true;
             CREATE UNIQUE INDEX IF NOT EXISTS feature_flags_global_unique
                 ON feature_flags (feature_key) WHERE is_global = true;
+
+            -- The client_admin tier was built for a company-scoped admin concept
+            -- that's now redundant with the GC owner/company model
+            -- (users.permission_level). Renamed to 'admin': a POMAR team member
+            -- with reduced (non-super) admin permissions, not scoped to a
+            -- company (migration 016).
+            ALTER TABLE admin_users DROP CONSTRAINT IF EXISTS admin_users_admin_level_check;
+            UPDATE admin_users SET admin_level = 'admin' WHERE admin_level = 'client_admin';
+            ALTER TABLE admin_users ADD CONSTRAINT admin_users_admin_level_check
+                CHECK (admin_level IN ('super_admin', 'admin'));
+
+            -- System logs: server exceptions, frontend error reports, and email
+            -- delivery attempts, surfaced together in the admin Logs page
+            -- (migration 017).
+            CREATE TABLE IF NOT EXISTS system_logs (
+                id SERIAL PRIMARY KEY,
+                source VARCHAR(20) NOT NULL CHECK (source IN ('server', 'frontend', 'email')),
+                level VARCHAR(10) NOT NULL CHECK (level IN ('error', 'warning', 'info')),
+                message TEXT NOT NULL,
+                detail TEXT,
+                company_id INT REFERENCES companies(id) ON DELETE SET NULL,
+                user_email VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
         """)
 
         await _backfill_clash_project_ids(conn)

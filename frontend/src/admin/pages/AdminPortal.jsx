@@ -7,6 +7,7 @@ import ClientsManagement from './ClientsManagement';
 import AdminUsersManagement from './AdminUsersManagement';
 import ActivityLogViewer from './ActivityLogViewer';
 import AnalyticsDashboard from './AnalyticsDashboard';
+import LogsManagement from './LogsManagement';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
@@ -23,6 +24,7 @@ export default function AdminPortal() {
     if (path.includes('/users')) return 'users';
     if (path.includes('/activity-log')) return 'activity-log';
     if (path.includes('/analytics')) return 'analytics';
+    if (path.includes('/logs')) return 'logs';
     return 'dashboard';
   }
 
@@ -80,7 +82,8 @@ export default function AdminPortal() {
       clients: '/admin/clients',
       users: '/admin/users',
       'activity-log': '/admin/activity-log',
-      'analytics': '/admin/analytics'
+      'analytics': '/admin/analytics',
+      logs: '/admin/logs'
     };
     window.history.pushState({}, '', pathMap[page]);
   };
@@ -95,13 +98,15 @@ export default function AdminPortal() {
     case 'flags':
       return <FeatureFlagsManagement token={token} onNavigate={handleNavigate} />;
     case 'clients':
-      return <ClientsManagement token={token} onNavigate={handleNavigate} />;
+      return <ClientsManagement token={token} admin={admin} onNavigate={handleNavigate} />;
     case 'users':
       return <AdminUsersManagement token={token} onNavigate={handleNavigate} />;
     case 'analytics':
       return <AnalyticsDashboard token={token} onNavigate={handleNavigate} />;
     case 'activity-log':
       return <ActivityLogViewer token={token} onNavigate={handleNavigate} />;
+    case 'logs':
+      return <LogsManagement token={token} admin={admin} onNavigate={handleNavigate} />;
     default:
       return <AdminDashboard token={token} admin={admin} onLogout={handleLogout} onNavigate={handleNavigate} />;
   }

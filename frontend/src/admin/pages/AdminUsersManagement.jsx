@@ -5,20 +5,17 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export default function AdminUsersManagement({ token, onNavigate }) {
   const [admins, setAdmins] = useState([]);
-  const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [message, setMessage] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    admin_level: 'super_admin',
-    company_id: ''
+    admin_level: 'super_admin'
   });
 
   useEffect(() => {
     fetchAdmins();
-    fetchClients();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -35,20 +32,6 @@ export default function AdminUsersManagement({ token, onNavigate }) {
       console.error('Fetch admins error:', err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchClients = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/companies?limit=100`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (data.success) {
-        setClients(data.companies);
-      }
-    } catch (err) {
-      console.error('Fetch companies error:', err);
     }
   };
 
@@ -71,10 +54,7 @@ export default function AdminUsersManagement({ token, onNavigate }) {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          ...formData,
-          company_id: formData.company_id ? parseInt(formData.company_id) : null
-        })
+        body: JSON.stringify(formData)
       });
 
       const data = await response.json();
@@ -84,8 +64,7 @@ export default function AdminUsersManagement({ token, onNavigate }) {
         setFormData({
           email: '',
           password: '',
-          admin_level: 'super_admin',
-          company_id: ''
+          admin_level: 'super_admin'
         });
         setShowCreateForm(false);
         fetchAdmins();
@@ -201,27 +180,9 @@ export default function AdminUsersManagement({ token, onNavigate }) {
                   onChange={handleInputChange}
                 >
                   <option value="super_admin">Super Admin</option>
-                  <option value="client_admin">Client Admin</option>
+                  <option value="admin">Admin</option>
                 </select>
               </div>
-
-              {formData.admin_level === 'client_admin' && (
-                <div className="form-group">
-                  <label>Assign to Client</label>
-                  <select
-                    name="company_id"
-                    value={formData.company_id}
-                    onChange={handleInputChange}
-                  >
-                    <option value="">Select a client</option>
-                    {clients.map(client => (
-                      <option key={client.id} value={client.id}>
-                        {client.name}{client.owner_email ? ` (${client.owner_email})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
 
               {message && (
                 <div className={`form-message ${message.includes('✅') ? 'success' : 'error'}`}>

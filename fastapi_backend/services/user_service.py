@@ -62,10 +62,8 @@ async def create_admin_user(data: dict) -> dict:
 
     if not email or not password or not admin_level:
         return {"success": False, "error": "Email, password, and admin_level required"}
-    if admin_level not in ("super_admin", "client_admin"):
+    if admin_level not in ("super_admin", "admin"):
         return {"success": False, "error": "Invalid admin_level"}
-    if admin_level == "client_admin" and not company_id:
-        return {"success": False, "error": "company_id required for client_admin"}
 
     password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt(12)).decode()
 
