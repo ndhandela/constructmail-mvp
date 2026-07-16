@@ -18,6 +18,14 @@ function getDisplayName(user) {
   return user.full_name || user.name || user.email || '';
 }
 
+function getInitials(name) {
+  if (!name) return '';
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] || '';
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
+  return (first + last).toUpperCase();
+}
+
 // Product nav shown to logged-in users. All four are reachable regardless of
 // plan — unlicensed modules (e.g. Marketplace) render their own upgrade/lock
 // prompt rather than being hidden from nav, matching the dashboard's pattern.
@@ -100,11 +108,6 @@ export default function Header({ userId, onLogout, user }) {
         <a href={isLoggedIn ? '/dashboard' : '/'} className="header-logo-link" aria-label={isLoggedIn ? 'POMAR dashboard' : 'POMAR home'}>
           <PomarLogo variant="light" height={32} />
         </a>
-        {isLoggedIn && user && (
-          <span className="header-identity">
-            {user.company ? `${user.company} · ` : ''}{displayName}
-          </span>
-        )}
       </div>
 
       {isLoggedIn ? (
@@ -212,6 +215,17 @@ export default function Header({ userId, onLogout, user }) {
               refreshProjects(project.id);
             }}
           />
+        )}
+
+        {isLoggedIn && user && (
+          /* ── User identity block (informational, not clickable) ── */
+          <div className="header-user-info">
+            <div className="header-user-badge">{getInitials(displayName)}</div>
+            <div className="header-user-text">
+              <div className="header-user-name">{displayName}</div>
+              {user.company && <div className="header-user-company">{user.company}</div>}
+            </div>
+          </div>
         )}
 
         {isLoggedIn ? (
