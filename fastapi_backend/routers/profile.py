@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 from db import get_pool
+from services.access_control import get_active_modules
 
 router = APIRouter(prefix="/api/profile", tags=["Profile"])
 
@@ -52,15 +53,7 @@ async def get_profile(userId: int):
         company = await conn.fetchrow(
             "SELECT * FROM clients WHERE user_id = $1", userId
         )
-        modules_row = None
-        if user["company_id"]:
-            modules_row = await conn.fetchrow(
-                "SELECT active_modules FROM companies WHERE id = $1", user["company_id"]
-            )
-        active_modules = modules_row["active_modules"] if modules_row else None
-        if isinstance(active_modules, str):
-            import json
-            active_modules = json.loads(active_modules)
+        active_modules = await get_active_modules(conn, user["company_id"])
 
     profile = {
         "id":               user["id"],
@@ -76,7 +69,7 @@ async def get_profile(userId: int):
         "company":          user["company"],
         "company_id":       user["company_id"],
         "permission_level": user["permission_level"],
-        "active_modules":   active_modules or {},
+        "active_modules":   active_modules,
     }
 
     company_data = dict(company) if company else {

@@ -9,7 +9,7 @@ export default function FeatureFlagsManagement({ token, onNavigate }) {
   const [loading, setLoading] = useState(true);
   const [rowState, setRowState] = useState({});
   const [formData, setFormData] = useState({
-    feature_name: 'mail_intelligence',
+    feature_name: 'mail',
     is_enabled: true,
     is_global: true,
     company_id: null
@@ -80,7 +80,7 @@ export default function FeatureFlagsManagement({ token, onNavigate }) {
       if (data.success) {
         fetchFlags();
         setFormData({
-          feature_name: 'mail_intelligence',
+          feature_name: 'mail',
           is_enabled: true,
           is_global: true,
           company_id: null
@@ -176,9 +176,10 @@ export default function FeatureFlagsManagement({ token, onNavigate }) {
             <div className="form-group">
               <label>Feature Name</label>
               <select name="feature_name" value={formData.feature_name} onChange={handleInputChange}>
-                <option value="mail_intelligence">Mail Intelligence</option>
-                <option value="clash_detection">Clash Detection</option>
-                <option value="vendor_search">Vendor Search</option>
+                <option value="mail">Mail Access</option>
+                <option value="clash">Clash Access</option>
+                <option value="vendors">Vendors Access</option>
+                <option value="marketplace">Marketplace Access</option>
               </select>
             </div>
 

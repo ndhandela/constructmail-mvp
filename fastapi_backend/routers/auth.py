@@ -7,6 +7,7 @@ from typing import Optional
 from db import get_pool
 from services.email_service import send_email
 from services.project_helpers import accept_pending_invites
+from services.access_control import get_active_modules
 import os
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
@@ -108,16 +109,7 @@ async def get_me(userId: int):
         if not row:
             raise HTTPException(401, "User not found")
         user = dict(row)
-        modules_row = None
-        if user["company_id"]:
-            modules_row = await conn.fetchrow(
-                "SELECT active_modules FROM companies WHERE id = $1", user["company_id"]
-            )
-        active_modules = modules_row["active_modules"] if modules_row else None
-        if isinstance(active_modules, str):
-            import json
-            active_modules = json.loads(active_modules)
-        user["active_modules"] = active_modules or {}
+        user["active_modules"] = await get_active_modules(conn, user["company_id"])
     return user
 
 
@@ -163,13 +155,22 @@ async def accept_invite(req: AcceptInviteRequest):
 async def login(req: LoginRequest):
     pool = await get_pool()
     async with pool.acquire() as conn:
-        user = await conn.fetchrow("SELECT id, password_hash FROM users WHERE email = $1", req.email.lower().strip())
+        user = await conn.fetchrow(
+            "SELECT id, password_hash, company_id FROM users WHERE email = $1", req.email.lower().strip()
+        )
         if not user:
             raise HTTPException(401, "No account found with this email.")
         if not user["password_hash"]:
             raise HTTPException(401, "This account uses magic link login. Please use the sign in link option.")
         if not bcrypt.checkpw(req.password.encode(), user["password_hash"].encode()):
             raise HTTPException(401, "Incorrect password.")
+        # Company status is checked only after the password succeeds, so a
+        # wrong-password guess still gets "Incorrect password" and never
+        # learns whether the account's company has been deactivated.
+        if user["company_id"]:
+            company = await conn.fetchrow("SELECT status FROM companies WHERE id = $1", user["company_id"])
+            if company and company["status"] != "active":
+                raise HTTPException(403, "Your company account has been deactivated. Contact your POMAR administrator.")
     return {"success": True, "userId": user["id"]}
 
 

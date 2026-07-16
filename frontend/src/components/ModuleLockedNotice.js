@@ -4,7 +4,7 @@ import '../styles/ModuleLockedNotice.css';
 // A company's active_modules is only meaningful once it has a company_id —
 // legacy accounts predating the company model get back an empty object from
 // the API and are treated as full access, not "locked" (see
-// services/access_control.py's require_module_access on the backend).
+// services/access_control.py's require_feature_flag on the backend).
 export function isModuleLocked(activeModules, key) {
   if (!activeModules || Object.keys(activeModules).length === 0) return false;
   return !activeModules[key];

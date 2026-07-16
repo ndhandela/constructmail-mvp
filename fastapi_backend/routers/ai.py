@@ -5,7 +5,7 @@ from typing import Optional
 from db import get_pool
 from services.ai_helpers import summarize_email_thread, extract_action_items, detect_signals, process_meeting_notes
 from services.project_helpers import get_or_create_personal_mail_project, require_project_member
-from services.access_control import require_module_access, require_feature_flag
+from services.access_control import require_feature_flag
 from routers.connect import enqueue_mail_signal
 
 router = APIRouter(prefix="/api", tags=["AI"])
@@ -71,8 +71,7 @@ async def summarize(req: SummarizeRequest):
         raise HTTPException(400, "emailText required and cannot be empty")
     pool = await get_pool()
     async with pool.acquire() as conn:
-        await require_module_access(conn, req.userId, "mail")
-        await require_feature_flag(conn, req.userId, "mail_intelligence")
+        await require_feature_flag(conn, req.userId, "mail")
         result = await summarize_email_thread(req.emailText)
         if req.projectId:
             await require_project_member(conn, req.projectId, req.userId)
@@ -98,7 +97,7 @@ async def extract_actions(req: ExtractActionsRequest):
         raise HTTPException(400, "emailText required")
     pool = await get_pool()
     async with pool.acquire() as conn:
-        await require_module_access(conn, req.userId, "mail")
+        await require_feature_flag(conn, req.userId, "mail")
         actions = await extract_action_items(req.emailText)
         if req.projectId:
             await require_project_member(conn, req.projectId, req.userId)
@@ -119,7 +118,7 @@ async def process_meeting(req: ProcessMeetingRequest):
         raise HTTPException(400, "notesText required")
     pool = await get_pool()
     async with pool.acquire() as conn:
-        await require_module_access(conn, req.userId, "mail")
+        await require_feature_flag(conn, req.userId, "mail")
         result = await process_meeting_notes(req.notesText)
         if req.projectId:
             await require_project_member(conn, req.projectId, req.userId)
@@ -156,7 +155,7 @@ async def detect_signals_route(req: DetectSignalsRequest):
         raise HTTPException(400, "emailText required")
     pool = await get_pool()
     async with pool.acquire() as conn:
-        await require_module_access(conn, req.userId, "mail")
+        await require_feature_flag(conn, req.userId, "mail")
         result = await detect_signals(req.emailText)
         if req.projectId:
             await require_project_member(conn, req.projectId, req.userId)

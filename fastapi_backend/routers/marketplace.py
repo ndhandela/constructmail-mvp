@@ -1,9 +1,9 @@
-import json
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import Optional
 from db import get_pool
 from services.project_helpers import require_project_member
+from services.access_control import require_feature_flag
 
 router = APIRouter(prefix="/api/marketplace", tags=["Marketplace"])
 
@@ -13,20 +13,11 @@ router = APIRouter(prefix="/api/marketplace", tags=["Marketplace"])
 async def _has_marketplace_license(user_id: int) -> bool:
     pool = await get_pool()
     async with pool.acquire() as conn:
-        row = await conn.fetchrow(
-            """SELECT c.active_modules FROM companies c
-               JOIN users u ON u.company_id = c.id
-               WHERE u.id = $1""",
-            user_id,
-        )
-    if not row or not row["active_modules"]:
-        return False
-    # asyncpg returns jsonb columns as raw JSON text (no codec registered on
-    # this pool), not a dict.
-    active_modules = row["active_modules"]
-    if isinstance(active_modules, str):
-        active_modules = json.loads(active_modules)
-    return bool(active_modules.get("marketplace"))
+        try:
+            await require_feature_flag(conn, user_id, "marketplace")
+            return True
+        except HTTPException:
+            return False
 
 
 async def _require_marketplace_license(user_id: int):

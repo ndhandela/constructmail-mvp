@@ -6,7 +6,7 @@ from typing import Optional
 from db import get_pool
 from services import vendor_service
 from services.project_helpers import require_project_member
-from services.access_control import require_module_access, require_feature_flag
+from services.access_control import require_feature_flag
 
 router = APIRouter(prefix="/api/vendors", tags=["Vendors"])
 
@@ -50,7 +50,7 @@ class LinkProjectRequest(BaseModel):
 async def create_vendor(req: CreateVendorRequest):
     pool = await get_pool()
     async with pool.acquire() as conn:
-        await require_module_access(conn, req.userId, "vendors")
+        await require_feature_flag(conn, req.userId, "vendors")
     result = await vendor_service.create_vendor(req.dict(exclude={"userId"}))
     if not result["success"]:
         raise HTTPException(400, result["error"])
@@ -73,8 +73,7 @@ async def search_vendors(
     parsed_min_rating = float(min_rating) if min_rating else None
     pool = await get_pool()
     async with pool.acquire() as conn:
-        await require_module_access(conn, userId, "vendors")
-        await require_feature_flag(conn, userId, "vendor_search")
+        await require_feature_flag(conn, userId, "vendors")
         if project_id is not None:
             await require_project_member(conn, project_id, userId)
     filters = {k: v for k, v in {

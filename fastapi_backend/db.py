@@ -607,6 +607,29 @@ async def init_db():
             INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
             SELECT id, 'vendor_search', 'Vendor Search', 'vendors', true, false FROM companies
             ON CONFLICT (company_id, feature_key) DO NOTHING;
+
+            -- Feature flags become the single source of truth for module
+            -- access (Mail/Clash/Vendors/Marketplace), replacing
+            -- companies.active_modules and the narrower mail_intelligence/
+            -- clash_detection/vendor_search keys, which are now fully
+            -- superseded by module-level keys (migration 019). Seeds from
+            -- each company's CURRENT active_modules so access doesn't
+            -- silently change during cutover; ON CONFLICT DO NOTHING so
+            -- anything already set (e.g. by a prior save) is left alone.
+            INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
+            SELECT id, 'mail', 'Mail Access', 'mail', COALESCE((active_modules->>'mail')::boolean, true), false FROM companies
+            ON CONFLICT (company_id, feature_key) DO NOTHING;
+            INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
+            SELECT id, 'clash', 'Clash Access', 'clash', COALESCE((active_modules->>'clash')::boolean, true), false FROM companies
+            ON CONFLICT (company_id, feature_key) DO NOTHING;
+            INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
+            SELECT id, 'vendors', 'Vendors Access', 'vendors', COALESCE((active_modules->>'vendors')::boolean, true), false FROM companies
+            ON CONFLICT (company_id, feature_key) DO NOTHING;
+            INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
+            SELECT id, 'marketplace', 'Marketplace Access', 'marketplace', COALESCE((active_modules->>'marketplace')::boolean, false), false FROM companies
+            ON CONFLICT (company_id, feature_key) DO NOTHING;
+
+            DELETE FROM feature_flags WHERE feature_key IN ('mail_intelligence', 'clash_detection', 'vendor_search');
         """)
 
         await _backfill_clash_project_ids(conn)

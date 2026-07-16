@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import secrets
@@ -126,9 +125,7 @@ async def create_company(req: CreateCompanyRequest, admin: dict = Depends(requir
             if existing:
                 raise HTTPException(400, "An account with this email already exists.")
             company = await conn.fetchrow(
-                """INSERT INTO companies (name, active_modules) VALUES ($1, $2::jsonb) RETURNING id""",
-                req.companyName.strip(),
-                '{"mail": true, "clash": true, "vendors": true, "marketplace": false}',
+                "INSERT INTO companies (name) VALUES ($1) RETURNING id", req.companyName.strip(),
             )
             user = await conn.fetchrow(
                 """INSERT INTO users (email, name, full_name, company, company_id, permission_level,
@@ -140,15 +137,17 @@ async def create_company(req: CreateCompanyRequest, admin: dict = Depends(requir
             )
             await accept_pending_invites(conn, user["id"], owner_email)
 
-            # Mail/Clash/Vendors are free and on by default (matches active_modules
-            # above); Marketplace stays opt-in. Seeded here so nothing needs to be
-            # manually configured after company creation.
+            # Mail/Clash/Vendors are free and on by default; Marketplace stays
+            # opt-in. Feature flags are the single source of truth for module
+            # access — seeded here so nothing needs to be manually configured
+            # after company creation.
             await conn.execute(
                 """INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
                    VALUES
-                     ($1, 'mail_intelligence', 'Mail Intelligence', 'mail', true, false),
-                     ($1, 'clash_detection', 'Clash Detection', 'clash', true, false),
-                     ($1, 'vendor_search', 'Vendor Search', 'vendors', true, false)
+                     ($1, 'mail', 'Mail Access', 'mail', true, false),
+                     ($1, 'clash', 'Clash Access', 'clash', true, false),
+                     ($1, 'vendors', 'Vendors Access', 'vendors', true, false),
+                     ($1, 'marketplace', 'Marketplace Access', 'marketplace', false, false)
                    ON CONFLICT (company_id, feature_key) DO NOTHING""",
                 company["id"],
             )
@@ -342,43 +341,27 @@ async def admin_analytics(admin: dict = Depends(require_super_admin)):
     }
 
 
-class UpdateModulesRequest(BaseModel):
-    modules: dict  # e.g. {"mail": true, "marketplace": true}
+class UpdateStatusRequest(BaseModel):
+    status: str  # 'active' | 'inactive'
 
 
-@router.put("/companies/{company_id}/modules")
-async def update_company_modules(
+@router.put("/companies/{company_id}/status")
+async def update_company_status(
     company_id: int,
-    req: UpdateModulesRequest,
+    req: UpdateStatusRequest,
     admin: dict = Depends(require_super_admin),
 ):
-    """Enable or disable individual modules for a company."""
+    if req.status not in ("active", "inactive"):
+        raise HTTPException(400, "status must be 'active' or 'inactive'")
     pool = await get_pool()
     async with pool.acquire() as conn:
-        existing = await conn.fetchrow("SELECT id, active_modules FROM companies WHERE id = $1", company_id)
-        if not existing:
-            raise HTTPException(404, "Company not found")
-        # asyncpg returns jsonb columns as raw JSON text (no codec registered
-        # on this pool), not a dict.
-        existing_modules = existing["active_modules"] or {}
-        if isinstance(existing_modules, str):
-            existing_modules = json.loads(existing_modules)
-        merged = {**existing_modules, **req.modules}
         row = await conn.fetchrow(
-            """
-            UPDATE companies
-            SET active_modules = $1::jsonb, updated_at = NOW()
-            WHERE id = $2
-            RETURNING id, active_modules
-            """,
-            json.dumps(merged),
-            company_id,
+            "UPDATE companies SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING id, status",
+            req.status, company_id,
         )
+    if not row:
+        raise HTTPException(404, "Company not found")
     await user_service.log_admin_activity(
-        admin["id"], "modules_updated", "companies", row["id"],
-        {"company_id": company_id, "modules": req.modules},
+        admin["id"], "company_status_updated", "companies", company_id, {"status": req.status},
     )
-    active_modules = row["active_modules"]
-    if isinstance(active_modules, str):
-        active_modules = json.loads(active_modules)
-    return {"success": True, "active_modules": active_modules}
+    return {"success": True, "status": row["status"]}

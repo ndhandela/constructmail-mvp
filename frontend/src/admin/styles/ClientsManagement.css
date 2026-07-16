@@ -135,6 +135,11 @@
   color: #155724;
 }
 
+.status-badge.inactive {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
 .client-joined {
   font-size: 12px;
   color: var(--slate);
@@ -142,6 +147,45 @@
 
 .client-action {
   text-align: center;
+}
+
+.client-action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.status-toggle-btn {
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.status-toggle-btn.deactivate {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.status-toggle-btn.activate {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-toggle-btn:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.status-toggle-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .expand-btn {
@@ -236,50 +280,6 @@
   color: var(--slate);
   font-weight: 600;
 }
-
-/* Module Toggles */
-.detail-item--full {
-  width: 100%;
-  margin-top: 12px;
-}
-
-.module-toggles {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.module-toggles-label {
-  font-weight: 600;
-  font-size: 13px;
-  color: #1a1a1a;
-  white-space: nowrap;
-}
-
-.module-toggle-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.module-toggle-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  color: #374151;
-}
-
-.module-toggle-item input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: #D97706;
-  cursor: pointer;
-}
-
-.module-toggle-name { user-select: none; }
 
 .save-modules-btn {
   background: #0E1B2C;

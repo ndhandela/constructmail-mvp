@@ -3,82 +3,6 @@ import '../styles/ClientsManagement.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-const ALL_MODULES = [
-  { key: 'mail',        label: 'POMAR Mail' },
-  { key: 'clash',       label: 'POMAR Clash' },
-  { key: 'vendors',     label: 'POMAR Vendors' },
-  { key: 'marketplace', label: 'Marketplace' },
-];
-
-function ModuleToggles({ company, token, onModulesUpdated }) {
-  const [modules, setModules] = useState({
-    mail: false, clash: false, vendors: false, marketplace: false,
-    ...(company.active_modules || {}),
-  });
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState(null);
-
-  const handleToggle = (key) => {
-    setModules(prev => ({ ...prev, [key]: !prev[key] }));
-    setMsg(null);
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    setMsg(null);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/companies/${company.id}/modules`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ modules }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setMsg({ type: 'success', text: 'Saved!' });
-        if (onModulesUpdated) onModulesUpdated(company.id, data.active_modules);
-        setTimeout(() => setMsg(null), 2500);
-      } else {
-        setMsg({ type: 'error', text: data.detail || 'Save failed.' });
-      }
-    } catch {
-      setMsg({ type: 'error', text: 'Network error.' });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="module-toggles">
-      <span className="module-toggles-label">Modules:</span>
-      <div className="module-toggle-list">
-        {ALL_MODULES.map(({ key, label }) => (
-          <label key={key} className="module-toggle-item">
-            <input
-              type="checkbox"
-              checked={!!modules[key]}
-              onChange={() => handleToggle(key)}
-            />
-            <span className="module-toggle-name">{label}</span>
-          </label>
-        ))}
-      </div>
-      <button
-        className="save-modules-btn"
-        onClick={handleSave}
-        disabled={saving}
-      >
-        {saving ? 'Saving…' : 'Save'}
-      </button>
-      {msg && (
-        <span className={`modules-msg modules-msg--${msg.type}`}>{msg.text}</span>
-      )}
-    </div>
-  );
-}
-
 const ADD_COMPANY_TIMEOUT_MS = 15000;
 
 function AddCompanyForm({ token, onCreated, onCancel }) {
@@ -201,6 +125,7 @@ export default function ClientsManagement({ token, admin, onNavigate }) {
   const [pagination, setPagination] = useState({ offset: 0, limit: 20, total: 0 });
   const [expandedId, setExpandedId] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [statusState, setStatusState] = useState({});
 
   useEffect(() => {
     if (isSuperAdmin) fetchCompanies();
@@ -226,10 +151,29 @@ export default function ClientsManagement({ token, admin, onNavigate }) {
     }
   };
 
-  const handleModulesUpdated = (companyId, newModules) => {
-    setCompanies(prev =>
-      prev.map(c => c.id === companyId ? { ...c, active_modules: newModules } : c)
-    );
+  const handleToggleStatus = async (company) => {
+    const newStatus = company.status === 'inactive' ? 'active' : 'inactive';
+    setStatusState(prev => ({ ...prev, [company.id]: { updating: true, error: '' } }));
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/companies/${company.id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchCompanies();
+        setStatusState(prev => ({ ...prev, [company.id]: { updating: false, error: '' } }));
+      } else {
+        setStatusState(prev => ({ ...prev, [company.id]: { updating: false, error: data.detail || 'Could not update status.' } }));
+      }
+    } catch (err) {
+      console.error('Update company status error:', err);
+      setStatusState(prev => ({ ...prev, [company.id]: { updating: false, error: 'Network error.' } }));
+    }
   };
 
   const handleCompanyCreated = () => {
@@ -274,7 +218,7 @@ export default function ClientsManagement({ token, admin, onNavigate }) {
         <div className="clients-header-content">
           <div>
             <h2>Companies</h2>
-            <p>Manage General Contractor companies and their module access</p>
+            <p>Manage General Contractor companies</p>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <button className="save-modules-btn" onClick={() => setShowAddModal(true)}>
@@ -301,53 +245,64 @@ export default function ClientsManagement({ token, admin, onNavigate }) {
               </tr>
             </thead>
             <tbody>
-              {companies.map(company => (
-                <React.Fragment key={company.id}>
-                  <tr className="client-row">
-                    <td className="client-name">{company.name || 'N/A'}</td>
-                    <td className="client-email">{company.owner_email || 'N/A'}</td>
-                    <td className="client-projects">{company.team_size}</td>
-                    <td className="client-status">
-                      <span className="status-badge active">{company.status || 'Active'}</span>
-                    </td>
-                    <td className="client-joined">
-                      {new Date(company.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="client-action">
-                      <button
-                        className="expand-btn"
-                        onClick={() => setExpandedId(expandedId === company.id ? null : company.id)}
-                      >
-                        {expandedId === company.id ? '▼' : '▶'}
-                      </button>
-                    </td>
-                  </tr>
-
-                  {expandedId === company.id && (
-                    <tr className="client-details-row">
-                      <td colSpan="6">
-                        <div className="client-details">
-                          <div className="detail-item">
-                            <span className="detail-label">Company ID:</span>
-                            <span className="detail-value">{company.id}</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="detail-label">Team Size:</span>
-                            <span className="detail-value">{company.team_size}</span>
-                          </div>
-                          <div className="detail-item detail-item--full">
-                            <ModuleToggles
-                              company={company}
-                              token={token}
-                              onModulesUpdated={handleModulesUpdated}
-                            />
-                          </div>
+              {companies.map(company => {
+                const isInactive = company.status === 'inactive';
+                const rowStatusState = statusState[company.id] || {};
+                return (
+                  <React.Fragment key={company.id}>
+                    <tr className="client-row">
+                      <td className="client-name">{company.name || 'N/A'}</td>
+                      <td className="client-email">{company.owner_email || 'N/A'}</td>
+                      <td className="client-projects">{company.team_size}</td>
+                      <td className="client-status">
+                        <span className={`status-badge ${isInactive ? 'inactive' : 'active'}`}>
+                          {isInactive ? 'Inactive' : 'Active'}
+                        </span>
+                      </td>
+                      <td className="client-joined">
+                        {new Date(company.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="client-action">
+                        <div className="client-action-buttons">
+                          <button
+                            className={`status-toggle-btn ${isInactive ? 'activate' : 'deactivate'}`}
+                            onClick={() => handleToggleStatus(company)}
+                            disabled={rowStatusState.updating}
+                          >
+                            {rowStatusState.updating ? '…' : isInactive ? 'Activate' : 'Deactivate'}
+                          </button>
+                          <button
+                            className="expand-btn"
+                            onClick={() => setExpandedId(expandedId === company.id ? null : company.id)}
+                          >
+                            {expandedId === company.id ? '▼' : '▶'}
+                          </button>
                         </div>
+                        {rowStatusState.error && (
+                          <div className="modules-msg modules-msg--error">{rowStatusState.error}</div>
+                        )}
                       </td>
                     </tr>
-                  )}
-                </React.Fragment>
-              ))}
+
+                    {expandedId === company.id && (
+                      <tr className="client-details-row">
+                        <td colSpan="6">
+                          <div className="client-details">
+                            <div className="detail-item">
+                              <span className="detail-label">Company ID:</span>
+                              <span className="detail-value">{company.id}</span>
+                            </div>
+                            <div className="detail-item">
+                              <span className="detail-label">Team Size:</span>
+                              <span className="detail-value">{company.team_size}</span>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>
