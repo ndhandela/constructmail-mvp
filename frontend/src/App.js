@@ -358,7 +358,7 @@ if (userId && path === '/dashboard') {
       <ProjectProvider userId={userId}>
         <Header userId={userId} onLogout={handleLogout} user={user} />
         <ProjectGate userId={userId} user={user}>
-          <ClashAnalyzer />
+          <ClashAnalyzer user={user} />
         </ProjectGate>
         <Footer />
       </ProjectProvider>

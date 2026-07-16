@@ -5,11 +5,13 @@ import AddVendorForm from '../components/AddVendorForm';
 import CSVImport from '../components/CSVImport';
 import VendorExport from '../components/VendorExport';
 import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
+import ModuleLockedNotice, { isModuleLocked } from '../../../components/ModuleLockedNotice';
 import '../styles/VendorsApp.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export default function VendorsApp({ user, userId, onLogout }) {
+  const vendorsLocked = isModuleLocked(user?.active_modules, 'vendors');
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchError, setSearchError] = useState('');
@@ -72,8 +74,8 @@ export default function VendorsApp({ user, userId, onLogout }) {
     }, [filters, pagination.limit, pagination.offset, currentProjectId, userId]);
 
   useEffect(() => {
-    searchVendors();
-  }, [filters, pagination.offset, currentProjectId, searchVendors]);
+    if (!vendorsLocked) searchVendors();
+  }, [filters, pagination.offset, currentProjectId, searchVendors, vendorsLocked]);
 
   useEffect(() => {
     const checkMarketplaceLicense = async () => {
@@ -84,8 +86,8 @@ export default function VendorsApp({ user, userId, onLogout }) {
         setHasMarketplaceLicense(false);
       }
     };
-    if (userId) checkMarketplaceLicense();
-  }, [userId]);
+    if (userId && !vendorsLocked) checkMarketplaceLicense();
+  }, [userId, vendorsLocked]);
 
   const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
@@ -120,68 +122,74 @@ export default function VendorsApp({ user, userId, onLogout }) {
       </div>
 
       <div className="vendors-container">
-        {/* Header with Search and Add Button */}
-        <div className="vendors-top-bar">
-          <div className="vendors-top-left">
-            <VendorSearch 
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              loading={loading}
-            />
-          </div>
-          <div className="vendors-top-right">
-            <a href="/connect" style={{ textDecoration: 'none' }}>
-              <button style={{ background: '#D97706', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', fontWeight: '600', fontSize: '0.82rem', cursor: 'pointer' }}>
-                ⚡ Connect
-              </button>
-            </a>
-            <VendorExport filters={filters} userId={userId} />
-            {!showAddSection && (
-              <button
-                className="add-vendor-btn"
-                onClick={() => setShowAddSection(true)}
-              >
-                ➕ Add Vendor
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Add Vendor Section */}
-        {showAddSection && (
-          <div className="add-vendor-section">
-            <div className="add-vendor-header">
-              <h3>Add Vendors to Your Network</h3>
-              <button 
-                className="close-add-btn"
-                onClick={() => setShowAddSection(false)}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="add-vendor-options">
-              <AddVendorForm userId={userId} onVendorAdded={handleVendorAdded} />
-              <div className="divider">OR</div>
-              <CSVImport userId={userId} onImportComplete={handleVendorAdded} />
-            </div>
-          </div>
-        )}
-
-        {/* Vendors List */}
-        {searchError ? (
-          <div className="vendors-search-error">{searchError}</div>
+        {vendorsLocked ? (
+          <ModuleLockedNotice moduleName="Vendors" companyName={user?.company} />
         ) : (
-          <VendorListTable
-            vendors={vendors}
-            loading={loading}
-            pagination={pagination}
-            onNextPage={handleNextPage}
-            onPrevPage={handlePrevPage}
-            userId={userId}
-            onVendorUpdated={searchVendors}
-            hasMarketplaceLicense={hasMarketplaceLicense}
-          />
+          <>
+            {/* Header with Search and Add Button */}
+            <div className="vendors-top-bar">
+              <div className="vendors-top-left">
+                <VendorSearch
+                  filters={filters}
+                  onFilterChange={handleFilterChange}
+                  loading={loading}
+                />
+              </div>
+              <div className="vendors-top-right">
+                <a href="/connect" style={{ textDecoration: 'none' }}>
+                  <button style={{ background: '#D97706', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', fontWeight: '600', fontSize: '0.82rem', cursor: 'pointer' }}>
+                    ⚡ Connect
+                  </button>
+                </a>
+                <VendorExport filters={filters} userId={userId} />
+                {!showAddSection && (
+                  <button
+                    className="add-vendor-btn"
+                    onClick={() => setShowAddSection(true)}
+                  >
+                    ➕ Add Vendor
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Add Vendor Section */}
+            {showAddSection && (
+              <div className="add-vendor-section">
+                <div className="add-vendor-header">
+                  <h3>Add Vendors to Your Network</h3>
+                  <button
+                    className="close-add-btn"
+                    onClick={() => setShowAddSection(false)}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="add-vendor-options">
+                  <AddVendorForm userId={userId} onVendorAdded={handleVendorAdded} />
+                  <div className="divider">OR</div>
+                  <CSVImport userId={userId} onImportComplete={handleVendorAdded} />
+                </div>
+              </div>
+            )}
+
+            {/* Vendors List */}
+            {searchError ? (
+              <div className="vendors-search-error">{searchError}</div>
+            ) : (
+              <VendorListTable
+                vendors={vendors}
+                loading={loading}
+                pagination={pagination}
+                onNextPage={handleNextPage}
+                onPrevPage={handlePrevPage}
+                userId={userId}
+                onVendorUpdated={searchVendors}
+                hasMarketplaceLicense={hasMarketplaceLicense}
+              />
+            )}
+          </>
         )}
       </div>
     </div>

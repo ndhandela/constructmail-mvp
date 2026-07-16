@@ -52,6 +52,15 @@ async def get_profile(userId: int):
         company = await conn.fetchrow(
             "SELECT * FROM clients WHERE user_id = $1", userId
         )
+        modules_row = None
+        if user["company_id"]:
+            modules_row = await conn.fetchrow(
+                "SELECT active_modules FROM companies WHERE id = $1", user["company_id"]
+            )
+        active_modules = modules_row["active_modules"] if modules_row else None
+        if isinstance(active_modules, str):
+            import json
+            active_modules = json.loads(active_modules)
 
     profile = {
         "id":               user["id"],
@@ -67,6 +76,7 @@ async def get_profile(userId: int):
         "company":          user["company"],
         "company_id":       user["company_id"],
         "permission_level": user["permission_level"],
+        "active_modules":   active_modules or {},
     }
 
     company_data = dict(company) if company else {

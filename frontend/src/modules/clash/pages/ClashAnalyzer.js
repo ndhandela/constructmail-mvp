@@ -6,6 +6,7 @@ import ClashDelta from '../components/ClashDelta';
 import ClashAssignments from '../components/ClashAssignments';
 import { parseNavisworksHTML } from '../components/ClashParser';
 import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
+import ModuleLockedNotice, { isModuleLocked } from '../../../components/ModuleLockedNotice';
 import '../styles/ClashAnalyzer.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
@@ -26,13 +27,14 @@ function getProjectKey(report) {
   return Math.abs(hash).toString(36);
 }
 
-export default function ClashAnalyzer() {
+export default function ClashAnalyzer({ user }) {
   const [screen, setScreen]         = useState('home');  // home | upload | report
   const [report, setReport]         = useState(null);
   const [fileName, setFileName]     = useState('');
   const [parseError, setParseError] = useState('');
   const [activeTab, setActiveTab]   = useState('dashboard');
 
+  const clashLocked = isModuleLocked(user?.active_modules, 'clash');
   const userId = localStorage.getItem('constructmail_userId');
   // Named distinctly from ProcoreConnect.js's `projectId` (a Procore remote
   // project id used for RFI push) — this is the POMAR project from the Header switcher.
@@ -113,69 +115,75 @@ export default function ClashAnalyzer() {
         </a>
       </div>
 
-      {/* ── Home screen ── */}
-      {screen === 'home' && (
-        <ClashHome
-          userId={userId}
-          onUploadNew={handleUploadNew}
-          onLoadReport={handleLoadReport}
-        />
-      )}
+      {clashLocked ? (
+        <ModuleLockedNotice moduleName="Clash" companyName={user?.company} />
+      ) : (
+        <>
+          {/* ── Home screen ── */}
+          {screen === 'home' && (
+            <ClashHome
+              userId={userId}
+              onUploadNew={handleUploadNew}
+              onLoadReport={handleLoadReport}
+            />
+          )}
 
-      {/* ── Upload screen ── */}
-      {screen === 'upload' && (
-        <div>
-          <div className="clash-home-back">
-            <button className="clash-btn-secondary" onClick={() => setScreen('home')}>
-              ← Back
-            </button>
-          </div>
-          <ClashUploader onParsed={handleParsed} />
-          {parseError && (
-            <div className="clash-parse-error">
-              <strong>Parse error:</strong> {parseError}
+          {/* ── Upload screen ── */}
+          {screen === 'upload' && (
+            <div>
+              <div className="clash-home-back">
+                <button className="clash-btn-secondary" onClick={() => setScreen('home')}>
+                  ← Back
+                </button>
+              </div>
+              <ClashUploader onParsed={handleParsed} />
+              {parseError && (
+                <div className="clash-parse-error">
+                  <strong>Parse error:</strong> {parseError}
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
-      {/* ── Report screen ── */}
-      {screen === 'report' && report && (
-        <>
-          <div className="clash-module-tabs">
-            {TABS.map(tab => (
-              <button
-                key={tab.key}
-                className={`clash-module-tab ${activeTab === tab.key ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab.key)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          {/* ── Report screen ── */}
+          {screen === 'report' && report && (
+            <>
+              <div className="clash-module-tabs">
+                {TABS.map(tab => (
+                  <button
+                    key={tab.key}
+                    className={`clash-module-tab ${activeTab === tab.key ? 'active' : ''}`}
+                    onClick={() => setActiveTab(tab.key)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
 
-          {activeTab === 'dashboard' && (
-            <ClashDashboard
-              report={report}
-              fileName={fileName}
-              onReset={handleReset}
-              userId={userId}
-            />
-          )}
+              {activeTab === 'dashboard' && (
+                <ClashDashboard
+                  report={report}
+                  fileName={fileName}
+                  onReset={handleReset}
+                  userId={userId}
+                />
+              )}
 
-          {activeTab === 'assignments' && (
-            <ClashAssignments
-              report={report}
-              fileName={fileName}
-              userId={userId}
-            />
-          )}
+              {activeTab === 'assignments' && (
+                <ClashAssignments
+                  report={report}
+                  fileName={fileName}
+                  userId={userId}
+                />
+              )}
 
-          {activeTab === 'delta' && (
-            <ClashDelta
-              currentReport={report}
-              currentFileName={fileName}
-            />
+              {activeTab === 'delta' && (
+                <ClashDelta
+                  currentReport={report}
+                  currentFileName={fileName}
+                />
+              )}
+            </>
           )}
         </>
       )}

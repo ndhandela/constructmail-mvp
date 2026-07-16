@@ -1,0 +1,42 @@
+.module-locked-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.module-locked-notice-content {
+  max-width: 420px;
+}
+
+.module-locked-notice-content h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--inkwell);
+  margin: 0 0 12px;
+}
+
+.module-locked-notice-content p {
+  color: var(--slate);
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0 0 20px;
+}
+
+.module-locked-notice-cta {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: var(--inkwell);
+  color: white;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.module-locked-notice-cta:hover {
+  background-color: var(--saffron);
+}

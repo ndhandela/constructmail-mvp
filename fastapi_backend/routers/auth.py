@@ -103,11 +103,22 @@ async def get_me(userId: int):
     pool = await get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT id, email, name, full_name, company, role, permission_level FROM users WHERE id = $1", userId
+            "SELECT id, email, name, full_name, company, role, permission_level, company_id FROM users WHERE id = $1", userId
         )
         if not row:
             raise HTTPException(401, "User not found")
-    return dict(row)
+        user = dict(row)
+        modules_row = None
+        if user["company_id"]:
+            modules_row = await conn.fetchrow(
+                "SELECT active_modules FROM companies WHERE id = $1", user["company_id"]
+            )
+        active_modules = modules_row["active_modules"] if modules_row else None
+        if isinstance(active_modules, str):
+            import json
+            active_modules = json.loads(active_modules)
+        user["active_modules"] = active_modules or {}
+    return user
 
 
 @router.patch("/role")
