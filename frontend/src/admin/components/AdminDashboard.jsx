@@ -50,61 +50,46 @@ export default function AdminDashboard({ token, admin, onLogout, onNavigate }) {
 
       <div className="admin-container">
         <div className="admin-grid">
-          <div className="admin-section">
+          <div className="admin-section" onClick={() => onNavigate('analytics')}>
             <div className="section-icon">📊</div>
             <h3>Analytics</h3>
             <p>User signups, vendor stats, review trends</p>
-            <button className="section-button" onClick={() => onNavigate('analytics')}>View Analytics</button>
           </div>
 
           {adminData?.admin_level === 'super_admin' && (
-            <div className="admin-section">
+            <div className="admin-section" onClick={() => onNavigate('pricing')}>
               <div className="section-icon">💰</div>
               <h3>Pricing Management</h3>
               <p>Set module pricing globally or per client</p>
-              <button className="section-button" onClick={() => onNavigate('pricing')}>Manage Pricing</button>
             </div>
           )}
 
           {adminData?.admin_level === 'super_admin' && (
-            <div className="admin-section">
+            <div className="admin-section" onClick={() => onNavigate('flags')}>
               <div className="section-icon">🚀</div>
               <h3>Feature Flags</h3>
               <p>Enable/disable features globally or per client</p>
-              <button className="section-button" onClick={() => onNavigate('flags')}>Manage Flags</button>
             </div>
           )}
 
-          <div className="admin-section">
-            <div className="section-icon">🏢</div>
-            <h3>Add Company</h3>
-            <p>Create a new General Contractor company</p>
-            <button className="section-button" onClick={() => onNavigate('clients')}>Add Company</button>
+          <div className="admin-section" onClick={() => onNavigate('clients')}>
+            <div className="section-icon">👥</div>
+            <h3>Companies</h3>
+            <p>Add and manage General Contractor companies</p>
           </div>
 
           {adminData?.admin_level === 'super_admin' && (
-            <div className="admin-section">
-              <div className="section-icon">👥</div>
-              <h3>Companies</h3>
-              <p>View and manage General Contractor companies</p>
-              <button className="section-button" onClick={() => onNavigate('clients')}>View Companies</button>
-            </div>
-          )}
-
-          {adminData?.admin_level === 'super_admin' && (
-            <div className="admin-section">
+            <div className="admin-section" onClick={() => onNavigate('users')}>
               <div className="section-icon">🔐</div>
               <h3>Admin Users</h3>
               <p>Create and manage admin accounts</p>
-              <button className="section-button" onClick={() => onNavigate('users')}>Manage Admins</button>
             </div>
           )}
 
-          <div className="admin-section">
+          <div className="admin-section" onClick={() => onNavigate('logs')}>
             <div className="section-icon">📋</div>
             <h3>Logs</h3>
             <p>Server, frontend, email delivery, and admin activity logs</p>
-            <button className="section-button" onClick={() => onNavigate('logs')}>View Logs</button>
           </div>
         </div>
       </div>
