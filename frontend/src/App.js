@@ -69,8 +69,19 @@ function App() {
           setUserId(data.userId);
           localStorage.setItem('constructmail_userId', data.userId);
           fetchUser(data.userId);
-          if (path === '/clash') setCurrentProduct('clash');
+          // Mirrors the [userId] effect below — every product path needs its
+          // own case here too, otherwise a magic-link login on (e.g.) /trust
+          // briefly renders the generic Dashboard/ProjectGate (and its
+          // "New Project" modal) before the other effect corrects it, since
+          // this branch used to default anything but /clash and /connect to
+          // 'dashboard'.
+          if (path === '/mail') setCurrentProduct('constructmail');
+          else if (path === '/clash') setCurrentProduct('clash');
+          else if (path === '/vendors') setCurrentProduct('vendors');
           else if (path === '/connect') setCurrentProduct('connect');
+          else if (path === '/marketplace') setCurrentProduct('marketplace');
+          else if (path === '/profile') setCurrentProduct('profile');
+          else if (path === '/trust') setCurrentProduct('trust');
           else setCurrentProduct('dashboard');
           window.history.replaceState({}, document.title, window.location.pathname);
         } else {

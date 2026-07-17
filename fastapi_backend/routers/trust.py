@@ -8,6 +8,7 @@ API layer (nav visibility is just a cosmetic mirror of this, see
 routers/profile.py's company_region field).
 """
 
+import logging
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
@@ -16,6 +17,7 @@ from pydantic import BaseModel
 from db import get_pool
 from services.trust_access import require_trust_module, require_trust_project, require_trust_role
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/trust", tags=["Trust"])
 
 
@@ -34,11 +36,29 @@ async def create_project(req: CreateProjectRequest):
     pool = await get_pool()
     async with pool.acquire() as conn:
         ctx = await require_trust_role(conn, req.userId, ("compliance_reviewer", "owner"))
-        row = await conn.fetchrow(
-            """INSERT INTO trust_projects (company_id, project_name, rera_registration_number, rera_state, unit_count)
-               VALUES ($1,$2,$3,$4,$5) RETURNING *""",
-            ctx["company_id"], req.project_name.strip(), req.rera_registration_number, req.rera_state, req.unit_count,
-        )
+        try:
+            row = await conn.fetchrow(
+                """INSERT INTO trust_projects (company_id, project_name, rera_registration_number, rera_state, unit_count)
+                   VALUES ($1,$2,$3,$4,$5) RETURNING *""",
+                ctx["company_id"], req.project_name.strip(), req.rera_registration_number, req.rera_state, req.unit_count,
+            )
+        except Exception:
+            logger.exception(
+                "trust_projects insert failed for company_id=%s user_id=%s project_name=%r",
+                ctx["company_id"], req.userId, req.project_name,
+            )
+            raise HTTPException(500, "Could not create the project — please try again.")
+
+        if row is None:
+            # Should be unreachable (a failed INSERT ... RETURNING raises rather than
+            # returning None), but fail loudly instead of silently 200-ing with no data
+            # if that assumption is ever wrong.
+            logger.error(
+                "trust_projects insert returned no row for company_id=%s user_id=%s project_name=%r",
+                ctx["company_id"], req.userId, req.project_name,
+            )
+            raise HTTPException(500, "Project was not saved — please try again.")
+
     return {"success": True, "project": dict(row)}
 
 
