@@ -173,8 +173,17 @@ export default function Header({ userId, onLogout, user }) {
       )}
 
       <div className="header-right">
-        {isLoggedIn && (
+        {isLoggedIn && currentPath !== '/trust' && (
           /* ── Project switcher ── */
+          /* Hidden on /trust: this switches/creates entries in the shared
+             ProjectContext projects table, a completely different concept
+             from Trust's own RERA trust_projects — TrustApp deliberately
+             doesn't wrap in ProjectProvider/ProjectGate for the same reason.
+             Both this dropdown's "+ New project" and Trust's own "+ New
+             project" button used identical wording, so a user on the Trust
+             dashboard could easily submit this one by mistake and have it
+             silently create a row in the wrong table (see Render logs
+             showing POST /api/projects during Trust testing). */
           <div
             className="header-dropdown header-project-dropdown"
             onMouseEnter={onProjectEnter}
