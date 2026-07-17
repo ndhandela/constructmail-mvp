@@ -15,6 +15,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from db import get_pool
+from services.state_rera_profiles import STATE_RERA_PROFILES, get_state_profile
 from services.trust_access import require_trust_module, require_trust_project, require_trust_role
 
 logger = logging.getLogger(__name__)
@@ -29,10 +30,30 @@ class CreateProjectRequest(BaseModel):
     unit_count: Optional[int] = None
 
 
+@router.get("/state-profiles")
+async def list_state_profiles(userId: int):
+    """Backs the state dropdown at project creation and the QPR Generator's
+    implemented/not-yet-implemented check — the frontend never hardcodes
+    state names, it renders whatever this registry currently has."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await require_trust_module(conn, userId)
+    return {
+        "success": True,
+        "states": [
+            {"code": code, "label": profile["label"], "implemented": profile["implemented"]}
+            for code, profile in STATE_RERA_PROFILES.items()
+        ],
+    }
+
+
 @router.post("/projects")
 async def create_project(req: CreateProjectRequest):
-    if req.rera_state != "TG":
-        raise HTTPException(400, "Only TG-RERA (Telangana) is supported in v1")
+    # Any recognized state can have a project created for it — Change Alerts
+    # and Audit Trail are state-agnostic, only QPR generation is gated on
+    # get_state_profile(...).implemented (see routers/trust_qpr.py). An
+    # unrecognized code still 400s, via get_state_profile.
+    get_state_profile(req.rera_state)
     pool = await get_pool()
     async with pool.acquire() as conn:
         ctx = await require_trust_role(conn, req.userId, ("compliance_reviewer", "owner"))

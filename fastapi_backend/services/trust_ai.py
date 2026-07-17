@@ -44,28 +44,58 @@ Rules:
     return parsed["extractions"]
 
 
-async def synthesize_qpr(project: dict, extractions: list[dict], financials: dict) -> dict:
-    system = """You are a RERA compliance assistant preparing a draft Quarterly Progress Report (QPR) for a Telangana RERA (TG-RERA) registered residential project. You MUST respond with ONLY valid JSON (no markdown, no code blocks, no preamble).
+async def synthesize_tg_qpr(project: dict, extractions: list[dict], financials: dict) -> dict:
+    """TG-RERA's QPR is not one document — it's three separate professionally
+    certified forms (Architect's Form-1, Engineer's Form-2, CA's Form-3), each
+    signed by a different licensed professional directly on the TG-RERA
+    portal. This produces pre-fill DRAFT content for all three in one call;
+    POMAR Trust never submits anything or claims these are certified.
+
+    Only called when services/state_rera_profiles.get_state_profile(state)
+    .implemented is True — TG is the only such state today. A future state's
+    synthesis function belongs here too, named synthesize_<state>_qpr."""
+    system = """You are a RERA compliance assistant preparing DRAFT pre-fill content for a Telangana RERA (TG-RERA) Quarterly Progress Report, which is three separate professionally-certified forms — not one document. You are producing reference material for the licensed professionals who will review, correct, and certify each form themselves. You MUST respond with ONLY valid JSON (no markdown, no code blocks, no preamble).
 
 Return this exact structure:
 {
-  "physical_progress_pct": 0-100,
-  "financial_progress_pct": 0-100,
-  "escrow_status": "One or two sentence plain-language escrow compliance status",
-  "milestone_summary": ["Milestone 1", "Milestone 2"],
-  "narrative_summary": "A short narrative paragraph summarizing the quarter's progress, suitable for a RERA filing, grounded only in the extractions and financial data provided"
+  "form1_architect_draft": {
+    "buildings": [
+      { "name": "Tower A", "completion_pct": 0-100, "as_of_date": "YYYY-MM-DD", "supporting_notes": ["short extracted milestone/progress notes relevant to this building"] }
+    ],
+    "overall_completion_pct": 0-100
+  },
+  "form2_engineer_draft": {
+    "milestone_log": [
+      { "date": "YYYY-MM-DD", "description": "the extracted progress note, lightly paraphrased for clarity only", "source": "as given in the input" }
+    ],
+    "note": "This is a compiled reference log of site-reported progress, not a quality or quantity assessment. The certifying engineer should independently verify and assess before signing Form-2."
+  },
+  "form3_ca_draft": {
+    "financial_progress_pct": 0-100 or null,
+    "escrow_data_provided": true or false,
+    "escrow_narrative": "plain-language escrow status, or an explicit statement that no financial data was provided",
+    "withdrawal_vs_completion_note": "brief note on whether financial data aligns with physical progress — only if both are actually available, otherwise null"
+  }
 }
 
-Only reference facts that appear in the provided extractions or financial data — never invent progress percentages or milestones not supported by the input. If physical/financial progress can't be reasonably estimated from the input, use the closest defensible estimate and say so in the narrative rather than fabricating precision."""
+Hard rules:
+- Group physical-progress extractions by building/tower/wing name as mentioned in the source text (e.g. "Tower A", "Tower B"). If no distinct building is named anywhere, use a single entry named "Overall".
+- form1_architect_draft: only reference facts present in the extractions. Never invent a completion percentage not supported by the input — if genuinely inestimable, use your closest defensible estimate from what IS stated and note the uncertainty in supporting_notes rather than fabricating precision.
+- form2_engineer_draft is the strictest section: you MUST NOT assess, characterize, rate, or draw any conclusion about construction quality, workmanship, or quantity of work done. Do not use words like "good", "satisfactory", "adequate", "poor", "on track", "delayed", "acceptable quality", or any other qualitative judgment. Only compile and lightly paraphrase (for clarity, not interpretation) the raw progress/milestone extractions into a dated log, preserving the date and source you were given for each one exactly. The "note" field must always be included verbatim as specified above.
+- form3_ca_draft: if no financial data was provided in the input, set escrow_data_provided to false, financial_progress_pct to null, and escrow_narrative must explicitly say no financial data was provided — never fabricate a number. Only set withdrawal_vs_completion_note if both financial and physical data are actually available; otherwise null.
+- Every date must come from the input data given to you — never invent a date."""
+    extraction_lines = "\n".join(
+        f"- date={e.get('created_at')} source={e.get('upload_type', 'upload')} #{e.get('upload_id')} "
+        f"[{e.get('extraction_type', e.get('type'))}] {e.get('content_summary', e.get('summary'))}"
+        for e in extractions
+    )
     user_message = (
         f"Project: {project.get('project_name')} (RERA #{project.get('rera_registration_number') or 'unregistered'}, "
         f"{project.get('unit_count') or 'unknown'} units)\n\n"
         f"Manually entered financial data: {financials}\n\n"
-        f"Extractions this quarter:\n" + "\n".join(
-            f"- [{e.get('extraction_type', e.get('type'))}] {e.get('content_summary', e.get('summary'))}" for e in extractions
-        )
+        f"Extractions this quarter (date, source, type, content):\n{extraction_lines or '(none)'}"
     )
-    content = await _call_claude(system, user_message, model=MODEL, max_tokens=1200, temperature=0.2)
+    content = await _call_claude(system, user_message, model=MODEL, max_tokens=2500, temperature=0.2)
     parsed = _parse_json(content)
     if not parsed:
         raise ValueError("Invalid JSON response from Claude")

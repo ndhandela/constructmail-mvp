@@ -61,3 +61,16 @@
   font-size: 13px;
   color: var(--slate);
 }
+
+/* Neutral/slate, not error-red — an unimplemented state is a roadmap gap,
+   not a failure. */
+.trust-state-badge {
+  display: block;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.trust-state-badge-soon {
+  color: var(--slate);
+  font-style: italic;
+}

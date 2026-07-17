@@ -12,10 +12,12 @@ function dueBadge(lastQpr) {
   return { text: `${lastQpr.quarter} due ${lastQpr.due_date}`, color: 'var(--sage)' };
 }
 
-function NewProjectForm({ userId, onCreated, onCancel }) {
-  const [form, setForm] = useState({ project_name: '', rera_registration_number: '', unit_count: '' });
+function NewProjectForm({ userId, states, onCreated, onCancel }) {
+  const [form, setForm] = useState({ project_name: '', rera_registration_number: '', rera_state: 'TG', unit_count: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const selectedState = states.find((s) => s.code === form.rera_state);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,7 +31,7 @@ function NewProjectForm({ userId, onCreated, onCancel }) {
           userId: Number(userId),
           project_name: form.project_name.trim(),
           rera_registration_number: form.rera_registration_number.trim() || null,
-          rera_state: 'TG',
+          rera_state: form.rera_state,
           unit_count: form.unit_count ? Number(form.unit_count) : null,
         }),
       });
@@ -60,7 +62,26 @@ function NewProjectForm({ userId, onCreated, onCancel }) {
           />
         </div>
         <div className="trust-field">
-          <label>TG-RERA Registration #</label>
+          <label>State</label>
+          <select
+            value={form.rera_state}
+            onChange={(e) => setForm((f) => ({ ...f, rera_state: e.target.value }))}
+            disabled={saving || states.length === 0}
+          >
+            {states.map((s) => (
+              <option key={s.code} value={s.code}>
+                {s.label}{s.implemented ? '' : ' — coming soon'}
+              </option>
+            ))}
+          </select>
+          {selectedState && !selectedState.implemented && (
+            <span className="trust-state-badge trust-state-badge-soon">
+              QPR generation coming soon for {selectedState.label} — Change Alerts and Audit Trail work now
+            </span>
+          )}
+        </div>
+        <div className="trust-field">
+          <label>RERA Registration #</label>
           <input
             value={form.rera_registration_number}
             onChange={(e) => setForm((f) => ({ ...f, rera_registration_number: e.target.value }))}
@@ -88,7 +109,11 @@ function NewProjectForm({ userId, onCreated, onCancel }) {
   );
 }
 
-export default function TrustDashboard({ userId, projects, loadingProjects, trustRole, onProjectCreated, onSelectProject }) {
+function stateLabel(stateProfiles, code) {
+  return stateProfiles.find((s) => s.code === code)?.label || code;
+}
+
+export default function TrustDashboard({ userId, projects, loadingProjects, trustRole, stateProfiles, onProjectCreated, onSelectProject }) {
   const [summaries, setSummaries] = useState({});
   const [showNewProject, setShowNewProject] = useState(false);
 
@@ -119,6 +144,7 @@ export default function TrustDashboard({ userId, projects, loadingProjects, trus
       {showNewProject && (
         <NewProjectForm
           userId={userId}
+          states={stateProfiles}
           onCreated={() => { setShowNewProject(false); onProjectCreated(); }}
           onCancel={() => setShowNewProject(false)}
         />
@@ -142,7 +168,7 @@ export default function TrustDashboard({ userId, projects, loadingProjects, trus
                   </span>
                 </div>
                 <p className="trust-muted">
-                  TG-RERA {p.rera_registration_number || 'unregistered'} · {p.unit_count || '—'} units
+                  {stateLabel(stateProfiles, p.rera_state)}-RERA {p.rera_registration_number || 'unregistered'} · {p.unit_count || '—'} units
                 </p>
                 <div className="trust-project-card-stats">
                   <span>{summary?.open_alert_count ?? '—'} open alerts</span>

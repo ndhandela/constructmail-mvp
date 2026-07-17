@@ -14,11 +14,14 @@ from datetime import date, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from db import get_pool
+from services.state_rera_profiles import get_state_profile
 from services.trust_access import require_trust_project
-from services.trust_ai import synthesize_qpr
+from services.trust_ai import synthesize_tg_qpr
+from services.trust_pdf import build_form_pdf
 from services.user_service import log_trust_activity
 
 router = APIRouter(prefix="/api/trust", tags=["Trust QPR"])
@@ -60,6 +63,20 @@ def _qpr_due_date(quarter_end: date) -> date:
     return quarter_end + timedelta(days=7)
 
 
+def _serialize_draft(row) -> dict:
+    """asyncpg returns a jsonb column as a raw JSON string, not a parsed
+    dict/list, unless a type codec is registered (none is, here) — every
+    response that includes a trust_qpr_drafts row must go through this or
+    the frontend silently gets draft_json as an unparsed string (this is
+    what was actually happening: narrative_summary/milestone_summary never
+    rendered, only the flat physical_progress_pct/escrow_status *columns*
+    did, since those aren't nested in the JSON blob)."""
+    draft = dict(row)
+    if isinstance(draft.get("draft_json"), str):
+        draft["draft_json"] = json.loads(draft["draft_json"])
+    return draft
+
+
 class GenerateQprRequest(BaseModel):
     userId: int
     financials: Optional[dict] = None
@@ -74,6 +91,19 @@ async def generate_qpr_draft(project_id: int, quarter: str, req: GenerateQprRequ
     async with pool.acquire() as conn:
         ctx = await require_trust_project(conn, req.userId, project_id, REVIEW_ROLES)
 
+        state_profile = get_state_profile(ctx["project"]["rera_state"])
+        if not state_profile["implemented"]:
+            # Structured, non-error response — the frontend uses this to show
+            # a graceful "not yet supported" message rather than an empty or
+            # broken screen. No draft row is created; there's nothing to store.
+            return {
+                "success": True,
+                "supported": False,
+                "state_code": ctx["project"]["rera_state"],
+                "state_label": state_profile["label"],
+                "message": f"QPR generation for {state_profile['label']} isn't available yet. We currently support TG-RERA.",
+            }
+
         existing = await conn.fetchrow(
             "SELECT id, status FROM trust_qpr_drafts WHERE project_id = $1 AND quarter = $2",
             project_id, quarter,
@@ -82,7 +112,7 @@ async def generate_qpr_draft(project_id: int, quarter: str, req: GenerateQprRequ
             raise HTTPException(400, f"The {quarter} QPR is already filed and can't be regenerated")
 
         extractions = await conn.fetch(
-            """SELECT te.* FROM trust_extractions te
+            """SELECT te.*, tu.upload_type FROM trust_extractions te
                JOIN trust_uploads tu ON tu.id = te.upload_id
                WHERE tu.project_id = $1
                  AND te.extraction_type IN ('progress_update', 'milestone')
@@ -91,7 +121,13 @@ async def generate_qpr_draft(project_id: int, quarter: str, req: GenerateQprRequ
             project_id, start, end,
         )
 
-        draft = await synthesize_qpr(ctx["project"], [dict(e) for e in extractions], req.financials or {})
+        # TG is the only implemented profile today; a future state's own
+        # synthesize_<state>_qpr would be dispatched here alongside this one.
+        draft = await synthesize_tg_qpr(ctx["project"], [dict(e) for e in extractions], req.financials or {})
+
+        physical_pct = draft.get("form1_architect_draft", {}).get("overall_completion_pct")
+        financial_pct = draft.get("form3_ca_draft", {}).get("financial_progress_pct")
+        escrow_status = draft.get("form3_ca_draft", {}).get("escrow_narrative")
 
         row = await conn.fetchrow(
             """INSERT INTO trust_qpr_drafts
@@ -101,9 +137,7 @@ async def generate_qpr_draft(project_id: int, quarter: str, req: GenerateQprRequ
                  due_date = $3, physical_progress_pct = $4, financial_progress_pct = $5,
                  escrow_status = $6, draft_json = $7, status = 'draft', generated_at = NOW(), filed_at = NULL
                RETURNING *""",
-            project_id, quarter, due_date,
-            draft.get("physical_progress_pct"), draft.get("financial_progress_pct"),
-            draft.get("escrow_status"), json.dumps(draft),
+            project_id, quarter, due_date, physical_pct, financial_pct, escrow_status, json.dumps(draft),
         )
 
         await log_trust_activity(
@@ -111,7 +145,7 @@ async def generate_qpr_draft(project_id: int, quarter: str, req: GenerateQprRequ
             {"project_id": project_id, "quarter": quarter},
         )
 
-    return {"success": True, "draft": dict(row)}
+    return {"success": True, "supported": True, "draft": _serialize_draft(row)}
 
 
 @router.get("/projects/{project_id}/qpr-drafts")
@@ -122,7 +156,7 @@ async def list_qpr_drafts(project_id: int, userId: int):
         rows = await conn.fetch(
             "SELECT * FROM trust_qpr_drafts WHERE project_id = $1 ORDER BY generated_at DESC", project_id,
         )
-    return {"success": True, "drafts": [dict(r) for r in rows]}
+    return {"success": True, "drafts": [_serialize_draft(r) for r in rows]}
 
 
 @router.get("/projects/{project_id}/qpr-draft/{draft_id}")
@@ -135,7 +169,7 @@ async def get_qpr_draft(project_id: int, draft_id: int, userId: int):
         )
     if not row:
         raise HTTPException(404, "Draft not found")
-    return {"success": True, "draft": dict(row)}
+    return {"success": True, "draft": _serialize_draft(row)}
 
 
 class UpdateQprRequest(BaseModel):
@@ -180,4 +214,33 @@ async def update_qpr_draft(project_id: int, draft_id: int, req: UpdateQprRequest
                 {"project_id": project_id, "quarter": row["quarter"]},
             )
 
-    return {"success": True, "draft": dict(row)}
+    return {"success": True, "draft": _serialize_draft(row)}
+
+
+@router.get("/projects/{project_id}/qpr-draft/{draft_id}/export")
+async def export_qpr_form(project_id: int, draft_id: int, userId: int, form: int):
+    """Downloads one form section (1=Architect, 2=Engineer, 3=CA) as a PDF —
+    always a DRAFT for professional review, never something POMAR files or
+    claims is certified. No "submit"/"file" language or action exists here
+    or anywhere else in the export path — see services/trust_pdf.py."""
+    if form not in (1, 2, 3):
+        raise HTTPException(400, "form must be 1, 2, or 3")
+
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        ctx = await require_trust_project(conn, userId, project_id, REVIEW_ROLES)
+        row = await conn.fetchrow(
+            "SELECT * FROM trust_qpr_drafts WHERE id = $1 AND project_id = $2", draft_id, project_id,
+        )
+    if not row:
+        raise HTTPException(404, "Draft not found")
+
+    draft = _serialize_draft(row)
+    buf = build_form_pdf(form, ctx["project"], draft["draft_json"] or {})
+    filename = f"POMAR-Trust-{ctx['project']['project_name'].replace(' ', '-')}-{draft['quarter']}-Form{form}-DRAFT.pdf"
+
+    return StreamingResponse(
+        buf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )

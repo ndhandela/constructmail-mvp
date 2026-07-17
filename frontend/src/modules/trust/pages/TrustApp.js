@@ -25,6 +25,7 @@ export default function TrustApp({ user, userId }) {
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [loadingProjects, setLoadingProjects] = useState(true);
+  const [stateProfiles, setStateProfiles] = useState([]);
   const trustRole = getTrustRole(user);
 
   const fetchProjects = useCallback(async () => {
@@ -46,6 +47,14 @@ export default function TrustApp({ user, userId }) {
   useEffect(() => {
     if (!trustLocked && userId) fetchProjects();
   }, [trustLocked, userId, fetchProjects]);
+
+  useEffect(() => {
+    if (trustLocked || !userId) return;
+    fetch(`${API_BASE_URL}/api/trust/state-profiles?userId=${userId}`)
+      .then((res) => res.json())
+      .then((data) => { if (data.success) setStateProfiles(data.states || []); })
+      .catch((err) => console.error('Fetch state profiles error:', err));
+  }, [trustLocked, userId]);
 
   if (trustLocked) {
     return (
@@ -100,12 +109,13 @@ export default function TrustApp({ user, userId }) {
             projects={projects}
             loadingProjects={loadingProjects}
             trustRole={trustRole}
+            stateProfiles={stateProfiles}
             onProjectCreated={fetchProjects}
             onSelectProject={(id) => { setSelectedProjectId(id); setActiveTab('qpr'); }}
           />
         )}
         {activeTab === 'qpr' && (
-          <TrustQPRGenerator userId={userId} project={selectedProject} trustRole={trustRole} />
+          <TrustQPRGenerator userId={userId} project={selectedProject} trustRole={trustRole} stateProfiles={stateProfiles} />
         )}
         {activeTab === 'alerts' && (
           <TrustChangeAlerts userId={userId} project={selectedProject} trustRole={trustRole} />

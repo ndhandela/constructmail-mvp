@@ -663,7 +663,7 @@ async def init_db():
                 company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
                 project_name VARCHAR(255) NOT NULL,
                 rera_registration_number VARCHAR(100),
-                rera_state VARCHAR(10) NOT NULL DEFAULT 'TG' CHECK (rera_state IN ('TG')),
+                rera_state VARCHAR(10) NOT NULL DEFAULT 'TG',
                 unit_count INT,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
@@ -742,6 +742,16 @@ async def init_db():
                 channel VARCHAR(20) NOT NULL CHECK (channel IN ('in_app','email')),
                 UNIQUE(qpr_draft_id, reminder_type)
             );
+
+            -- Widen rera_state from TG-only to every state stubbed in
+            -- services/state_rera_profiles.py's STATE_RERA_PROFILES (migration
+            -- 021) — a project can be created for any recognized state even
+            -- before QPR generation is implemented for it (Change Alerts/Audit
+            -- Trail are state-agnostic); this list must be kept in sync with
+            -- that registry's keys since Postgres can't reference it directly.
+            ALTER TABLE trust_projects DROP CONSTRAINT IF EXISTS trust_projects_rera_state_check;
+            ALTER TABLE trust_projects ADD CONSTRAINT trust_projects_rera_state_check
+                CHECK (rera_state IN ('TG','TN','KA','MH','AP','GJ','UP','DL'));
         """)
 
         await _backfill_clash_project_ids(conn)
