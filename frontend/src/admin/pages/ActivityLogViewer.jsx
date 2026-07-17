@@ -11,17 +11,19 @@ export default function ActivityLogViewer({ token, onNavigate }) {
     limit: 50,
     total: 0
   });
+  const [moduleKey, setModuleKey] = useState('');
 
   useEffect(() => {
     fetchLogs();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.offset]);
+  }, [pagination.offset, moduleKey]);
 
   const fetchLogs = async () => {
     setLoading(true);
     try {
+      const moduleParam = moduleKey ? `&module_key=${moduleKey}` : '';
       const response = await fetch(
-        `${API_BASE_URL}/api/admin/activity-log?limit=${pagination.limit}&offset=${pagination.offset}`,
+        `${API_BASE_URL}/api/admin/activity-log?limit=${pagination.limit}&offset=${pagination.offset}${moduleParam}`,
         {
           headers: { 'Authorization': `Bearer ${token}` }
         }
@@ -61,7 +63,14 @@ export default function ActivityLogViewer({ token, onNavigate }) {
       'feature_flags_updated': '#3B82F6',
       'admin_user_created': '#8B5CF6',
       'admin_user_updated': '#EC4899',
-      'admin_user_deleted': '#EF4444'
+      'admin_user_deleted': '#EF4444',
+      'upload_parsed': '#0EA5E9',
+      'qpr_draft_generated': '#0EA5E9',
+      'qpr_filed': '#10B981',
+      'notice_drafted': '#F59E0B',
+      'notice_sent': '#10B981',
+      'alert_dismissed': '#6B7280',
+      'trust_role_updated': '#8B5CF6',
     };
     return colors[action] || '#6B7280';
   };
@@ -79,9 +88,17 @@ export default function ActivityLogViewer({ token, onNavigate }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2>Activity Log</h2>
-            <p>Audit trail of all admin actions</p>
+            <p>Audit trail of all admin and module actions</p>
           </div>
-          <button 
+          <select
+            value={moduleKey}
+            onChange={(e) => { setModuleKey(e.target.value); setPagination(prev => ({ ...prev, offset: 0 })); }}
+            style={{ marginRight: 12, padding: '8px 12px', borderRadius: 8 }}
+          >
+            <option value="">All modules</option>
+            <option value="trust">POMAR Trust</option>
+          </select>
+          <button
             onClick={() => onNavigate('dashboard')}
             style={{
               padding: '10px 20px',
@@ -102,7 +119,7 @@ export default function ActivityLogViewer({ token, onNavigate }) {
           <table className="logs-table">
             <thead>
               <tr>
-                <th>Admin</th>
+                <th>Actor</th>
                 <th>Action</th>
                 <th>Resource</th>
                 <th>Changes</th>
@@ -112,7 +129,10 @@ export default function ActivityLogViewer({ token, onNavigate }) {
             <tbody>
               {logs.map(log => (
                 <tr key={log.id} className="log-row">
-                  <td className="log-admin">{log.admin_email}</td>
+                  <td className="log-admin">
+                    {log.admin_email || log.user_email || '—'}
+                    {log.module_key && <span className="resource-type" style={{ marginLeft: 6 }}>({log.module_key})</span>}
+                  </td>
                   <td className="log-action">
                     <span 
                       className="action-badge"

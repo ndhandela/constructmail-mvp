@@ -1,6 +1,7 @@
 import os
 import secrets
 from datetime import datetime, timedelta
+from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from db import get_pool
@@ -94,12 +95,41 @@ async def list_team(userId: int):
         if not requester["company_id"]:
             return {"success": True, "team": []}
         rows = await conn.fetch(
-            """SELECT id, email, full_name, name, permission_level,
+            """SELECT id, email, full_name, name, permission_level, trust_role,
                       (invite_token IS NOT NULL) as invite_pending, created_at
                FROM users WHERE company_id = $1 ORDER BY created_at ASC""",
             requester["company_id"],
         )
     return {"success": True, "team": [dict(r) for r in rows]}
+
+
+class UpdateTrustRoleRequest(BaseModel):
+    requesterId: int
+    trust_role: Optional[str] = None  # null clears it
+
+
+@router.put("/{member_user_id}/trust-role")
+async def update_member_trust_role(member_user_id: int, req: UpdateTrustRoleRequest):
+    if req.trust_role is not None and req.trust_role not in ("owner", "site_data", "compliance_reviewer"):
+        raise HTTPException(400, "trust_role must be 'owner', 'site_data', or 'compliance_reviewer'")
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        requester = await conn.fetchrow(
+            "SELECT company_id, permission_level FROM users WHERE id = $1", req.requesterId
+        )
+        member = await conn.fetchrow(
+            "SELECT company_id FROM users WHERE id = $1", member_user_id
+        )
+        if not requester or not member or requester["company_id"] != member["company_id"]:
+            raise HTTPException(403, "Not authorized")
+        if requester["permission_level"] != "owner":
+            raise HTTPException(403, "Only the company owner can change this")
+
+        row = await conn.fetchrow(
+            "UPDATE users SET trust_role = $1 WHERE id = $2 RETURNING id, trust_role",
+            req.trust_role, member_user_id,
+        )
+    return {"success": True, "trust_role": row["trust_role"]}
 
 
 @router.get("/{member_user_id}/projects")

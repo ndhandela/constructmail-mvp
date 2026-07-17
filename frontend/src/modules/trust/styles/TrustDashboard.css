@@ -1,0 +1,63 @@
+.trust-new-project-form {
+  background: var(--parchment);
+  border: 1px solid #E7E0D3;
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.trust-new-project-form h3 {
+  margin: 0 0 12px;
+  color: var(--inkwell);
+  font-size: 15px;
+}
+
+.trust-project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.trust-project-card {
+  background: white;
+  border: 1px solid #E7E0D3;
+  border-radius: var(--radius-md);
+  padding: 20px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.trust-project-card:hover {
+  border-color: var(--saffron);
+}
+
+.trust-project-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.trust-project-card-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--inkwell);
+}
+
+.trust-due-badge {
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid;
+  border-radius: var(--radius-pill);
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+
+.trust-project-card-stats {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--slate);
+}

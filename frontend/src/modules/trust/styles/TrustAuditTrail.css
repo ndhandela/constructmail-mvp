@@ -1,0 +1,13 @@
+.trust-audit-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.trust-audit-filters select {
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #E7E0D3;
+  font-size: 13px;
+  background: white;
+}

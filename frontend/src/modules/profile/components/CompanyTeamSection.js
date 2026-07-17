@@ -6,9 +6,10 @@ function teamMemberDisplayName(m) {
   return m.full_name || m.name || m.email;
 }
 
-export default function CompanyTeamSection({ userId, isOwner, companyId }) {
+export default function CompanyTeamSection({ userId, isOwner, companyId, trustEnabled }) {
   const [team, setTeam] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [trustRoleState, setTrustRoleState] = useState({});
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteFullName, setInviteFullName] = useState('');
   const [inviting, setInviting] = useState(false);
@@ -127,6 +128,27 @@ export default function CompanyTeamSection({ userId, isOwner, companyId }) {
     });
   };
 
+  const handleTrustRoleChange = async (memberId, trustRole) => {
+    setTrustRoleState((prev) => ({ ...prev, [memberId]: { saving: true } }));
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/team/${memberId}/trust-role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requesterId: Number(userId), trust_role: trustRole || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setTrustRoleState((prev) => ({ ...prev, [memberId]: { saving: false, error: data.detail || 'Could not update role.' } }));
+        return;
+      }
+      setTeam((prev) => prev.map((m) => (m.id === memberId ? { ...m, trust_role: data.trust_role } : m)));
+      setTrustRoleState((prev) => ({ ...prev, [memberId]: { saving: false } }));
+    } catch (err) {
+      console.error('Update trust role error:', err);
+      setTrustRoleState((prev) => ({ ...prev, [memberId]: { saving: false, error: 'Network error.' } }));
+    }
+  };
+
   const handleSaveMemberProjects = async (memberId) => {
     setSavingMemberProjects(true);
     setMemberProjectsMsg(null);
@@ -188,6 +210,33 @@ export default function CompanyTeamSection({ userId, isOwner, companyId }) {
                 )}
               </div>
             </div>
+
+            {trustEnabled && m.permission_level !== 'owner' && (
+              <div className="team-access-panel" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span className="profile-readonly-note">POMAR Trust role:</span>
+                {isOwner ? (
+                  <select
+                    value={m.trust_role || ''}
+                    onChange={(e) => handleTrustRoleChange(m.id, e.target.value)}
+                    disabled={trustRoleState[m.id]?.saving}
+                  >
+                    <option value="">No Trust access</option>
+                    <option value="site_data">Site Data</option>
+                    <option value="compliance_reviewer">Compliance Reviewer</option>
+                  </select>
+                ) : (
+                  <span className="team-role-pill">{m.trust_role || 'No Trust access'}</span>
+                )}
+                {trustRoleState[m.id]?.error && (
+                  <span className="profile-msg error">{trustRoleState[m.id].error}</span>
+                )}
+              </div>
+            )}
+            {trustEnabled && m.permission_level === 'owner' && (
+              <div className="team-access-panel">
+                <span className="profile-readonly-note">POMAR Trust role: Owner (full access)</span>
+              </div>
+            )}
 
             {isOwner && editingMemberId === m.id && (
               <div className="team-access-panel">

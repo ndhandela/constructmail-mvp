@@ -29,6 +29,10 @@
   --saffron-hover: #B45309;
   --success: #10B981;
   --error: #DC2626;
+
+  /* === POMAR Trust semantic colors (compliant / at-risk states) === */
+  --sage: #4B7B62;
+  --brick: #B23A2F;
   
   /* === TYPOGRAPHY === */
   --font-serif: Georgia, 'Times New Roman', serif;

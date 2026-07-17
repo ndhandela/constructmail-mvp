@@ -1,0 +1,24 @@
+-- Migration: 011_trust_module.sql
+-- Documents the POMAR Trust (RERA compliance) schema applied by
+-- fastapi_backend/db.py's init_db() on every startup (idempotent
+-- CREATE TABLE IF NOT EXISTS / ALTER TABLE ADD COLUMN IF NOT EXISTS —
+-- no raw SQL to run here, this is a record of what that block does):
+--
+--   * companies gains `region` ('US'|'IN', default 'US') and `entity_name`.
+--     Trust is gated on region = 'IN' AND a `trust` feature_flags row —
+--     no separate org_modules table, 'trust' is just another feature_key
+--     alongside mail/clash/vendors/marketplace.
+--   * users gains a nullable `trust_role` ('owner'|'site_data'|
+--     'compliance_reviewer'). Company owners (permission_level='owner')
+--     always resolve to full Trust access regardless of this column —
+--     see services/trust_access.py.
+--   * admin_activity_log's actor FK is widened (admin_user_id now
+--     nullable, new nullable user_id/company_id/module_key columns, new
+--     CHECK requiring at least one actor) so Trust events raised by
+--     regular users log into the same table/Admin Portal viewer instead
+--     of a second, parallel activity log.
+--   * New tables: trust_projects, trust_uploads, trust_extractions,
+--     trust_qpr_drafts, trust_change_alerts, trust_buyer_notices,
+--     trust_reminders. Raw WhatsApp/email uploads are never stored in
+--     Postgres — trust_uploads.storage_path is an object key in the
+--     private `pomar-trust-uploads` R2 bucket (see services/r2_storage.py).

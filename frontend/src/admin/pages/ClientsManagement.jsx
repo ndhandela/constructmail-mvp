@@ -6,7 +6,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 const ADD_COMPANY_TIMEOUT_MS = 15000;
 
 function AddCompanyForm({ token, onCreated, onCancel }) {
-  const [form, setForm] = useState({ companyName: '', ownerFullName: '', ownerEmail: '' });
+  const [form, setForm] = useState({ companyName: '', ownerFullName: '', ownerEmail: '', region: 'US', entityName: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -70,7 +70,7 @@ function AddCompanyForm({ token, onCreated, onCancel }) {
               onCancel();
             } else {
               setSuccess(false);
-              setForm({ companyName: '', ownerFullName: '', ownerEmail: '' });
+              setForm({ companyName: '', ownerFullName: '', ownerEmail: '', region: 'US', entityName: '' });
             }
           }}
         >
@@ -95,6 +95,19 @@ function AddCompanyForm({ token, onCreated, onCancel }) {
         <label>Owner Email</label>
         <input type="email" name="ownerEmail" value={form.ownerEmail} onChange={handleChange} required disabled={saving} />
       </div>
+      <div className="add-company-field">
+        <label>Region</label>
+        <select name="region" value={form.region} onChange={handleChange} disabled={saving}>
+          <option value="US">US</option>
+          <option value="IN">India (unlocks POMAR Trust eligibility)</option>
+        </select>
+      </div>
+      {form.region === 'IN' && (
+        <div className="add-company-field">
+          <label>Legal Entity Name (optional)</label>
+          <input name="entityName" value={form.entityName} onChange={handleChange} disabled={saving} />
+        </div>
+      )}
       {error && <div className="modules-msg modules-msg--error">{error}</div>}
       <div className="add-company-actions">
         {onCancel && (
@@ -105,6 +118,126 @@ function AddCompanyForm({ token, onCreated, onCancel }) {
         </button>
       </div>
     </form>
+  );
+}
+
+// Region/entity-name editing + per-user Trust role assignment for a company.
+// Only rendered for India-region companies — Trust access itself is still
+// enforced server-side regardless of this UI's visibility.
+function CompanyTrustPanel({ token, company, onDetailsSaved }) {
+  const [region, setRegion] = useState(company.region || 'US');
+  const [entityName, setEntityName] = useState(company.entity_name || '');
+  const [savingDetails, setSavingDetails] = useState(false);
+  const [detailsMsg, setDetailsMsg] = useState(null);
+
+  const [team, setTeam] = useState([]);
+  const [teamLoading, setTeamLoading] = useState(true);
+  const [roleState, setRoleState] = useState({});
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/admin/companies/${company.id}/team`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    })
+      .then(res => res.json())
+      .then(data => { if (data.success) setTeam(data.team); })
+      .catch(err => console.error('Fetch company team error:', err))
+      .finally(() => setTeamLoading(false));
+  }, [company.id, token]);
+
+  const handleSaveDetails = async (e) => {
+    e.preventDefault();
+    setSavingDetails(true);
+    setDetailsMsg(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/companies/${company.id}/details`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ region, entityName: entityName || null }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDetailsMsg({ type: 'success', text: 'Saved.' });
+        onDetailsSaved();
+      } else {
+        setDetailsMsg({ type: 'error', text: data.detail || 'Could not save.' });
+      }
+    } catch (err) {
+      setDetailsMsg({ type: 'error', text: 'Network error.' });
+    } finally {
+      setSavingDetails(false);
+    }
+  };
+
+  const handleRoleChange = async (userId, trustRole) => {
+    setRoleState(prev => ({ ...prev, [userId]: { saving: true } }));
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/team/${userId}/trust-role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ trust_role: trustRole || null }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTeam(prev => prev.map(m => m.id === userId ? { ...m, trust_role: data.trust_role } : m));
+        setRoleState(prev => ({ ...prev, [userId]: { saving: false } }));
+      } else {
+        setRoleState(prev => ({ ...prev, [userId]: { saving: false, error: data.detail } }));
+      }
+    } catch (err) {
+      setRoleState(prev => ({ ...prev, [userId]: { saving: false, error: 'Network error.' } }));
+    }
+  };
+
+  return (
+    <div className="client-details" style={{ marginTop: 16, borderTop: '1px solid #E7E0D3', paddingTop: 16 }}>
+      <form onSubmit={handleSaveDetails} style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <div className="add-company-field">
+          <label>Region</label>
+          <select value={region} onChange={(e) => setRegion(e.target.value)}>
+            <option value="US">US</option>
+            <option value="IN">India</option>
+          </select>
+        </div>
+        <div className="add-company-field">
+          <label>Legal Entity Name</label>
+          <input value={entityName} onChange={(e) => setEntityName(e.target.value)} />
+        </div>
+        <button type="submit" className="save-modules-btn" disabled={savingDetails}>
+          {savingDetails ? 'Saving…' : 'Save details'}
+        </button>
+        {detailsMsg && <span className={`modules-msg modules-msg--${detailsMsg.type}`}>{detailsMsg.text}</span>}
+      </form>
+
+      {region === 'IN' && (
+        <>
+          <p className="detail-label" style={{ marginTop: 16 }}>POMAR Trust roles</p>
+          {teamLoading ? (
+            <p>Loading team…</p>
+          ) : (
+            <div className="team-member-list">
+              {team.map(member => (
+                <div key={member.id} className="detail-item" style={{ justifyContent: 'space-between', display: 'flex' }}>
+                  <span className="detail-value">{member.full_name || member.name || member.email}</span>
+                  <select
+                    value={member.trust_role || ''}
+                    onChange={(e) => handleRoleChange(member.id, e.target.value)}
+                    disabled={roleState[member.id]?.saving || member.permission_level === 'owner'}
+                  >
+                    <option value="">No Trust access</option>
+                    <option value="site_data">Site Data</option>
+                    <option value="compliance_reviewer">Compliance Reviewer</option>
+                    <option value="owner">Owner</option>
+                  </select>
+                  {member.permission_level === 'owner' && (
+                    <span className="detail-value" style={{ fontSize: 12 }}>(company owner — always full access)</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 }
 
@@ -296,7 +429,12 @@ export default function ClientsManagement({ token, admin, onNavigate }) {
                               <span className="detail-label">Team Size:</span>
                               <span className="detail-value">{company.team_size}</span>
                             </div>
+                            <div className="detail-item">
+                              <span className="detail-label">Region:</span>
+                              <span className="detail-value">{company.region || 'US'}</span>
+                            </div>
                           </div>
+                          <CompanyTrustPanel token={token} company={company} onDetailsSaved={fetchCompanies} />
                         </td>
                       </tr>
                     )}

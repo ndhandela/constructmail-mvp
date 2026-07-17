@@ -61,6 +61,21 @@ export const PRODUCTS = [
     // and renders a locked card instead of omitting this entry when disabled.
     licenseGated: true
   },
+  {
+    id: 'trust',
+    name: 'POMAR Trust',
+    description: 'RERA compliance — QPR drafts and buyer disclosure, automated from site updates',
+    detailedDescription: "Indian builders must file Quarterly Progress Reports with their state RERA authority and proactively disclose any change to layout, amenities, or possession timeline. POMAR Trust reads your site engineers' WhatsApp and email updates, drafts the QPR, and flags disclosure-triggering changes before they become a compliance gap — then logs every buyer notice as proof-of-send.",
+    icon: '🛡️',
+    path: '/trust',
+    logo: '/logos/pomar.png',
+    color: '#D97706',
+    status: 'live',
+    // India-only: rendered only when company_region === 'IN' AND active_modules.trust
+    // is true (see pages/Dashboard.js) — never shown to a US org regardless of flags.
+    regionGated: 'IN',
+    licenseGated: true
+  },
 ];
 
 export const getProductById = (id) => PRODUCTS.find(p => p.id === id);

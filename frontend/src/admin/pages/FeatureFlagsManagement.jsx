@@ -180,6 +180,7 @@ export default function FeatureFlagsManagement({ token, onNavigate }) {
                 <option value="clash">Clash Access</option>
                 <option value="vendors">Vendors Access</option>
                 <option value="marketplace">Marketplace Access</option>
+                <option value="trust">POMAR Trust Access (India-only)</option>
               </select>
             </div>
 

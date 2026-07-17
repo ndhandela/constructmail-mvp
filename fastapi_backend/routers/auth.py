@@ -104,12 +104,15 @@ async def get_me(userId: int):
     pool = await get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT id, email, name, full_name, company, role, permission_level, company_id FROM users WHERE id = $1", userId
+            "SELECT id, email, name, full_name, company, role, permission_level, company_id, trust_role FROM users WHERE id = $1", userId
         )
         if not row:
             raise HTTPException(401, "User not found")
         user = dict(row)
         user["active_modules"] = await get_active_modules(conn, user["company_id"])
+        user["company_region"] = await conn.fetchval(
+            "SELECT region FROM companies WHERE id = $1", user["company_id"]
+        ) if user["company_id"] else None
     return user
 
 

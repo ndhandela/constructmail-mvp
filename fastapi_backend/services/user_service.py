@@ -7,7 +7,7 @@ async def get_all_companies(limit: int = 50, offset: int = 0) -> dict:
     pool = await get_pool()
     async with pool.acquire() as conn:
         rows = await conn.fetch(
-            """SELECT c.id, c.name, c.status, c.active_modules, c.created_at,
+            """SELECT c.id, c.name, c.status, c.active_modules, c.region, c.entity_name, c.created_at,
                       COUNT(DISTINCT u.id) as team_size,
                       MAX(u.email) FILTER (WHERE u.permission_level = 'owner') as owner_email
                FROM companies c
@@ -24,7 +24,7 @@ async def get_company(company_id: int) -> dict:
     pool = await get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            """SELECT c.id, c.name, c.status, c.active_modules, c.created_at,
+            """SELECT c.id, c.name, c.status, c.active_modules, c.region, c.entity_name, c.created_at,
                       COUNT(DISTINCT u.id) as team_size,
                       MAX(u.email) FILTER (WHERE u.permission_level = 'owner') as owner_email
                FROM companies c
@@ -115,7 +115,11 @@ async def delete_admin_user(admin_id: int) -> dict:
 
 async def get_activity_log(limit: int = 100, offset: int = 0, filters: dict = {}) -> dict:
     pool = await get_pool()
-    query = "SELECT aal.*, au.email as admin_email FROM admin_activity_log aal LEFT JOIN admin_users au ON aal.admin_user_id = au.id WHERE 1=1"
+    query = """SELECT aal.*, au.email as admin_email, u.email as user_email
+               FROM admin_activity_log aal
+               LEFT JOIN admin_users au ON aal.admin_user_id = au.id
+               LEFT JOIN users u ON aal.user_id = u.id
+               WHERE 1=1"""
     params = []
     p = 1
     if filters.get("admin_id"):
@@ -129,6 +133,14 @@ async def get_activity_log(limit: int = 100, offset: int = 0, filters: dict = {}
     if filters.get("resource_type"):
         query += f" AND aal.resource_type = ${p}"
         params.append(filters["resource_type"])
+        p += 1
+    if filters.get("module_key"):
+        query += f" AND aal.module_key = ${p}"
+        params.append(filters["module_key"])
+        p += 1
+    if filters.get("company_id"):
+        query += f" AND aal.company_id = ${p}"
+        params.append(filters["company_id"])
         p += 1
     query += f" ORDER BY aal.created_at DESC LIMIT ${p} OFFSET ${p+1}"
     params.extend([limit, offset])
@@ -150,3 +162,21 @@ async def log_admin_activity(admin_user_id: int, action: str, resource_type: str
             )
         except Exception as e:
             print("Log activity error:", e)
+
+
+async def log_trust_activity(user_id: int, company_id: int, action: str, resource_type: str, resource_id, changes=None):
+    """POMAR Trust's equivalent of log_admin_activity, for regular-user actors
+    (site engineers, GC owners) rather than admin_users. Writes into the same
+    admin_activity_log table/Admin Portal viewer via the widened actor columns
+    (admin_activity_log.user_id/company_id/module_key) instead of a separate log."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        try:
+            await conn.execute(
+                """INSERT INTO admin_activity_log (user_id, company_id, module_key, action, resource_type, resource_id, changes)
+                   VALUES ($1,$2,'trust',$3,$4,$5,$6)""",
+                user_id, company_id, action, resource_type, resource_id,
+                json.dumps(changes) if changes else None,
+            )
+        except Exception as e:
+            print("Log trust activity error:", e)

@@ -96,6 +96,12 @@ const PRODUCT_ICONS = {
       <path d="M5.5 12 5 3"/>
     </svg>
   ),
+  trust: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5z"/>
+      <path d="m9 12 2 2 4-4"/>
+    </svg>
+  ),
 };
 
 const SOON_ICONS = {
@@ -157,8 +163,16 @@ export default function ProductDashboard({ user, userId, onProductSelect }) {
 
       <div className="pd-section-label">Your tools</div>
       <div className="pd-grid">
-        {PRODUCTS.filter(p => p.status === 'live').map(product => {
-          const locked = product.licenseGated && marketplaceLicensed !== true;
+        {PRODUCTS.filter(p => p.status === 'live')
+          // India-only modules (POMAR Trust) never render for a non-matching
+          // region, and are fully hidden — not shown as a locked/upgrade card —
+          // until the company's feature flag is also enabled. This differs from
+          // marketplace's licenseGated "upgrade" card on purpose: a US org
+          // should never learn Trust exists at all.
+          .filter(p => !p.regionGated || user?.company_region === p.regionGated)
+          .filter(p => !p.regionGated || !!user?.active_modules?.[p.id])
+          .map(product => {
+          const locked = product.id === 'marketplace' && product.licenseGated && marketplaceLicensed !== true;
           return (
             <div
               key={product.id}

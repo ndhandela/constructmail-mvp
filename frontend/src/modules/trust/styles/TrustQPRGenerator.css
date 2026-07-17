@@ -1,0 +1,92 @@
+.trust-upload-type-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.trust-toggle-btn {
+  border: 1px solid #E7E0D3;
+  background: white;
+  color: var(--slate);
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.trust-toggle-btn.active {
+  background: var(--inkwell);
+  color: white;
+  border-color: var(--inkwell);
+}
+
+.trust-upload-source-toggle {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--slate);
+}
+
+.trust-upload-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #E7E0D3;
+  font-family: inherit;
+  font-size: 14px;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+.trust-upload-panel input[type="file"] {
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.trust-upload-row {
+  border: 1px solid #E7E0D3;
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.trust-upload-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--inkwell);
+}
+
+.trust-extractions {
+  padding: 0 14px 12px;
+}
+
+.trust-extraction-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-top: 1px solid #F0EAE0;
+  font-size: 13px;
+}
+
+.trust-qpr-draft {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #E7E0D3;
+}
+
+.trust-qpr-draft-stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--inkwell);
+  margin-bottom: 12px;
+}

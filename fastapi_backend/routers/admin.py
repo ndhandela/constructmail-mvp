@@ -53,6 +53,13 @@ class CreateCompanyRequest(BaseModel):
     companyName: str
     ownerEmail: str
     ownerFullName: str
+    region: Optional[str] = "US"
+    entityName: Optional[str] = None
+
+
+class UpdateCompanyDetailsRequest(BaseModel):
+    region: Optional[str] = None
+    entityName: Optional[str] = None
 
 
 @router.post("/auth/login")
@@ -124,8 +131,10 @@ async def create_company(req: CreateCompanyRequest, admin: dict = Depends(requir
             existing = await conn.fetchrow("SELECT id FROM users WHERE email = $1", owner_email)
             if existing:
                 raise HTTPException(400, "An account with this email already exists.")
+            region = req.region if req.region in ("US", "IN") else "US"
             company = await conn.fetchrow(
-                "INSERT INTO companies (name) VALUES ($1) RETURNING id", req.companyName.strip(),
+                "INSERT INTO companies (name, region, entity_name) VALUES ($1,$2,$3) RETURNING id",
+                req.companyName.strip(), region, (req.entityName or "").strip() or None,
             )
             user = await conn.fetchrow(
                 """INSERT INTO users (email, name, full_name, company, company_id, permission_level,
@@ -147,7 +156,8 @@ async def create_company(req: CreateCompanyRequest, admin: dict = Depends(requir
                      ($1, 'mail', 'Mail Access', 'mail', true, false),
                      ($1, 'clash', 'Clash Access', 'clash', true, false),
                      ($1, 'vendors', 'Vendors Access', 'vendors', true, false),
-                     ($1, 'marketplace', 'Marketplace Access', 'marketplace', false, false)
+                     ($1, 'marketplace', 'Marketplace Access', 'marketplace', false, false),
+                     ($1, 'trust', 'POMAR Trust Access', 'trust', false, false)
                    ON CONFLICT (company_id, feature_key) DO NOTHING""",
                 company["id"],
             )
@@ -219,9 +229,13 @@ async def delete_admin_user(admin_id: int, admin: dict = Depends(require_super_a
 async def get_activity_log(
     limit: int = 100, offset: int = 0,
     admin_id: Optional[int] = None, action: Optional[str] = None, resource_type: Optional[str] = None,
+    module_key: Optional[str] = None, company_id: Optional[int] = None,
     admin: dict = Depends(require_admin),
 ):
-    filters = {k: v for k, v in {"admin_id": admin_id, "action": action, "resource_type": resource_type}.items() if v}
+    filters = {k: v for k, v in {
+        "admin_id": admin_id, "action": action, "resource_type": resource_type,
+        "module_key": module_key, "company_id": company_id,
+    }.items() if v}
     result = await user_service.get_activity_log(limit, offset, filters)
     if not result["success"]:
         raise HTTPException(400, result["error"])
@@ -365,3 +379,68 @@ async def update_company_status(
         admin["id"], "company_status_updated", "companies", company_id, {"status": req.status},
     )
     return {"success": True, "status": row["status"]}
+
+
+@router.put("/companies/{company_id}/details")
+async def update_company_details(
+    company_id: int,
+    req: UpdateCompanyDetailsRequest,
+    admin: dict = Depends(require_super_admin),
+):
+    if req.region is not None and req.region not in ("US", "IN"):
+        raise HTTPException(400, "region must be 'US' or 'IN'")
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """UPDATE companies SET
+                 region = COALESCE($1, region),
+                 entity_name = COALESCE($2, entity_name),
+                 updated_at = NOW()
+               WHERE id = $3 RETURNING id, region, entity_name""",
+            req.region, req.entityName, company_id,
+        )
+    if not row:
+        raise HTTPException(404, "Company not found")
+    await user_service.log_admin_activity(
+        admin["id"], "company_details_updated", "companies", company_id,
+        {"region": req.region, "entityName": req.entityName},
+    )
+    return {"success": True, "region": row["region"], "entity_name": row["entity_name"]}
+
+
+@router.get("/companies/{company_id}/team")
+async def get_company_team(company_id: int, admin: dict = Depends(require_super_admin)):
+    """Trust-role assignment for Super Admin, mirroring the GC Owner-facing
+    equivalent in routers/team.py's PUT /api/team/{member_user_id}/trust-role."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """SELECT id, email, full_name, name, permission_level, trust_role
+               FROM users WHERE company_id = $1 ORDER BY created_at ASC""",
+            company_id,
+        )
+    return {"success": True, "team": [dict(r) for r in rows]}
+
+
+class UpdateTrustRoleRequest(BaseModel):
+    trust_role: Optional[str] = None  # null clears it
+
+
+@router.put("/team/{member_user_id}/trust-role")
+async def admin_update_trust_role(
+    member_user_id: int, req: UpdateTrustRoleRequest, admin: dict = Depends(require_super_admin),
+):
+    if req.trust_role is not None and req.trust_role not in ("owner", "site_data", "compliance_reviewer"):
+        raise HTTPException(400, "trust_role must be 'owner', 'site_data', or 'compliance_reviewer'")
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "UPDATE users SET trust_role = $1 WHERE id = $2 RETURNING id, company_id, trust_role",
+            req.trust_role, member_user_id,
+        )
+    if not row:
+        raise HTTPException(404, "User not found")
+    await user_service.log_admin_activity(
+        admin["id"], "trust_role_updated", "users", member_user_id, {"trust_role": req.trust_role},
+    )
+    return {"success": True, "trust_role": row["trust_role"]}

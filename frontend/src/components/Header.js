@@ -122,6 +122,17 @@ export default function Header({ userId, onLogout, user }) {
               {item.label}
             </a>
           ))}
+          {/* Unlike the always-visible items above, POMAR Trust is India-only
+              and must never appear in nav for a US org or a company without
+              the flag enabled — no "locked" affordance, fully absent. */}
+          {user?.company_region === 'IN' && user?.active_modules?.trust && (
+            <a
+              href="/trust"
+              className={`header-link ${currentPath === '/trust' ? 'active' : ''}`}
+            >
+              Trust
+            </a>
+          )}
         </nav>
       ) : (
         /* ── Logged-out: marketing nav ── */

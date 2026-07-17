@@ -630,6 +630,118 @@ async def init_db():
             ON CONFLICT (company_id, feature_key) DO NOTHING;
 
             DELETE FROM feature_flags WHERE feature_key IN ('mail_intelligence', 'clash_detection', 'vendor_search');
+
+            -- POMAR Trust: RERA compliance module for India-region companies only
+            -- (migration 020). region/entity_name gate a company into the module;
+            -- 'trust' itself is just another feature_flags feature_key, reusing the
+            -- existing module-access machinery rather than a parallel org_modules table.
+            ALTER TABLE companies ADD COLUMN IF NOT EXISTS region VARCHAR(2) NOT NULL DEFAULT 'US' CHECK (region IN ('US','IN'));
+            ALTER TABLE companies ADD COLUMN IF NOT EXISTS entity_name VARCHAR(255);
+
+            -- Only meaningful once a company has Trust enabled; NULL for every
+            -- other user. 'owner' is never actually required in practice — a
+            -- company owner (users.permission_level = 'owner') always resolves to
+            -- full Trust access regardless of this column (see
+            -- services/trust_access.py) — but the value is still allowed here so
+            -- an owner row can be set explicitly from the admin/team UI.
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS trust_role VARCHAR(20) CHECK (trust_role IN ('owner','site_data','compliance_reviewer'));
+
+            -- admin_activity_log previously only recorded admin_users actions.
+            -- Trust events are performed by regular users (site engineers, GC
+            -- owners), so the actor FK is widened rather than standing up a
+            -- second, parallel activity log the spec explicitly asked to avoid.
+            ALTER TABLE admin_activity_log ADD COLUMN IF NOT EXISTS module_key VARCHAR(50);
+            ALTER TABLE admin_activity_log ADD COLUMN IF NOT EXISTS user_id INT REFERENCES users(id) ON DELETE SET NULL;
+            ALTER TABLE admin_activity_log ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE SET NULL;
+            ALTER TABLE admin_activity_log ALTER COLUMN admin_user_id DROP NOT NULL;
+            ALTER TABLE admin_activity_log DROP CONSTRAINT IF EXISTS admin_activity_log_actor_check;
+            ALTER TABLE admin_activity_log ADD CONSTRAINT admin_activity_log_actor_check
+                CHECK (admin_user_id IS NOT NULL OR user_id IS NOT NULL);
+
+            CREATE TABLE IF NOT EXISTS trust_projects (
+                id SERIAL PRIMARY KEY,
+                company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+                project_name VARCHAR(255) NOT NULL,
+                rera_registration_number VARCHAR(100),
+                rera_state VARCHAR(10) NOT NULL DEFAULT 'TG' CHECK (rera_state IN ('TG')),
+                unit_count INT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+
+            -- Raw bytes never land here — storage_path is an R2 object key
+            -- (pomar-trust-uploads bucket), Public Access disabled, backend-only
+            -- reads. TODO: lifecycle policy to auto-delete the raw object once
+            -- parse_status = 'parsed' is confirmed is not built in v1.
+            CREATE TABLE IF NOT EXISTS trust_uploads (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES trust_projects(id) ON DELETE CASCADE,
+                upload_type VARCHAR(20) NOT NULL CHECK (upload_type IN ('whatsapp','email')),
+                storage_path VARCHAR(500) NOT NULL,
+                uploaded_by INT REFERENCES users(id) ON DELETE SET NULL,
+                uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                parse_status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (parse_status IN ('pending','parsed','failed')),
+                contains_pii BOOLEAN NOT NULL DEFAULT true
+            );
+
+            CREATE TABLE IF NOT EXISTS trust_extractions (
+                id SERIAL PRIMARY KEY,
+                upload_id INT NOT NULL REFERENCES trust_uploads(id) ON DELETE CASCADE,
+                extraction_type VARCHAR(30) NOT NULL CHECK (extraction_type IN ('progress_update','milestone','photo_reference','change_trigger')),
+                content_summary TEXT,
+                source_excerpt VARCHAR(500),
+                confidence FLOAT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS trust_qpr_drafts (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES trust_projects(id) ON DELETE CASCADE,
+                quarter VARCHAR(20) NOT NULL,
+                due_date DATE,
+                physical_progress_pct NUMERIC(5,2),
+                financial_progress_pct NUMERIC(5,2),
+                escrow_status TEXT,
+                draft_json JSONB,
+                status VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','reviewed','filed')),
+                generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                filed_at TIMESTAMPTZ,
+                UNIQUE(project_id, quarter)
+            );
+
+            CREATE TABLE IF NOT EXISTS trust_change_alerts (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES trust_projects(id) ON DELETE CASCADE,
+                extraction_id INT REFERENCES trust_extractions(id) ON DELETE SET NULL,
+                alert_type VARCHAR(30) NOT NULL CHECK (alert_type IN ('timeline_shift','layout_change','amenity_change')),
+                severity VARCHAR(10) NOT NULL CHECK (severity IN ('high','low')),
+                description TEXT,
+                status VARCHAR(20) NOT NULL DEFAULT 'open' CHECK (status IN ('open','notice_drafted','resolved','dismissed')),
+                detected_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS trust_buyer_notices (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES trust_projects(id) ON DELETE CASCADE,
+                alert_id INT REFERENCES trust_change_alerts(id) ON DELETE SET NULL,
+                unit_reference VARCHAR(100),
+                notice_type VARCHAR(30) NOT NULL CHECK (notice_type IN ('qpr_summary','change_disclosure')),
+                content TEXT NOT NULL,
+                sent_by INT REFERENCES users(id) ON DELETE SET NULL,
+                sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                delivery_status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (delivery_status IN ('pending','confirmed','failed')),
+                proof_reference VARCHAR(255)
+            );
+
+            -- UNIQUE(qpr_draft_id, reminder_type) is what makes the daily cron
+            -- idempotent: re-running the scan never inserts a second 'due_3d' etc.
+            CREATE TABLE IF NOT EXISTS trust_reminders (
+                id SERIAL PRIMARY KEY,
+                qpr_draft_id INT NOT NULL REFERENCES trust_qpr_drafts(id) ON DELETE CASCADE,
+                reminder_type VARCHAR(20) NOT NULL CHECK (reminder_type IN ('due_7d','due_3d','due_1d','overdue')),
+                sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                channel VARCHAR(20) NOT NULL CHECK (channel IN ('in_app','email')),
+                UNIQUE(qpr_draft_id, reminder_type)
+            );
         """)
 
         await _backfill_clash_project_ids(conn)

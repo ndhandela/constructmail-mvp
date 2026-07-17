@@ -54,6 +54,9 @@ async def get_profile(userId: int):
             "SELECT * FROM clients WHERE user_id = $1", userId
         )
         active_modules = await get_active_modules(conn, user["company_id"])
+        company_region = await conn.fetchval(
+            "SELECT region FROM companies WHERE id = $1", user["company_id"]
+        ) if user["company_id"] else None
 
     profile = {
         "id":               user["id"],
@@ -70,6 +73,8 @@ async def get_profile(userId: int):
         "company_id":       user["company_id"],
         "permission_level": user["permission_level"],
         "active_modules":   active_modules,
+        "trust_role":       user["trust_role"],
+        "company_region":   company_region,
     }
 
     company_data = dict(company) if company else {

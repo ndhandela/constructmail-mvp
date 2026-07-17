@@ -7,12 +7,15 @@ from fastapi.responses import PlainTextResponse
 from db import init_db, get_pool
 from routers import ai, auth, gmail, outlook, clash, procore, vendors, admin, misc, marketplace, profile, mail, projects, team, logs
 from routers import connect as connect_router
+from routers import trust, trust_uploads, trust_qpr, trust_alerts
+from services import trust_reminders
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
     connect_router.start_scheduler()
+    trust_reminders.start_scheduler()
     yield
 
 
@@ -46,6 +49,10 @@ app.include_router(team.router)
 app.include_router(admin.router)
 app.include_router(logs.router)
 app.include_router(connect_router.router)
+app.include_router(trust.router)
+app.include_router(trust_uploads.router)
+app.include_router(trust_qpr.router)
+app.include_router(trust_alerts.router)
 
 
 @app.exception_handler(Exception)

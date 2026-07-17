@@ -22,6 +22,7 @@ import VendorsApp from './modules/vendors/pages/VendorsApp';
 import ConnectApp from './modules/connect/pages/ConnectApp';
 import MarketplaceApp from './modules/marketplace/pages/MarketplaceApp';
 import ProfileApp from './modules/profile/pages/ProfileApp';
+import TrustApp from './modules/trust/pages/TrustApp';
 
 // Modules
 import ConstructMailApp from './modules/constructmail/pages/ConstructMailApp';
@@ -33,7 +34,7 @@ import './styles/components.css';
 import './App.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile'];
+const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/trust'];
 
 function App() {
   const [userId, setUserId] = useState(null);
@@ -107,6 +108,7 @@ function App() {
       if (path === '/connect') setCurrentProduct('connect');
       if (path === '/marketplace') setCurrentProduct('marketplace');
       if (path === '/profile') setCurrentProduct('profile');
+      if (path === '/trust') setCurrentProduct('trust');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
@@ -424,6 +426,20 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
         </ProjectGate>
         <Footer />
       </ProjectProvider>
+    );
+  }
+
+  // ── POMAR Trust (India-only) ─────────────────────────────────────────
+  // No ProjectProvider/ProjectGate — Trust has its own project concept
+  // (trust_projects, RERA-registered developments), independent of the
+  // shared POMAR ProjectContext the other modules use.
+  if (currentProduct === 'trust' || path === '/trust') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <TrustApp user={user} userId={userId} />
+        <Footer />
+      </>
     );
   }
 
