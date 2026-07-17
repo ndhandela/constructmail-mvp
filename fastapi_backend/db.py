@@ -752,6 +752,17 @@ async def init_db():
             ALTER TABLE trust_projects DROP CONSTRAINT IF EXISTS trust_projects_rera_state_check;
             ALTER TABLE trust_projects ADD CONSTRAINT trust_projects_rera_state_check
                 CHECK (rera_state IN ('TG','TN','KA','MH','AP','GJ','UP','DL'));
+
+            -- Optional link from a Trust RERA project to the generic
+            -- cross-module projects table Mail/Clash/Vendors already use
+            -- (migration 022) — nullable, no backfill: existing rows keep
+            -- linked_project_id = NULL and work exactly as before. The two
+            -- tables are deliberately not merged; this is just a pointer so
+            -- an org using both doesn't have to model the same physical
+            -- project twice. ON DELETE SET NULL rather than CASCADE — a
+            -- generic project being removed shouldn't take the RERA project
+            -- and its compliance history down with it.
+            ALTER TABLE trust_projects ADD COLUMN IF NOT EXISTS linked_project_id INT REFERENCES projects(id) ON DELETE SET NULL;
         """)
 
         await _backfill_clash_project_ids(conn)

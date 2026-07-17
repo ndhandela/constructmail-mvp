@@ -27,6 +27,10 @@ export default function TrustApp({ user, userId }) {
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [stateProfiles, setStateProfiles] = useState([]);
   const trustRole = getTrustRole(user);
+  // Only orgs with something else to link to need the mode picker at all —
+  // an India-only Trust-only org has no generic projects to offer, so the
+  // form just stays the plain standalone one for them.
+  const canLinkProjects = !!(user?.active_modules?.vendors || user?.active_modules?.clash || user?.active_modules?.mail);
 
   const fetchProjects = useCallback(async () => {
     setLoadingProjects(true);
@@ -110,6 +114,7 @@ export default function TrustApp({ user, userId }) {
             loadingProjects={loadingProjects}
             trustRole={trustRole}
             stateProfiles={stateProfiles}
+            canLinkProjects={canLinkProjects}
             onProjectCreated={fetchProjects}
             onSelectProject={(id) => { setSelectedProjectId(id); setActiveTab('qpr'); }}
           />

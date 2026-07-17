@@ -17,6 +17,7 @@ export default function ProjectTeam({ userId, permissionLevel, companyId, trustE
   const [inviteRole, setInviteRole] = useState('contributor');
   const [inviting, setInviting] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [trustLink, setTrustLink] = useState(null);
 
   const hasProject = currentProjectId && currentProjectId !== ALL_PROJECTS;
   const currentProject = projects.find((p) => String(p.id) === String(currentProjectId));
@@ -46,6 +47,21 @@ export default function ProjectTeam({ userId, permissionLevel, companyId, trustE
   }, [hasProject, currentProjectId, userId]);
 
   useEffect(() => { fetchMembers(); }, [fetchMembers]);
+
+  // Reverse direction of Trust's "Linked to" indicator — only ever
+  // meaningful for a Trust-enabled org, since a non-Trust company can never
+  // have a matching trust_projects row (the endpoint is safe to call
+  // regardless, it just always comes back false for them).
+  useEffect(() => {
+    if (!hasProject || !trustEnabled) {
+      setTrustLink(null);
+      return;
+    }
+    fetch(`${API_BASE_URL}/api/projects/${currentProjectId}/trust-link?userId=${userId}`)
+      .then((res) => res.json())
+      .then((data) => setTrustLink(data.success && data.has_trust_link ? data : null))
+      .catch(() => setTrustLink(null));
+  }, [hasProject, trustEnabled, currentProjectId, userId]);
 
   const handleInvite = async (e) => {
     e.preventDefault();
@@ -99,6 +115,12 @@ export default function ProjectTeam({ userId, permissionLevel, companyId, trustE
             <p className="profile-section-title" style={{ marginTop: 8 }}>
               Members of {currentProject?.name}
             </p>
+            {trustLink && (
+              <p className="profile-readonly-note">
+                🔗 This project also has POMAR Trust data —{' '}
+                <a href="/trust">View in POMAR Trust</a>
+              </p>
+            )}
 
             <div className="team-member-list">
               {members.map((m) => (

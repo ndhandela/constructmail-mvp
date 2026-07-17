@@ -12,15 +12,44 @@ function dueBadge(lastQpr) {
   return { text: `${lastQpr.quarter} due ${lastQpr.due_date}`, color: 'var(--sage)' };
 }
 
-function NewProjectForm({ userId, states, onCreated, onCancel }) {
+const PROJECT_MODES = [
+  { key: 'standalone', label: 'Create a standalone Trust project' },
+  { key: 'link_existing', label: 'Link to an existing project' },
+  { key: 'create_linked', label: 'Create a new project for both' },
+];
+
+function NewProjectForm({ userId, states, canLinkProjects, onCreated, onCancel }) {
+  const [mode, setMode] = useState('standalone');
   const [form, setForm] = useState({ project_name: '', rera_registration_number: '', rera_state: 'TG', unit_count: '' });
+  const [existingProjectId, setExistingProjectId] = useState('');
+  const [existingProjects, setExistingProjects] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const selectedState = states.find((s) => s.code === form.rera_state);
 
+  useEffect(() => {
+    if (mode !== 'link_existing' || !canLinkProjects) return;
+    fetch(`${API_BASE_URL}/api/projects?userId=${userId}`)
+      .then((res) => res.json())
+      .then((data) => { if (data.success) setExistingProjects(data.projects || []); })
+      .catch(() => setExistingProjects([]));
+  }, [mode, canLinkProjects, userId]);
+
+  const handleExistingProjectSelect = (id) => {
+    setExistingProjectId(id);
+    const picked = existingProjects.find((p) => String(p.id) === String(id));
+    if (picked && !form.project_name) {
+      setForm((f) => ({ ...f, project_name: picked.name }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (mode === 'link_existing' && !existingProjectId) {
+      setError('Select a project to link to.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
@@ -33,6 +62,8 @@ function NewProjectForm({ userId, states, onCreated, onCancel }) {
           rera_registration_number: form.rera_registration_number.trim() || null,
           rera_state: form.rera_state,
           unit_count: form.unit_count ? Number(form.unit_count) : null,
+          mode,
+          existing_project_id: mode === 'link_existing' ? Number(existingProjectId) : null,
         }),
       });
       const data = await res.json();
@@ -51,6 +82,40 @@ function NewProjectForm({ userId, states, onCreated, onCancel }) {
   return (
     <form className="trust-new-project-form" onSubmit={handleSubmit}>
       <h3>New RERA Project</h3>
+
+      {canLinkProjects && (
+        <div className="trust-project-mode-picker">
+          {PROJECT_MODES.map((m) => (
+            <label key={m.key} className="trust-project-mode-option">
+              <input
+                type="radio"
+                name="project-mode"
+                checked={mode === m.key}
+                onChange={() => setMode(m.key)}
+                disabled={saving}
+              />
+              {m.label}
+            </label>
+          ))}
+        </div>
+      )}
+
+      {mode === 'link_existing' && canLinkProjects && (
+        <div className="trust-field" style={{ marginBottom: 14 }}>
+          <label>Existing project</label>
+          <select
+            value={existingProjectId}
+            onChange={(e) => handleExistingProjectSelect(e.target.value)}
+            disabled={saving}
+          >
+            <option value="">Select a project…</option>
+            {existingProjects.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div className="trust-form-row">
         <div className="trust-field">
           <label>Project Name</label>
@@ -74,11 +139,6 @@ function NewProjectForm({ userId, states, onCreated, onCancel }) {
               </option>
             ))}
           </select>
-          {selectedState && !selectedState.implemented && (
-            <span className="trust-state-badge trust-state-badge-soon">
-              QPR generation coming soon for {selectedState.label} — Change Alerts and Audit Trail work now
-            </span>
-          )}
         </div>
         <div className="trust-field">
           <label>RERA Registration #</label>
@@ -98,6 +158,17 @@ function NewProjectForm({ userId, states, onCreated, onCancel }) {
           />
         </div>
       </div>
+      {/* Full-width, below the whole row — rendered here rather than inside the
+          State field's own column so its presence/absence never changes the
+          row's height and knocks the four inputs out of alignment. */}
+      <div className="trust-state-helper-slot">
+        {selectedState && !selectedState.implemented && (
+          <span className="trust-state-badge trust-state-badge-soon">
+            QPR generation coming soon for {selectedState.label} — Change Alerts and Audit Trail work now
+          </span>
+        )}
+      </div>
+
       {error && <div className="trust-error">{error}</div>}
       <div className="trust-form-actions">
         <button type="button" className="trust-btn-secondary" onClick={onCancel} disabled={saving}>Cancel</button>
@@ -113,7 +184,7 @@ function stateLabel(stateProfiles, code) {
   return stateProfiles.find((s) => s.code === code)?.label || code;
 }
 
-export default function TrustDashboard({ userId, projects, loadingProjects, trustRole, stateProfiles, onProjectCreated, onSelectProject }) {
+export default function TrustDashboard({ userId, projects, loadingProjects, trustRole, stateProfiles, canLinkProjects, onProjectCreated, onSelectProject }) {
   const [summaries, setSummaries] = useState({});
   const [showNewProject, setShowNewProject] = useState(false);
 
@@ -145,6 +216,7 @@ export default function TrustDashboard({ userId, projects, loadingProjects, trus
         <NewProjectForm
           userId={userId}
           states={stateProfiles}
+          canLinkProjects={canLinkProjects}
           onCreated={() => { setShowNewProject(false); onProjectCreated(); }}
           onCancel={() => setShowNewProject(false)}
         />
@@ -170,6 +242,9 @@ export default function TrustDashboard({ userId, projects, loadingProjects, trus
                 <p className="trust-muted">
                   {stateLabel(stateProfiles, p.rera_state)}-RERA {p.rera_registration_number || 'unregistered'} · {p.unit_count || '—'} units
                 </p>
+                {p.linked_project_id && (
+                  <p className="trust-linked-indicator">🔗 Linked to: {p.linked_project_name || 'another project'}</p>
+                )}
                 <div className="trust-project-card-stats">
                   <span>{summary?.open_alert_count ?? '—'} open alerts</span>
                   <span>{summary?.upload_count ?? '—'} uploads</span>

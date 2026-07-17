@@ -74,3 +74,35 @@
   color: var(--slate);
   font-style: italic;
 }
+
+/* Full-width slot below the field row (not inside the State field's own
+   column) so its presence/absence never changes that column's height and
+   knocks the row's four inputs out of vertical alignment with each other. */
+.trust-state-helper-slot {
+  margin: -4px 0 14px;
+  min-height: 16px;
+}
+
+.trust-project-mode-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #E7E0D3;
+}
+
+.trust-project-mode-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--inkwell);
+  cursor: pointer;
+}
+
+.trust-linked-indicator {
+  font-size: 12px;
+  color: var(--slate);
+  margin: 4px 0 0;
+}

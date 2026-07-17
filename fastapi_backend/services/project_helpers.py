@@ -80,6 +80,45 @@ async def get_or_create_personal_mail_project(conn, user_id: int) -> int:
     return project_id
 
 
+async def create_project_and_membership(
+    conn, user_id: int, company_id: int, name: str,
+    project_number: str | None = None, client_name: str | None = None,
+) -> dict:
+    """Inserts a row into the generic projects table plus its project_members,
+    with the exact same sharing rule routers/projects.py's own create_project
+    uses (creator as owner, rest of the company as owner/contributor by their
+    own permission_level) — factored out so POMAR Trust's "create a project
+    for both" mode produces a project indistinguishable from one created
+    directly in Vendors/Clash/Mail. Runs in its own transaction block; nested
+    inside a caller's already-open transaction, asyncpg treats this as a
+    savepoint, so a caller wrapping this together with another insert (e.g.
+    Trust's linked trust_projects row) still gets a single all-or-nothing unit."""
+    async with conn.transaction():
+        project = await conn.fetchrow(
+            """INSERT INTO projects (user_id, company_id, name, project_number, client_name)
+               VALUES ($1, $2, $3, $4, $5)
+               RETURNING id, name, project_number, client_name""",
+            user_id, company_id, name, project_number, client_name,
+        )
+        await conn.execute(
+            "INSERT INTO project_members (project_id, user_id, role) VALUES ($1, $2, 'owner')",
+            project["id"], user_id,
+        )
+        if company_id:
+            teammates = await conn.fetch(
+                "SELECT id, permission_level FROM users WHERE company_id = $1 AND id != $2",
+                company_id, user_id,
+            )
+            for teammate in teammates:
+                role = "owner" if teammate["permission_level"] == "owner" else "contributor"
+                await conn.execute(
+                    """INSERT INTO project_members (project_id, user_id, role) VALUES ($1, $2, $3)
+                       ON CONFLICT (project_id, user_id) DO NOTHING""",
+                    project["id"], teammate["id"], role,
+                )
+    return dict(project)
+
+
 async def accept_pending_invites(conn, user_id: int, email: str):
     """
     Called right after a user account is created or first verified (register,

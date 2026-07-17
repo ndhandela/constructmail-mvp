@@ -102,6 +102,35 @@ async def get_company_projects(company_id: int):
     return {"success": True, "projects": [dict(r) for r in rows]}
 
 
+@router.get("/{project_id}/trust-link")
+async def get_project_trust_link(project_id: int, userId: int):
+    """Lets Vendors/Clash/Mail optionally surface "this project also has
+    POMAR Trust data" without knowing anything about Trust's schema beyond
+    this one lookup. Safe to call for any project regardless of the caller's
+    region/module access — a non-Trust company can never have a matching
+    trust_projects row, so this is a no-op (has_trust_link: false) for them,
+    not a new access path into Trust data."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        is_member = await conn.fetchval(
+            "SELECT 1 FROM project_members WHERE project_id = $1 AND user_id = $2",
+            project_id, userId,
+        )
+        if not is_member:
+            raise HTTPException(403, "You do not have access to this project")
+
+        trust_project = await conn.fetchrow(
+            "SELECT id, project_name FROM trust_projects WHERE linked_project_id = $1",
+            project_id,
+        )
+    return {
+        "success": True,
+        "has_trust_link": trust_project is not None,
+        "trust_project_id": trust_project["id"] if trust_project else None,
+        "trust_project_name": trust_project["project_name"] if trust_project else None,
+    }
+
+
 @router.get("/{project_id}/members")
 async def get_project_members(project_id: int, userId: int):
     pool = await get_pool()
