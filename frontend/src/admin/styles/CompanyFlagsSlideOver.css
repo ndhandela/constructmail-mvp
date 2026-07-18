@@ -1,0 +1,106 @@
+/* ============================================================
+   Company flags slide-over — same mechanics as
+   src/styles/ProjectInfoSlideOver.css (pis-*), 420px per the
+   admin flags redesign spec instead of that panel's 380px.
+   ============================================================ */
+
+.cfso-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 27, 44, 0.55);
+  z-index: 2500;
+}
+
+.cfso-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 420px;
+  max-width: 100vw;
+  background: var(--parchment);
+  z-index: 2600;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  animation: cfso-slide-in 0.2s ease-out;
+  font-family: var(--font-poppins);
+}
+
+@keyframes cfso-slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.cfso-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 24px 24px 16px;
+  background: white;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.cfso-eyebrow {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--inkwell);
+}
+
+.cfso-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--slate);
+}
+
+.cfso-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--slate);
+  padding: 4px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.cfso-search {
+  padding: 14px 24px;
+  background: white;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.cfso-search input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.cfso-search input:focus {
+  outline: none;
+  border-color: var(--saffron);
+}
+
+.cfso-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 24px 24px;
+}
+
+.cfso-empty {
+  font-size: 13px;
+  color: var(--slate);
+  padding: 20px 0;
+}
+
+@media (max-width: 480px) {
+  .cfso-panel {
+    width: 100vw;
+  }
+}

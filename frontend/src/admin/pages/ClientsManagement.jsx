@@ -241,7 +241,10 @@ function CompanyTrustPanel({ token, company, onDetailsSaved }) {
   );
 }
 
-function AddCompanyModal({ token, onClose, onCreated }) {
+// Exported so other admin pages (e.g. the redesigned Feature Flags company
+// list) can reuse the exact same company-creation flow instead of building
+// a second, divergent "add a company" form for the same `companies` table.
+export function AddCompanyModal({ token, onClose, onCreated }) {
   return (
     <div className="add-company-modal-overlay" onClick={onClose}>
       <div className="add-company-modal" onClick={e => e.stopPropagation()}>
