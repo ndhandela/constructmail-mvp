@@ -1,0 +1,89 @@
+/* ============================================================
+   Global unsaved-changes confirm dialog
+   ============================================================ */
+
+.ucg-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 27, 44, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  padding: 20px;
+}
+
+.ucg-box {
+  background: white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 400px;
+  padding: 24px;
+  font-family: var(--font-poppins);
+}
+
+.ucg-title {
+  margin: 0 0 10px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--inkwell);
+}
+
+.ucg-body {
+  margin: 0 0 20px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--slate);
+}
+
+.ucg-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.ucg-btn {
+  padding: 9px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  border: 1.5px solid transparent;
+}
+
+.ucg-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.ucg-btn-cancel {
+  background: transparent;
+  color: var(--inkwell);
+  border-color: var(--border-light);
+}
+
+.ucg-btn-cancel:hover:not(:disabled) {
+  background: var(--parchment);
+}
+
+.ucg-btn-discard {
+  background: transparent;
+  color: var(--slate);
+  border-color: var(--border-light);
+}
+
+.ucg-btn-discard:hover:not(:disabled) {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.ucg-btn-save {
+  background: var(--saffron);
+  color: white;
+}
+
+.ucg-btn-save:hover:not(:disabled) {
+  background: var(--saffron-hover);
+}

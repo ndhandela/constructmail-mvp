@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ProjectProvider } from './contexts/ProjectContext';
+import { UnsavedChangesProvider } from './contexts/UnsavedChangesContext';
 import Auth from './modules/shared/auth/Auth';
 import SelectRole from './modules/shared/auth/SelectRole';
 import LandingPage from './pages/LandingPage';
@@ -13,6 +14,7 @@ import VendorsMarketing from './pages/marketing/VendorsMarketing';
 import MarketplaceMarketing from './pages/marketing/MarketplaceMarketing';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import AppLayout from './components/AppLayout';
 import ProjectGate from './components/ProjectGate';
 import AboutUs from './pages/AboutUs';
 import ResetPassword from './pages/ResetPassword';
@@ -28,6 +30,7 @@ import TrustApp from './modules/trust/pages/TrustApp';
 import ConstructMailApp from './modules/constructmail/pages/ConstructMailApp';
 import ClashAnalyzer from './modules/clash/pages/ClashAnalyzer';
 import ProductDashboard from './pages/Dashboard';
+import ProjectsEditPage from './pages/ProjectsEditPage';
 
 import './styles/theme.css';
 import './styles/components.css';
@@ -35,6 +38,32 @@ import './App.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/trust'];
+
+// The "Your Tools" landing grid and the Projects edit page share the
+// /dashboard route — the edit page is reached only via the project info
+// slide-over's "Edit Project Info"/"Edit Team Members" buttons (see
+// ProjectInfoSlideOver.js), which navigate to
+// /dashboard?view=projects-edit&section=info|team&projectId=... via a full
+// page load (this app has no client router). Parsing that here keeps the
+// decision local to the one route both views live on.
+function DashboardArea({ user, userId, onProductSelect }) {
+  const params = new URLSearchParams(window.location.search);
+  const view = params.get('view');
+
+  if (view === 'projects-edit') {
+    return (
+      <ProjectsEditPage
+        projectId={params.get('projectId')}
+        section={params.get('section') || 'info'}
+        userId={userId}
+        user={user}
+        onBack={() => { window.location.href = '/dashboard'; }}
+      />
+    );
+  }
+
+  return <ProductDashboard user={user} userId={userId} onProductSelect={onProductSelect} />;
+}
 
 function App() {
   const [userId, setUserId] = useState(null);
@@ -319,11 +348,11 @@ function App() {
 if (userId && path === '/dashboard') {
   return (
     <ProjectProvider userId={userId}>
-      <Header userId={userId} onLogout={handleLogout} user={user} />
-      <ProjectGate userId={userId} user={user}>
-        <ProductDashboard user={user} userId={userId} onProductSelect={handleProductSelect} />
-      </ProjectGate>
-      <Footer />
+      <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+        <ProjectGate userId={userId} user={user}>
+          <DashboardArea user={user} userId={userId} onProductSelect={handleProductSelect} />
+        </ProjectGate>
+      </AppLayout>
     </ProjectProvider>
   );
 }
@@ -333,7 +362,7 @@ if (userId && path === '/dashboard') {
     return <AdminPortal />;
   }
 
-  
+
   // ── Landing page ─────────────────────────────────────────────────────────
   if (!currentProduct) {
     return (
@@ -356,11 +385,11 @@ if (userId && path === '/dashboard') {
   if (currentProduct === 'constructmail') {
     return (
       <ProjectProvider userId={userId}>
-        <Header userId={userId} onLogout={handleLogout} user={user} />
-        <ProjectGate userId={userId} user={user}>
-          <ConstructMailApp user={user} userId={userId} onLogout={handleLogout} />
-        </ProjectGate>
-        <Footer />
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <ProjectGate userId={userId} user={user}>
+            <ConstructMailApp user={user} userId={userId} onLogout={handleLogout} />
+          </ProjectGate>
+        </AppLayout>
       </ProjectProvider>
     );
   }
@@ -369,11 +398,11 @@ if (userId && path === '/dashboard') {
   if (currentProduct === 'clash') {
     return (
       <ProjectProvider userId={userId}>
-        <Header userId={userId} onLogout={handleLogout} user={user} />
-        <ProjectGate userId={userId} user={user}>
-          <ClashAnalyzer user={user} />
-        </ProjectGate>
-        <Footer />
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <ProjectGate userId={userId} user={user}>
+            <ClashAnalyzer user={user} />
+          </ProjectGate>
+        </AppLayout>
       </ProjectProvider>
     );
   }
@@ -382,11 +411,11 @@ if (userId && path === '/dashboard') {
   if (currentProduct === 'vendors') {
     return (
       <ProjectProvider userId={userId}>
-        <Header userId={userId} onLogout={handleLogout} user={user} />
-        <ProjectGate userId={userId} user={user}>
-          <VendorsApp user={user} userId={userId} onLogout={handleLogout} />
-        </ProjectGate>
-        <Footer />
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <ProjectGate userId={userId} user={user}>
+            <VendorsApp user={user} userId={userId} onLogout={handleLogout} />
+          </ProjectGate>
+        </AppLayout>
       </ProjectProvider>
     );
   }
@@ -395,11 +424,11 @@ if (userId && path === '/dashboard') {
   if (currentProduct === 'connect' || path === '/connect') {
     return (
       <ProjectProvider userId={userId}>
-        <Header userId={userId} onLogout={handleLogout} user={user} />
-        <ProjectGate userId={userId} user={user}>
-          <ConnectApp userId={userId} />
-        </ProjectGate>
-        <Footer />
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <ProjectGate userId={userId} user={user}>
+            <ConnectApp userId={userId} />
+          </ProjectGate>
+        </AppLayout>
       </ProjectProvider>
     );
   }
@@ -407,11 +436,11 @@ if (userId && path === '/dashboard') {
 if (currentProduct === 'dashboard' || path === '/dashboard') {
     return (
       <ProjectProvider userId={userId}>
-        <Header userId={userId} onLogout={handleLogout} user={user} />
-        <ProjectGate userId={userId} user={user}>
-          <ProductDashboard user={user} userId={userId} onProductSelect={handleProductSelect} />
-        </ProjectGate>
-        <Footer />
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <ProjectGate userId={userId} user={user}>
+            <DashboardArea user={user} userId={userId} onProductSelect={handleProductSelect} />
+          </ProjectGate>
+        </AppLayout>
       </ProjectProvider>
     );
   }
@@ -420,9 +449,9 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
   if (currentProduct === 'profile' || path === '/profile') {
     return (
       <ProjectProvider userId={userId}>
-        <Header userId={userId} onLogout={handleLogout} user={user} />
-        <ProfileApp userId={userId} />
-        <Footer />
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <ProfileApp userId={userId} />
+        </AppLayout>
       </ProjectProvider>
     );
   }
@@ -431,11 +460,11 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
   if (currentProduct === 'marketplace' || path === '/marketplace') {
     return (
       <ProjectProvider userId={userId}>
-        <Header userId={userId} onLogout={handleLogout} user={user} />
-        <ProjectGate userId={userId} user={user}>
-          <MarketplaceApp user={user} userId={userId} />
-        </ProjectGate>
-        <Footer />
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <ProjectGate userId={userId} user={user}>
+            <MarketplaceApp user={user} userId={userId} />
+          </ProjectGate>
+        </AppLayout>
       </ProjectProvider>
     );
   }
@@ -446,15 +475,19 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
   // shared POMAR ProjectContext the other modules use.
   if (currentProduct === 'trust' || path === '/trust') {
     return (
-      <>
-        <Header userId={userId} onLogout={handleLogout} user={user} />
+      <AppLayout userId={userId} onLogout={handleLogout} user={user}>
         <TrustApp user={user} userId={userId} />
-        <Footer />
-      </>
+      </AppLayout>
     );
   }
 
   return <div>Unknown product</div>;
 }
 
-export default App;
+export default function AppWithProviders() {
+  return (
+    <UnsavedChangesProvider>
+      <App />
+    </UnsavedChangesProvider>
+  );
+}

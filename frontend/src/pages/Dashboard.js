@@ -61,13 +61,13 @@ function ActivityFeedPanel({ userId }) {
 // Clean SVG icons for each product
 const PRODUCT_ICONS = {
   constructmail: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="2" y="4" width="20" height="16" rx="2"/>
       <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
     </svg>
   ),
   clash: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M2 20h20"/>
       <path d="M5 20V8l7-6 7 6v12"/>
       <path d="M9 20v-6h6v6"/>
@@ -75,7 +75,7 @@ const PRODUCT_ICONS = {
     </svg>
   ),
   vendors: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
       <circle cx="9" cy="7" r="4"/>
       <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
@@ -83,12 +83,12 @@ const PRODUCT_ICONS = {
     </svg>
   ),
   connect: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
     </svg>
   ),
   marketplace: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 3h18l-1.5 9h-15z"/>
       <path d="M3 3 2 3"/>
       <circle cx="9" cy="20" r="1.5"/>
@@ -97,7 +97,7 @@ const PRODUCT_ICONS = {
     </svg>
   ),
   trust: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5z"/>
       <path d="m9 12 2 2 4-4"/>
     </svg>
@@ -106,7 +106,7 @@ const PRODUCT_ICONS = {
 
 const SOON_ICONS = {
   'POMAR Specs': (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
       <polyline points="14 2 14 8 20 8"/>
       <line x1="16" y1="13" x2="8" y2="13"/>
@@ -114,13 +114,13 @@ const SOON_ICONS = {
     </svg>
   ),
   'POMAR Field': (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
       <circle cx="12" cy="10" r="3"/>
     </svg>
   ),
   'POMAR Closeout': (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="20 6 9 17 4 12"/>
     </svg>
   ),
@@ -178,9 +178,8 @@ export default function ProductDashboard({ user, userId, onProductSelect }) {
               key={product.id}
               className={`pd-card ${locked ? 'pd-card-soon' : ''}`}
               onClick={() => { if (!locked) window.location.href = product.path; }}
-              style={{ '--product-color': product.color }}
             >
-              <div className="pd-card-icon" style={{ color: locked ? 'var(--slate)' : product.color }}>
+              <div className="pd-card-icon" style={{ color: locked ? 'var(--slate)' : 'var(--saffron)' }}>
                 {PRODUCT_ICONS[product.id]}
               </div>
               <div className="pd-card-body">
@@ -188,7 +187,15 @@ export default function ProductDashboard({ user, userId, onProductSelect }) {
                 <p className="pd-card-desc">{product.description}</p>
               </div>
               {locked
-                ? <div className="pd-card-badge">🔒 Upgrade</div>
+                ? (
+                  <div className="pd-card-badge pd-card-badge-locked">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    Upgrade
+                  </div>
+                )
                 : <div className="pd-card-arrow">→</div>}
             </div>
           );

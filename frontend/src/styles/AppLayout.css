@@ -1,0 +1,24 @@
+/* ============================================================
+   POMAR App Shell — Header + Sidebar + content
+   ============================================================ */
+
+.app-layout {
+  min-height: 100vh;
+  background: var(--parchment);
+  font-family: var(--font-poppins);
+}
+
+.app-layout h1, .app-layout h2, .app-layout h3, .app-layout h4 {
+  font-family: var(--font-poppins);
+  font-weight: 700;
+}
+
+.app-layout-body {
+  display: flex;
+  align-items: flex-start;
+}
+
+.content-shell {
+  flex: 1;
+  min-width: 0;
+}

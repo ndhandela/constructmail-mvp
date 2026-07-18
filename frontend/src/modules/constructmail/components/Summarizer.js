@@ -26,6 +26,14 @@ export default function Summarizer({ userId, selectedEmailText, emailMeta, onDra
     if (e.target.value !== selectedEmailText) {
       setMetaValid(false);
     }
+    // TODO(unsaved-changes guard): call setDirty(true, 'a mail reply draft')
+    // here (import useUnsavedChanges from '../../../contexts/
+    // UnsavedChangesContext') so switching sidebar apps mid-draft prompts
+    // Save & Switch/Discard/Cancel instead of silently losing this text.
+    // Skip marking dirty on the very first render where selectedEmailText
+    // populates emailText (see MailReplyComposer's isMountedWithInitialValue
+    // pattern in the worked example) so loading an inbox thread doesn't
+    // itself count as an edit.
   };
 
   const handleSubmit = async (e) => {
@@ -49,6 +57,11 @@ export default function Summarizer({ userId, selectedEmailText, emailMeta, onDra
       if (response.data.draft_reply_id && onDraftCreated) {
         onDraftCreated();
       }
+      // TODO(unsaved-changes guard): call setDirty(false) here too — a
+      // successful summarize/draft call is the closest thing this component
+      // has to a "save", so it should clear the dirty flag set in
+      // handleTextChange above. Also call registerSaveHandler(null) on
+      // unmount (see the worked example's touch point 2/3).
     } catch (err) {
       const errorMsg = err.response?.data?.detail || err.message || 'Unknown error occurred';
       setError(errorMsg);

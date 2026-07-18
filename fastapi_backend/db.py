@@ -763,6 +763,34 @@ async def init_db():
             -- generic project being removed shouldn't take the RERA project
             -- and its compliance history down with it.
             ALTER TABLE trust_projects ADD COLUMN IF NOT EXISTS linked_project_id INT REFERENCES projects(id) ON DELETE SET NULL;
+
+            -- Project info fields for the Projects edit page (migration 023).
+            -- No `owner` column on purpose: project_members.role='owner' is
+            -- already the permission-bearing owner (it's what gates
+            -- POST /{project_id}/invite), so a second freeform owner label
+            -- here would just be a second, driftable source of truth. The
+            -- edit page keeps deriving "Owner" from project_members, same as
+            -- before, and doesn't let it be edited as plain text.
+            ALTER TABLE projects ADD COLUMN IF NOT EXISTS location VARCHAR(255);
+            ALTER TABLE projects ADD COLUMN IF NOT EXISTS start_date DATE;
+            ALTER TABLE projects ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'active'
+                CHECK (status IN ('planning', 'active', 'on_hold', 'completed'));
+
+            -- UNIQUE(company_id, name) (migration 024). Follow-up to 023:
+            -- company_id=11 had 4 rows all named exactly "MyHome Project 1"
+            -- (ids 36-39, zero rows referencing any of them anywhere per a
+            -- full scan of every table with a project_id column) — owner
+            -- confirmed ids 37-39 as safe-to-delete duplicates of 36, deleted
+            -- outside this migration (a one-time data cleanup keyed to those
+            -- specific row ids has no business living in code that runs
+            -- against every environment). A plain unique index (not a named
+            -- UNIQUE constraint) to match this file's existing idempotency
+            -- idiom — see module_pricing_global_unique/feature_flags_global_unique
+            -- above — since `ADD CONSTRAINT` has no IF NOT EXISTS guard and
+            -- would error on every restart after the first. NULLs (rows with
+            -- no company_id, e.g. each user's own "Default Project") are
+            -- unaffected — Postgres unique indexes never collide two NULLs.
+            CREATE UNIQUE INDEX IF NOT EXISTS projects_company_id_name_key ON projects (company_id, name);
         """)
 
         await _backfill_clash_project_ids(conn)

@@ -1,0 +1,255 @@
+/* ============================================================
+   Projects edit page
+   ============================================================ */
+
+.pep-container {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+.pep-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--slate);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+  margin-bottom: 20px;
+}
+
+.pep-back-link:hover {
+  color: var(--inkwell);
+}
+
+.pep-notice {
+  background: var(--sandstone);
+  color: var(--inkwell);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.pep-notice-error {
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--error);
+}
+
+.pep-card {
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.pep-card-title {
+  margin: 0 0 18px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--inkwell);
+}
+
+.pep-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.pep-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pep-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--slate);
+}
+
+.pep-input {
+  padding: 9px 12px;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--inkwell);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.pep-input:focus {
+  outline: none;
+  border-color: var(--saffron);
+}
+
+.pep-input:disabled {
+  background: var(--parchment);
+  color: var(--slate);
+  cursor: not-allowed;
+}
+
+.pep-form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.pep-save-btn {
+  padding: 10px 22px;
+  background: var(--saffron);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pep-save-btn:hover {
+  background: var(--saffron-hover);
+}
+
+@media (max-width: 600px) {
+  .pep-field-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Team members ─────────────────────────────────────────────────────── */
+
+.pep-team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.pep-team-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+}
+
+.pep-team-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--inkwell);
+  color: var(--sandstone);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pep-team-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pep-team-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--inkwell);
+}
+
+.pep-team-role {
+  font-size: 12px;
+  color: var(--slate);
+  text-transform: capitalize;
+}
+
+.pep-team-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pep-team-action-btn {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--inkwell);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pep-team-action-btn:hover {
+  background: var(--parchment);
+}
+
+.pep-remove-btn {
+  color: var(--error);
+  border-color: var(--error);
+}
+
+.pep-remove-btn:hover {
+  background: #fef2f2;
+}
+
+.pep-save-inline {
+  color: var(--saffron);
+  border-color: var(--saffron);
+}
+
+.pep-team-edit {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pep-team-edit-input {
+  flex: 1;
+  min-width: 120px;
+}
+
+.pep-empty {
+  font-size: 13px;
+  color: var(--slate);
+}
+
+.pep-add-member-btn {
+  padding: 10px 18px;
+  background: transparent;
+  border: 1.5px dashed var(--saffron);
+  border-radius: var(--radius-pill);
+  color: var(--saffron);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pep-add-member-btn:hover {
+  background: var(--saffron-soft);
+}
+
+.pep-add-member-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.pep-add-member-form .pep-input {
+  flex: 1;
+  min-width: 180px;
+}

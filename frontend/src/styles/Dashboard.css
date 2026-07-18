@@ -50,7 +50,8 @@
   gap: 16px;
   cursor: pointer;
   transition: all 0.15s;
-  border-left: 4px solid var(--product-color, var(--saffron));
+  border-left: 3px solid var(--saffron);
+  box-shadow: var(--shadow-sm);
   position: relative;
 }
 
@@ -62,20 +63,20 @@
 .pd-card-soon {
   cursor: default;
   opacity: 0.6;
-  border-left-color: var(--border-color);
+  border-left-color: var(--sandstone);
 }
 
 .pd-card-soon:hover {
-  box-shadow: none;
+  box-shadow: var(--shadow-sm);
   transform: none;
 }
 
 .pd-card-icon {
-  font-size: 28px;
+  font-size: 20px;
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  background: var(--parchment);
+  width: 40px;
+  height: 40px;
+  background: var(--sandstone);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -117,14 +118,22 @@
   position: absolute;
   top: 14px;
   right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--slate);
   background: var(--parchment);
-  padding: 2px 8px;
+  padding: 3px 8px;
   border-radius: var(--radius-pill);
+}
+
+.pd-card-badge-locked {
+  color: var(--saffron);
+  background: var(--sandstone);
 }
 
 @media (max-width: 600px) {

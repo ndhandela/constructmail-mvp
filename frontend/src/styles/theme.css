@@ -37,6 +37,9 @@
   /* === TYPOGRAPHY === */
   --font-serif: Georgia, 'Times New Roman', serif;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* Poppins loaded via public/index.html — used by the app-shell nav
+     (Header/Sidebar/landing grid/edit pages), not applied app-wide. */
+  --font-poppins: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   
   /* === SPACING === */
   --radius-sm: 8px;

@@ -1,0 +1,224 @@
+/* ============================================================
+   Project info slide-over
+   ============================================================ */
+
+.pis-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 27, 44, 0.55);
+  z-index: 2500;
+}
+
+.pis-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 380px;
+  max-width: 100vw;
+  background: var(--parchment);
+  z-index: 2600;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  animation: pis-slide-in 0.2s ease-out;
+  font-family: var(--font-poppins);
+}
+
+@keyframes pis-slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.pis-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 24px 24px 16px;
+  background: white;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.pis-eyebrow {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+
+.pis-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--inkwell);
+}
+
+.pis-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--slate);
+  padding: 4px;
+  line-height: 1;
+}
+
+.pis-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 12px 24px 0;
+  background: white;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.pis-tab {
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pis-tab.active {
+  color: var(--saffron);
+  border-bottom-color: var(--saffron);
+}
+
+.pis-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+.pis-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pis-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.pis-info-label {
+  font-size: 13px;
+  color: var(--slate);
+  font-weight: 600;
+}
+
+.pis-info-value {
+  font-size: 13px;
+  color: var(--inkwell);
+  font-weight: 500;
+  text-align: right;
+}
+
+.pis-info-muted {
+  color: var(--slate);
+  font-style: italic;
+  opacity: 0.75;
+}
+
+.pis-team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pis-team-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: white;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+}
+
+.pis-team-row-pending {
+  opacity: 0.7;
+}
+
+.pis-team-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--inkwell);
+  color: var(--sandstone);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pis-team-avatar-pending {
+  background: var(--sandstone);
+  color: var(--slate);
+}
+
+.pis-team-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--inkwell);
+}
+
+.pis-team-role {
+  font-size: 12px;
+  color: var(--slate);
+  text-transform: capitalize;
+}
+
+.pis-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--slate);
+  margin: 16px 0 8px;
+}
+
+.pis-empty {
+  font-size: 13px;
+  color: var(--slate);
+}
+
+.pis-footer {
+  padding: 16px 24px 24px;
+  background: white;
+  border-top: 1px solid var(--border-light);
+}
+
+.pis-edit-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--saffron);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pis-edit-btn:hover {
+  background: var(--saffron-hover);
+}
+
+@media (max-width: 480px) {
+  .pis-panel {
+    width: 100vw;
+  }
+}

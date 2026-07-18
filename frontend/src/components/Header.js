@@ -1,6 +1,7 @@
 import React, { useState, useRef, useContext } from 'react';
 import PomarLogo from './PomarLogo';
 import NewProjectModal from './NewProjectModal';
+import ProjectInfoSlideOver from './ProjectInfoSlideOver';
 import { ProjectContext, ALL_PROJECTS } from '../contexts/ProjectContext';
 import { getProductById } from '../config/products';
 import '../styles/Header.css';
@@ -26,18 +27,8 @@ function getInitials(name) {
   return (first + last).toUpperCase();
 }
 
-// Product nav shown to logged-in users. All four are reachable regardless of
-// plan — unlicensed modules (e.g. Marketplace) render their own upgrade/lock
-// prompt rather than being hidden from nav, matching the dashboard's pattern.
-const PRODUCT_NAV = [
-  { path: '/mail',          label: 'Mail' },
-  { path: '/clash',         label: 'Clash' },
-  { path: '/vendors',       label: 'Vendors' },
-  { path: '/marketplace',   label: 'Marketplace' },
-];
-
 // Platform dropdown shown to logged-out visitors — links to public marketing
-// pages (product.marketingPath), never to the authenticated app routes above.
+// pages (product.marketingPath), never to the authenticated app routes.
 const PLATFORM_DROPDOWN_IDS = ['constructmail', 'clash', 'vendors', 'marketplace'];
 
 export default function Header({ userId, onLogout, user }) {
@@ -47,6 +38,7 @@ export default function Header({ userId, onLogout, user }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [projectOpen, setProjectOpen] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   const platformTimer = useRef(null);
   const profileTimer  = useRef(null);
@@ -56,6 +48,10 @@ export default function Header({ userId, onLogout, user }) {
   const canCreateProject = PROJECT_CREATOR_ROLES.includes(user?.role);
 
   const currentPath = window.location.pathname;
+  // Trust has its own project concept (trust_projects) — the shared
+  // ProjectContext switcher/info panel doesn't apply there. See ProjectGate
+  // usage in App.js and the comment on TrustApp's route.
+  const onTrust = currentPath === '/trust';
 
   // Platform dropdown handlers
   const onPlatformEnter = () => {
@@ -80,9 +76,13 @@ export default function Header({ userId, onLogout, user }) {
     setProjectOpen(false);
   };
 
+  const hasActiveProject = projects.length > 0;
   const currentProjectName = currentProjectId === ALL_PROJECTS
     ? 'All projects'
     : (projects.find((p) => String(p.id) === String(currentProjectId))?.name || 'All projects');
+  // The info slide-over needs one concrete project — "All projects" has
+  // nothing to show info for, so fall back to the first real project.
+  const infoProjectId = currentProjectId === ALL_PROJECTS ? projects[0]?.id : currentProjectId;
 
   // Profile dropdown handlers
   const onProfileEnter = () => {
@@ -106,34 +106,78 @@ export default function Header({ userId, onLogout, user }) {
     <header className="main-header">
       <div className="header-left">
         <a href={isLoggedIn ? '/dashboard' : '/'} className="header-logo-link" aria-label={isLoggedIn ? 'POMAR dashboard' : 'POMAR home'}>
-          <PomarLogo variant="light" height={32} />
+          <PomarLogo variant="dark" height={28} />
         </a>
       </div>
 
       {isLoggedIn ? (
-        /* ── Logged-in: product nav ── */
-        <nav className="header-nav">
-          {PRODUCT_NAV.map((item) => (
-            <a
-              key={item.path}
-              href={item.path}
-              className={`header-link ${currentPath === item.path ? 'active' : ''}`}
-            >
-              {item.label}
-            </a>
-          ))}
-          {/* Unlike the always-visible items above, POMAR Trust is India-only
-              and must never appear in nav for a US org or a company without
-              the flag enabled — no "locked" affordance, fully absent. */}
-          {user?.company_region === 'IN' && user?.active_modules?.trust && (
-            <a
-              href="/trust"
-              className={`header-link ${currentPath === '/trust' ? 'active' : ''}`}
-            >
-              Trust
-            </a>
+        /* ── Logged-in: active project name + info button (no app tabs — the
+             sidebar owns app switching now) ── */
+        <div className="header-center">
+          {onTrust ? (
+            <span className="header-project-static">POMAR Trust</span>
+          ) : hasActiveProject ? (
+            <div className="header-project-block">
+              <div
+                className="header-dropdown header-project-dropdown"
+                onMouseEnter={onProjectEnter}
+                onMouseLeave={onProjectLeave}
+              >
+                <button className="header-project-name-btn">
+                  {currentProjectName} <span className="caret">▾</span>
+                </button>
+                {projectOpen && (
+                  <div className="dropdown-menu project-dropdown-menu">
+                    <button
+                      className={`dropdown-item project-dropdown-item ${currentProjectId === ALL_PROJECTS ? 'active' : ''}`}
+                      onClick={() => handleProjectSelect(ALL_PROJECTS)}
+                    >
+                      All projects
+                    </button>
+                    {projects.length > 0 && <div className="profile-dropdown-divider" />}
+                    {projects.map((p) => (
+                      <button
+                        key={p.id}
+                        className={`dropdown-item project-dropdown-item ${String(currentProjectId) === String(p.id) ? 'active' : ''}`}
+                        onClick={() => handleProjectSelect(String(p.id))}
+                      >
+                        {p.name}
+                      </button>
+                    ))}
+                    {canCreateProject && (
+                      <>
+                        <div className="profile-dropdown-divider" />
+                        <button
+                          className="project-dropdown-new-btn"
+                          onClick={() => { setProjectOpen(false); setShowNewProject(true); }}
+                        >
+                          + New project
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {currentProjectId !== ALL_PROJECTS && infoProjectId && (
+                <button
+                  className="header-info-btn"
+                  onClick={() => setInfoOpen(true)}
+                  aria-label="Project info"
+                  title="Project info"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="11" x2="12" y2="16.5" />
+                    <circle cx="12" cy="7.5" r="0.5" fill="currentColor" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          ) : (
+            <span className="header-project-static header-select-project">Select a project</span>
           )}
-        </nav>
+        </div>
       ) : (
         /* ── Logged-out: marketing nav ── */
         <nav className="header-nav">
@@ -173,59 +217,6 @@ export default function Header({ userId, onLogout, user }) {
       )}
 
       <div className="header-right">
-        {isLoggedIn && currentPath !== '/trust' && (
-          /* ── Project switcher ── */
-          /* Hidden on /trust: this switches/creates entries in the shared
-             ProjectContext projects table, a completely different concept
-             from Trust's own RERA trust_projects — TrustApp deliberately
-             doesn't wrap in ProjectProvider/ProjectGate for the same reason.
-             Both this dropdown's "+ New project" and Trust's own "+ New
-             project" button used identical wording, so a user on the Trust
-             dashboard could easily submit this one by mistake and have it
-             silently create a row in the wrong table (see Render logs
-             showing POST /api/projects during Trust testing). */
-          <div
-            className="header-dropdown header-project-dropdown"
-            onMouseEnter={onProjectEnter}
-            onMouseLeave={onProjectLeave}
-          >
-            <button className="header-link dropdown-trigger project-switcher-btn">
-              {currentProjectName} <span className="caret">▾</span>
-            </button>
-            {projectOpen && (
-              <div className="dropdown-menu project-dropdown-menu">
-                <button
-                  className={`dropdown-item project-dropdown-item ${currentProjectId === ALL_PROJECTS ? 'active' : ''}`}
-                  onClick={() => handleProjectSelect(ALL_PROJECTS)}
-                >
-                  All projects
-                </button>
-                {projects.length > 0 && <div className="profile-dropdown-divider" />}
-                {projects.map((p) => (
-                  <button
-                    key={p.id}
-                    className={`dropdown-item project-dropdown-item ${String(currentProjectId) === String(p.id) ? 'active' : ''}`}
-                    onClick={() => handleProjectSelect(String(p.id))}
-                  >
-                    {p.name}
-                  </button>
-                ))}
-                {canCreateProject && (
-                  <>
-                    <div className="profile-dropdown-divider" />
-                    <button
-                      className="project-dropdown-new-btn"
-                      onClick={() => { setProjectOpen(false); setShowNewProject(true); }}
-                    >
-                      + New project
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
         {showNewProject && (
           <NewProjectModal
             userId={userId}
@@ -271,7 +262,12 @@ export default function Header({ userId, onLogout, user }) {
                   className="dropdown-item profile-dropdown-item"
                   onClick={() => setProfileOpen(false)}
                 >
-                  <span className="profile-dropdown-icon">👤</span>
+                  <span className="profile-dropdown-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </span>
                   My Profile
                 </a>
 
@@ -282,7 +278,13 @@ export default function Header({ userId, onLogout, user }) {
                   className="dropdown-item profile-dropdown-item"
                   onClick={() => setProfileOpen(false)}
                 >
-                  <span className="profile-dropdown-icon">ℹ️</span>
+                  <span className="profile-dropdown-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="11" x2="12" y2="16.5" />
+                      <circle cx="12" cy="7.5" r="0.5" fill="currentColor" />
+                    </svg>
+                  </span>
                   About Us
                 </a>
 
@@ -292,7 +294,13 @@ export default function Header({ userId, onLogout, user }) {
                   className="dropdown-item profile-dropdown-item profile-logout-btn"
                   onClick={handleLogoutClick}
                 >
-                  <span className="profile-dropdown-icon">→</span>
+                  <span className="profile-dropdown-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                      <polyline points="16 17 21 12 16 7" />
+                      <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                  </span>
                   Logout
                 </button>
               </div>
@@ -303,6 +311,15 @@ export default function Header({ userId, onLogout, user }) {
         )}
         {!isLoggedIn && <a href="/demo" className="header-btn-book">Book a Demo</a>}
       </div>
+
+      {infoOpen && infoProjectId && (
+        <ProjectInfoSlideOver
+          projectId={infoProjectId}
+          projectName={currentProjectName}
+          userId={userId}
+          onClose={() => setInfoOpen(false)}
+        />
+      )}
     </header>
   );
 }

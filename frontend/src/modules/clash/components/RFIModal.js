@@ -143,6 +143,15 @@ export default function RFIModal({ clash, onClose }) {
     });
   };
 
+  // TODO(unsaved-changes guard): this modal's fields/aiDraft are exactly the
+  // kind of "in-progress Clash annotation" the guard is meant to protect —
+  // import useUnsavedChanges from '../../../contexts/UnsavedChangesContext'
+  // and call setDirty(true, 'an RFI draft') from setField/setAi below (skip
+  // the initial generateRFI() population on mount, same as the worked
+  // example's isMountedWithInitialValue pattern). There's no persistence API
+  // for RFI drafts today — handleCopy is the closest thing to a "save", so
+  // registerSaveHandler(() => handleCopy()) and setDirty(false) on copy/close
+  // is the reasonable wiring once this needs enforcing.
   const setField = (key, val) => setFields(f => ({ ...f, [key]: val }));
   const setAi    = (key, val) => setAiDraft(f => ({ ...f, [key]: val }));
 

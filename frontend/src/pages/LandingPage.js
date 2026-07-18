@@ -11,28 +11,34 @@ export default function LandingPage({ onProductSelect }) {
   return (
     <div className="landing">
 
-      {/* === HERO === */}
+      {/* === HERO ===
+          Photo-free, fully typographic — the earlier photo/duotone treatment
+          tested poorly (cluttered, weak text legibility, cramped headline)
+          and was scrapped. Plain --parchment background, generous width and
+          line-height on the headline so it wraps at natural phrase breaks. */}
       <section className="hero">
-        <div className="hero-eyebrow">Intelligence Infrastructure for Construction</div>
-        <h1 className="hero-title">
-          Your project knows everything.<br />
-          <em>POMAR helps it remember.</em>
-        </h1>
-        <p className="hero-sub">
-          From inbox overload to clash report chaos, POMAR turns scattered project data into
-          decisions general contractors can act on — without changing how their teams work.
-        </p>
-        <div className="hero-cta">
-          <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('constructmail')}>
-            Try POMAR Mail — Free
-          </button>
-          <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('clash')}>
-            Try POMAR Clash — Free
-          </button>
-          <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('vendors')}>
-            Explore POMAR Vendors
-          </button>
-          <a href="/contact" className="btn-ghost">Book a Demo</a>
+        <div className="hero-content">
+          <div className="hero-eyebrow">Intelligence Infrastructure for Construction</div>
+          <h1 className="hero-title">
+            Your project knows everything.{' '}
+            <span className="hero-title-accent">POMAR helps it remember.</span>
+          </h1>
+          <p className="hero-sub">
+            From inbox overload to clash report chaos, POMAR turns scattered project data into
+            decisions general contractors can act on — without changing how their teams work.
+          </p>
+          <div className="hero-cta">
+            <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('constructmail')}>
+              Try POMAR Mail — Free
+            </button>
+            <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('clash')}>
+              Try POMAR Clash — Free
+            </button>
+            <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('vendors')}>
+              Explore POMAR Vendors
+            </button>
+            <a href="/contact" className="btn-outline-dark">Book a Demo</a>
+          </div>
         </div>
       </section>
 

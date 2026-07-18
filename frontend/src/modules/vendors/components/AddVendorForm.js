@@ -50,6 +50,12 @@ export default function AddVendorForm({ userId, onVendorAdded }) {
       ...prev,
       [name]: value
     }));
+    // TODO(unsaved-changes guard): this is the "edited Vendor listing" case
+    // the guard is meant to cover — import useUnsavedChanges from
+    // '../../../contexts/UnsavedChangesContext' and call
+    // setDirty(true, 'a vendor listing') here once showForm is true (don't
+    // mark dirty for the initial empty formData before the user opens the
+    // form).
   };
 
   const handleSubmit = async (e) => {
@@ -83,7 +89,10 @@ export default function AddVendorForm({ userId, onVendorAdded }) {
 
       if (data.success) {
         setMessage(`✅ ${formData.name} added successfully!`);
-        
+        // TODO(unsaved-changes guard): setDirty(false) here — this is the
+        // successful-save path (registerSaveHandler(handleSubmit) is the
+        // natural save handler to register while showForm is true).
+
         // Reset form
         setFormData({
           name: '',
