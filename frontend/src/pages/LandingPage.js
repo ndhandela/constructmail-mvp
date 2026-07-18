@@ -13,11 +13,11 @@ export default function LandingPage({ onProductSelect }) {
     <div className="landing">
 
       {/* === HERO ===
-          Full-color jobsite photo on the right, fading into a plain
-          --parchment scrim on the left so the headline stays legible. */}
+          Full-color jobsite photo, bottom band (blueprints + hard hat)
+          revealed across the full width — legibility comes from the
+          hero-content card's own background, not a full-height scrim. */}
       <section className="hero">
         <div className="hero-photo-layer" style={{ backgroundImage: `url(${heroJobsite})` }} />
-        <div className="hero-scrim" />
         <div className="hero-warm-edge" />
         <div className="hero-content">
           <div className="hero-eyebrow">Intelligence Infrastructure for Construction</div>

@@ -144,9 +144,11 @@
    photo itself (no grayscale/duotone — see hero-photo-layer below). */
 .hero {
   position: relative;
-  padding: 140px 60px 120px;
+  height: 580px;
   text-align: left;
   background: var(--parchment);
+  display: flex;
+  align-items: center;
   overflow: hidden;
 }
 
@@ -154,18 +156,7 @@
   position: absolute;
   inset: 0;
   background-size: cover;
-  background-position: center 78%;
-}
-
-.hero-scrim {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(100deg,
-    var(--parchment) 0%,
-    var(--parchment) 28%,
-    rgba(250, 247, 242, 0.88) 42%,
-    rgba(250, 247, 242, 0.35) 60%,
-    rgba(250, 247, 242, 0.05) 78%);
+  background-position: center 88%;
 }
 
 .hero-warm-edge {
@@ -178,6 +169,13 @@
   position: relative;
   z-index: 2;
   max-width: 640px;
+  padding: 26px 36px;
+  margin: 24px 0 0 40px;
+  background: linear-gradient(120deg,
+    rgba(250, 247, 242, 0.97) 0%,
+    rgba(250, 247, 242, 0.93) 65%,
+    rgba(250, 247, 242, 0) 100%);
+  border-radius: 16px;
 }
 
 .hero-eyebrow {
@@ -192,10 +190,10 @@
 .hero-title {
   font-family: var(--font-serif);
   font-weight: 700;
-  font-size: 46px;
+  font-size: 38px;
   line-height: 1.28;
   color: var(--inkwell);
-  margin: 0 0 28px;
+  margin: 0 0 12px;
   letter-spacing: -0.5px;
 }
 
@@ -204,11 +202,11 @@
 }
 
 .hero-sub {
-  font-size: 19px;
+  font-size: 14px;
   font-weight: 400;
   color: var(--slate);
   max-width: 620px;
-  margin: 0 0 40px;
+  margin: 0 0 18px;
   line-height: 1.5;
 }
 
