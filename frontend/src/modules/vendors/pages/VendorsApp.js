@@ -115,6 +115,16 @@ export default function VendorsApp({ user, userId, onLogout }) {
 
   return (
     <div className="vendors-app">
+      {/* ── Connect link — standalone, top-right, above the page content,
+           matching the Clash page's positioning ── */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '12px 24px 0' }}>
+        <a href="/connect" style={{ textDecoration: 'none' }}>
+          <button style={{ background: '#D97706', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', fontWeight: '600', fontSize: '0.82rem', cursor: 'pointer' }}>
+            ⚡ Connect
+          </button>
+        </a>
+      </div>
+
       <div className="vendors-hero">
         <div className="vendors-badge">POMAR VENDORS · INTELLIGENCE</div>
         <h1>Contractor & Supplier Intelligence</h1>
@@ -136,11 +146,6 @@ export default function VendorsApp({ user, userId, onLogout }) {
                 />
               </div>
               <div className="vendors-top-right">
-                <a href="/connect" style={{ textDecoration: 'none' }}>
-                  <button style={{ background: '#D97706', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', fontWeight: '600', fontSize: '0.82rem', cursor: 'pointer' }}>
-                    ⚡ Connect
-                  </button>
-                </a>
                 <VendorExport filters={filters} userId={userId} />
                 {!showAddSection && (
                   <button
