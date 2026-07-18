@@ -24,6 +24,7 @@ import VendorsApp from './modules/vendors/pages/VendorsApp';
 import ConnectApp from './modules/connect/pages/ConnectApp';
 import MarketplaceApp from './modules/marketplace/pages/MarketplaceApp';
 import ProfileApp from './modules/profile/pages/ProfileApp';
+import CompanySettingsApp from './modules/profile/pages/CompanySettingsApp';
 import TrustApp from './modules/trust/pages/TrustApp';
 
 // Modules
@@ -37,7 +38,7 @@ import './styles/components.css';
 import './App.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/trust'];
+const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/company-settings', '/trust'];
 
 // The "Your Tools" landing grid and the Projects edit page share the
 // /dashboard route — the edit page is reached only via the project info
@@ -110,6 +111,7 @@ function App() {
           else if (path === '/connect') setCurrentProduct('connect');
           else if (path === '/marketplace') setCurrentProduct('marketplace');
           else if (path === '/profile') setCurrentProduct('profile');
+          else if (path === '/company-settings') setCurrentProduct('company-settings');
           else if (path === '/trust') setCurrentProduct('trust');
           else setCurrentProduct('dashboard');
           window.history.replaceState({}, document.title, window.location.pathname);
@@ -148,6 +150,7 @@ function App() {
       if (path === '/connect') setCurrentProduct('connect');
       if (path === '/marketplace') setCurrentProduct('marketplace');
       if (path === '/profile') setCurrentProduct('profile');
+      if (path === '/company-settings') setCurrentProduct('company-settings');
       if (path === '/trust') setCurrentProduct('trust');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -451,6 +454,17 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
       <ProjectProvider userId={userId}>
         <AppLayout userId={userId} onLogout={handleLogout} user={user}>
           <ProfileApp userId={userId} />
+        </AppLayout>
+      </ProjectProvider>
+    );
+  }
+
+  // ── Company Settings ─────────────────────────────────────────────────
+  if (currentProduct === 'company-settings' || path === '/company-settings') {
+    return (
+      <ProjectProvider userId={userId}>
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <CompanySettingsApp userId={userId} />
         </AppLayout>
       </ProjectProvider>
     );

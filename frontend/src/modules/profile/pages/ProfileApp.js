@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import ProfileInfo from '../components/ProfileInfo';
-import ProfileCompany from '../components/ProfileCompany';
 import ProfileSecurity from '../components/ProfileSecurity';
-import CompanyTeamSection from '../components/CompanyTeamSection';
 import '../styles/Profile.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 const TABS = [
   { key: 'info',     label: 'My Information' },
-  { key: 'company',  label: 'Company' },
-  { key: 'team',     label: 'Team' },
   { key: 'security', label: 'Security' },
 ];
 
@@ -35,7 +31,6 @@ function getDisplayName(profile) {
 export default function ProfileApp({ userId }) {
   const [activeTab, setActiveTab] = useState('info');
   const [profile, setProfile] = useState(null);
-  const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,7 +44,6 @@ export default function ProfileApp({ userId }) {
       const data = await res.json();
       if (data.success) {
         setProfile(data.profile);
-        setCompany(data.company);
       }
     } catch (err) {
       console.error('Profile fetch error:', err);
@@ -102,28 +96,6 @@ export default function ProfileApp({ userId }) {
             userId={userId}
             onProfileUpdated={(updated) => setProfile(prev => ({ ...prev, ...updated }))}
           />
-        )}
-        {activeTab === 'company' && (
-          <ProfileCompany
-            company={company}
-            permissionLevel={profile?.permission_level}
-            userId={userId}
-            onCompanyUpdated={(updated) => setCompany(prev => ({ ...prev, ...updated }))}
-          />
-        )}
-        {activeTab === 'team' && (
-          <div className="profile-card">
-            {/* Company-wide team roster and project-access control — not the
-                per-project member list, which now lives exclusively in the
-                header's project info slide-over and the Projects edit page
-                (see ProjectInfoSlideOver.js / ProjectsEditPage.js). */}
-            <CompanyTeamSection
-              userId={userId}
-              isOwner={profile?.permission_level === 'owner'}
-              companyId={profile?.company_id}
-              trustEnabled={!!profile?.active_modules?.trust}
-            />
-          </div>
         )}
         {activeTab === 'security' && (
           <ProfileSecurity userId={userId} />

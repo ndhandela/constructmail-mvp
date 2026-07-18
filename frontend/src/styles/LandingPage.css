@@ -139,19 +139,45 @@
 }
 
 /* === HERO ===
-   Photo-free and fully typographic on a plain --parchment background — an
-   earlier photo/duotone treatment was tested and scrapped for being
-   cluttered and hurting legibility. Padding matches the .trust/.quiet-truth
-   rhythm below; .hero-content is wide enough that the headline wraps at
-   natural phrase breaks instead of a cramped fixed column. */
+   Full-color jobsite photo, revealed on the right through a leftward
+   --parchment scrim so the headline stays legible without dulling the
+   photo itself (no grayscale/duotone — see hero-photo-layer below). */
 .hero {
+  position: relative;
   padding: 140px 60px 120px;
   text-align: left;
   background: var(--parchment);
+  overflow: hidden;
+}
+
+.hero-photo-layer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center 35%;
+}
+
+.hero-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg,
+    var(--parchment) 0%,
+    var(--parchment) 28%,
+    rgba(250, 247, 242, 0.88) 42%,
+    rgba(250, 247, 242, 0.35) 60%,
+    rgba(250, 247, 242, 0.05) 78%);
+}
+
+.hero-warm-edge {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 55%, rgba(217, 119, 6, 0.10) 100%);
 }
 
 .hero-content {
-  max-width: 820px;
+  position: relative;
+  z-index: 2;
+  max-width: 640px;
 }
 
 .hero-eyebrow {
@@ -166,7 +192,7 @@
 .hero-title {
   font-family: var(--font-serif);
   font-weight: 700;
-  font-size: 54px;
+  font-size: 46px;
   line-height: 1.28;
   color: var(--inkwell);
   margin: 0 0 28px;

@@ -4,7 +4,8 @@
   justify-content: space-between;
   padding: 0 24px;
   height: 64px;
-  background: var(--inkwell);
+  background: #fff;
+  border-bottom: 1px solid var(--sandstone);
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -34,7 +35,8 @@
 }
 
 .header-link {
-  color: var(--sandstone);
+  color: var(--inkwell);
+  opacity: 0.85;
   text-decoration: none;
   font-size: 15px;
   font-weight: 500;
@@ -48,7 +50,9 @@
 }
 
 .header-link:hover {
-  background: rgba(240, 221, 196, 0.12);
+  opacity: 1;
+  color: var(--saffron);
+  background: var(--sandstone);
 }
 
 .header-link.active {
@@ -61,19 +65,24 @@
 .header-project-block {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  background: var(--sandstone);
+  padding: 6px 10px 6px 16px;
+  border-radius: 8px;
 }
 
 .header-project-static {
-  color: var(--sandstone);
+  color: var(--inkwell);
   font-size: 15px;
   font-weight: 700;
 }
 
 .header-select-project {
-  color: rgba(240, 221, 196, 0.55);
+  color: var(--slate);
   font-weight: 500;
   font-style: italic;
+  background: none;
+  padding: 0;
 }
 
 .header-project-name-btn {
@@ -82,41 +91,44 @@
   gap: 4px;
   background: none;
   border: none;
-  color: var(--parchment);
+  color: var(--inkwell);
   font-size: 15px;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
-  padding: 8px 12px;
+  padding: 8px 4px;
   border-radius: var(--radius-pill);
   max-width: 320px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: background 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .header-project-name-btn:hover {
-  background: rgba(240, 221, 196, 0.12);
+  opacity: 0.75;
 }
 
 .header-info-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  border: none;
-  background: rgba(240, 221, 196, 0.14);
-  color: var(--sandstone);
+  border: 1.5px solid var(--inkwell);
+  background: none;
+  color: var(--inkwell);
+  opacity: 0.7;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease, border-color 0.2s ease;
 }
 
 .header-info-btn:hover {
+  opacity: 1;
   background: var(--saffron);
+  border-color: var(--saffron);
   color: white;
 }
 
@@ -234,10 +246,10 @@
 
 /* Header Buttons */
 .header-btn-login {
-  padding: 10px 20px;
-  background: var(--saffron);
-  color: white;
-  border: none;
+  padding: 9px 20px;
+  background: none;
+  color: var(--inkwell);
+  border: 1px solid var(--sandstone);
   border-radius: var(--radius-pill);
   text-decoration: none;
   font-weight: 600;
@@ -248,9 +260,7 @@
 }
 
 .header-btn-login:hover {
-  background: var(--saffron-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+  background: var(--sandstone);
 }
 
 .header-btn-book {
@@ -312,15 +322,15 @@
 }
 
 .header-user-info:hover {
-  background: rgba(240, 221, 196, 0.12);
+  background: var(--sandstone);
 }
 
 .header-user-badge {
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-sm);
-  background: var(--sandstone);
-  color: var(--inkwell);
+  border-radius: 50%;
+  background: var(--saffron);
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -339,7 +349,7 @@
 .header-user-name {
   font-size: 14px;
   font-weight: 700;
-  color: var(--parchment);
+  color: var(--inkwell);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -347,8 +357,7 @@
 
 .header-user-company {
   font-size: 12px;
-  color: var(--sandstone);
-  opacity: 0.75;
+  color: var(--slate);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

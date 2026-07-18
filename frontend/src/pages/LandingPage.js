@@ -1,6 +1,7 @@
 import React from 'react';
 import PomarLogo from './../components/PomarLogo';
 import { getProductById } from '../config/products';
+import heroJobsite from '../assets/hero-jobsite.png';
 import '../styles/LandingPage.css';
 
 const goToMarketing = (id) => {
@@ -12,11 +13,12 @@ export default function LandingPage({ onProductSelect }) {
     <div className="landing">
 
       {/* === HERO ===
-          Photo-free, fully typographic — the earlier photo/duotone treatment
-          tested poorly (cluttered, weak text legibility, cramped headline)
-          and was scrapped. Plain --parchment background, generous width and
-          line-height on the headline so it wraps at natural phrase breaks. */}
+          Full-color jobsite photo on the right, fading into a plain
+          --parchment scrim on the left so the headline stays legible. */}
       <section className="hero">
+        <div className="hero-photo-layer" style={{ backgroundImage: `url(${heroJobsite})` }} />
+        <div className="hero-scrim" />
+        <div className="hero-warm-edge" />
         <div className="hero-content">
           <div className="hero-eyebrow">Intelligence Infrastructure for Construction</div>
           <h1 className="hero-title">

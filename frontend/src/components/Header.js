@@ -106,7 +106,7 @@ export default function Header({ userId, onLogout, user }) {
     <header className="main-header">
       <div className="header-left">
         <a href={isLoggedIn ? '/dashboard' : '/'} className="header-logo-link" aria-label={isLoggedIn ? 'POMAR dashboard' : 'POMAR home'}>
-          <PomarLogo variant="dark" height={28} />
+          <PomarLogo variant="light" height={28} />
         </a>
       </div>
 
@@ -269,6 +269,22 @@ export default function Header({ userId, onLogout, user }) {
                     </svg>
                   </span>
                   My Profile
+                </a>
+
+                <a
+                  href="/company-settings"
+                  className="dropdown-item profile-dropdown-item"
+                  onClick={() => setProfileOpen(false)}
+                >
+                  <span className="profile-dropdown-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 21h18" />
+                      <path d="M5 21V7l7-4 7 4v14" />
+                      <path d="M9 21v-6h6v6" />
+                      <path d="M9 11h.01M15 11h.01M9 15h.01M15 15h.01" />
+                    </svg>
+                  </span>
+                  Company Settings
                 </a>
 
                 <div className="profile-dropdown-divider" />

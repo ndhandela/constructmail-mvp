@@ -5,7 +5,8 @@
 .app-sidebar {
   width: 72px;
   flex-shrink: 0;
-  background: var(--inkwell);
+  background: #fff;
+  border-right: 1px solid var(--sandstone);
   position: sticky;
   top: 64px;
   height: calc(100vh - 64px);
@@ -27,7 +28,7 @@
 .sidebar-divider {
   width: 36px;
   height: 1px;
-  background: rgba(240, 221, 196, 0.2);
+  background: var(--sandstone);
   margin: 14px 0;
   flex-shrink: 0;
 }
@@ -45,8 +46,9 @@
   border-left: 3px solid transparent;
   cursor: pointer;
   font-family: inherit;
-  color: rgba(240, 221, 196, 0.55);
-  transition: background 0.15s ease, color 0.15s ease;
+  color: var(--inkwell);
+  opacity: 0.65;
+  transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
@@ -65,18 +67,20 @@
 }
 
 .sidebar-item:hover:not(.disabled) {
-  color: rgba(240, 221, 196, 0.9);
+  opacity: 1;
+  background: var(--sandstone);
 }
 
 .sidebar-item.active {
   color: var(--saffron);
-  background: rgba(217, 119, 6, 0.16);
+  opacity: 1;
+  background: rgba(217, 119, 6, 0.12);
   border-left-color: var(--saffron);
 }
 
 .sidebar-item.disabled {
   cursor: not-allowed;
-  color: rgba(240, 221, 196, 0.28);
+  opacity: 0.28;
 }
 
 @media (max-width: 768px) {
