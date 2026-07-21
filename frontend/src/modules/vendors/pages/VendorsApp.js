@@ -175,6 +175,7 @@ export default function VendorsApp({ user, userId, onLogout }) {
                   <AddVendorForm
                     userId={userId}
                     projectId={currentProjectId !== ALL_PROJECTS ? currentProjectId : null}
+                    user={user}
                     onVendorAdded={handleVendorAdded}
                   />
                   <div className="divider">OR</div>

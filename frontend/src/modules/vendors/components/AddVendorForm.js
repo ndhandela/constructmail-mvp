@@ -18,7 +18,29 @@ const TRADES = [
   'Excavation'
 ];
 
-const STATES = ['TX', 'OK', 'AR', 'LA', 'NM', 'CO', 'KS', 'NE', 'MO'];
+// All 50 US states + DC — was previously hardcoded to a 9-state regional
+// subset (TX and its neighbors), which didn't work for clients outside
+// that footprint.
+const US_STATES = [
+  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA', 'HI',
+  'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN',
+  'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH',
+  'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA',
+  'WV', 'WI', 'WY'
+];
+
+// All Indian states + union territories, for company_region === 'IN' clients.
+const INDIA_STATES = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
+  'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya',
+  'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim',
+  'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand',
+  'West Bengal',
+  'Andaman and Nicobar Islands', 'Chandigarh',
+  'Dadra and Nagar Haveli and Daman and Diu', 'Delhi',
+  'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
+];
 
 const INSURANCE_STATUS = [
   { value: 'not_verified', label: 'Not Verified' },
@@ -26,19 +48,24 @@ const INSURANCE_STATUS = [
   { value: 'verified', label: 'Verified' }
 ];
 
-export default function AddVendorForm({ userId, projectId, onVendorAdded }) {
-  const [formData, setFormData] = useState({
-    name: '',
-    trade: '',
-    phone: '',
-    email: '',
-    address: '',
-    city: 'Dallas',
-    state: 'TX',
-    zip: '',
-    website: '',
-    insurance_status: 'not_verified'
-  });
+const EMPTY_FORM = {
+  name: '',
+  trade: '',
+  phone: '',
+  email: '',
+  address: '',
+  city: '',
+  state: '',
+  zip: '',
+  website: '',
+  insurance_status: 'not_verified'
+};
+
+export default function AddVendorForm({ userId, projectId, user, onVendorAdded }) {
+  const isIndia = user?.company_region === 'IN';
+  const STATES = isIndia ? INDIA_STATES : US_STATES;
+
+  const [formData, setFormData] = useState(EMPTY_FORM);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -94,18 +121,7 @@ export default function AddVendorForm({ userId, projectId, onVendorAdded }) {
         // natural save handler to register while showForm is true).
 
         // Reset form
-        setFormData({
-          name: '',
-          trade: '',
-          phone: '',
-          email: '',
-          address: '',
-          city: 'Dallas',
-          state: 'TX',
-          zip: '',
-          website: '',
-          insurance_status: 'not_verified'
-        });
+        setFormData(EMPTY_FORM);
 
         // Close form after 2 seconds
         setTimeout(() => {
@@ -126,18 +142,7 @@ export default function AddVendorForm({ userId, projectId, onVendorAdded }) {
   };
 
   const handleReset = () => {
-    setFormData({
-      name: '',
-      trade: '',
-      phone: '',
-      email: '',
-      address: '',
-      city: 'Dallas',
-      state: 'TX',
-      zip: '',
-      website: '',
-      insurance_status: 'not_verified'
-    });
+    setFormData(EMPTY_FORM);
     setMessage('');
   };
 
@@ -229,7 +234,8 @@ export default function AddVendorForm({ userId, projectId, onVendorAdded }) {
                 />
               </div>
 
-              {/* City */}
+              {/* City — free text, no assumed default; vendors can be
+                  anywhere, not just the original TX metro footprint. */}
               <div className="form-group">
                 <label>City *</label>
                 <input
@@ -237,13 +243,14 @@ export default function AddVendorForm({ userId, projectId, onVendorAdded }) {
                   name="city"
                   value={formData.city}
                   onChange={handleInputChange}
-                  placeholder="Dallas"
+                  placeholder={isIndia ? 'e.g., Mumbai' : 'e.g., Dallas'}
                   disabled={loading}
                   required
                 />
               </div>
 
-              {/* State */}
+              {/* State — full US state list, or India's states/UTs for
+                  company_region === 'IN' clients. */}
               <div className="form-group">
                 <label>State</label>
                 <select
@@ -252,21 +259,22 @@ export default function AddVendorForm({ userId, projectId, onVendorAdded }) {
                   onChange={handleInputChange}
                   disabled={loading}
                 >
+                  <option value="">Select a state</option>
                   {STATES.map(state => (
                     <option key={state} value={state}>{state}</option>
                   ))}
                 </select>
               </div>
 
-              {/* Zip */}
+              {/* Zip / PIN */}
               <div className="form-group">
-                <label>ZIP Code</label>
+                <label>{isIndia ? 'PIN Code' : 'ZIP Code'}</label>
                 <input
                   type="text"
                   name="zip"
                   value={formData.zip}
                   onChange={handleInputChange}
-                  placeholder="75201"
+                  placeholder={isIndia ? '400001' : '75201'}
                   disabled={loading}
                 />
               </div>
