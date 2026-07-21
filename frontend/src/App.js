@@ -484,14 +484,19 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
   }
 
   // ── POMAR Trust (India-only) ─────────────────────────────────────────
-  // No ProjectProvider/ProjectGate — Trust has its own project concept
-  // (trust_projects, RERA-registered developments), independent of the
-  // shared POMAR ProjectContext the other modules use.
+  // No ProjectGate — Trust has its own project concept (trust_projects,
+  // RERA-registered developments), independent of the shared POMAR
+  // ProjectContext the other modules use. ProjectProvider is still mounted
+  // (without ProjectGate) purely so Sidebar sees the user's real project
+  // list — otherwise it falls back to the context's default empty array
+  // and disables Mail/Clash/Vendors/Connect until another route mounts one.
   if (currentProduct === 'trust' || path === '/trust') {
     return (
-      <AppLayout userId={userId} onLogout={handleLogout} user={user}>
-        <TrustApp user={user} userId={userId} />
-      </AppLayout>
+      <ProjectProvider userId={userId}>
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <TrustApp user={user} userId={userId} />
+        </AppLayout>
+      </ProjectProvider>
     );
   }
 

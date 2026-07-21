@@ -3,7 +3,7 @@ import '../styles/CSVImport.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-export default function CSVImport({ userId, onImportComplete }) {
+export default function CSVImport({ userId, projectId, onImportComplete }) {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [importResult, setImportResult] = useState(null);
@@ -51,6 +51,7 @@ export default function CSVImport({ userId, onImportComplete }) {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('userId', userId);
+      if (projectId) formData.append('project_id', projectId);
 
       const response = await fetch(`${API_BASE_URL}/api/vendors/bulk-import`, {
         method: 'POST',

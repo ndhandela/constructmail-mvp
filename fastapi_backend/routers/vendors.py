@@ -24,6 +24,7 @@ class CreateVendorRequest(BaseModel):
     website: Optional[str] = None
     insurance_status: Optional[str] = None
     insurance_expiry: Optional[str] = None
+    project_id: Optional[int] = None
 
 
 class ReviewRequest(BaseModel):
@@ -51,7 +52,11 @@ async def create_vendor(req: CreateVendorRequest):
     pool = await get_pool()
     async with pool.acquire() as conn:
         await require_feature_flag(conn, req.userId, "vendors")
-    result = await vendor_service.create_vendor(req.dict(exclude={"userId"}))
+        if req.project_id is not None:
+            await require_project_member(conn, req.project_id, req.userId)
+    result = await vendor_service.create_vendor(
+        req.dict(exclude={"userId", "project_id"}), req.project_id
+    )
     if not result["success"]:
         raise HTTPException(400, result["error"])
     return {"success": True, "vendor": result["vendor"]}
@@ -120,11 +125,19 @@ async def get_reviews(vendor_id: int, limit: int = 10, offset: int = 0):
 
 
 @router.post("/bulk-import")
-async def bulk_import(file: UploadFile = File(...), userId: int = Form(...)):
+async def bulk_import(
+    file: UploadFile = File(...),
+    userId: int = Form(...),
+    project_id: Optional[int] = Form(None),
+):
+    if project_id is not None:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            await require_project_member(conn, project_id, userId)
     content = await file.read()
     reader = csv.DictReader(io.StringIO(content.decode("utf-8")))
     vendors = list(reader)
-    result = await vendor_service.bulk_import_vendors(vendors, userId)
+    result = await vendor_service.bulk_import_vendors(vendors, userId, project_id)
     return {"success": True, "imported": result["imported"], "failed": result["failed"]}
 
 

@@ -172,9 +172,17 @@ export default function VendorsApp({ user, userId, onLogout }) {
                 </div>
 
                 <div className="add-vendor-options">
-                  <AddVendorForm userId={userId} onVendorAdded={handleVendorAdded} />
+                  <AddVendorForm
+                    userId={userId}
+                    projectId={currentProjectId !== ALL_PROJECTS ? currentProjectId : null}
+                    onVendorAdded={handleVendorAdded}
+                  />
                   <div className="divider">OR</div>
-                  <CSVImport userId={userId} onImportComplete={handleVendorAdded} />
+                  <CSVImport
+                    userId={userId}
+                    projectId={currentProjectId !== ALL_PROJECTS ? currentProjectId : null}
+                    onImportComplete={handleVendorAdded}
+                  />
                 </div>
               </div>
             )}

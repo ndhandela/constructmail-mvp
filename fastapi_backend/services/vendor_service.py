@@ -8,17 +8,29 @@ ALLOWED_VENDOR_FIELDS = [
 ]
 
 
-async def create_vendor(data: dict) -> dict:
+async def create_vendor(data: dict, project_id: int | None = None) -> dict:
     pool = await get_pool()
     async with pool.acquire() as conn:
         try:
-            row = await conn.fetchrow(
-                """INSERT INTO vendors (name, trade, phone, email, address, city, state, zip, website, insurance_status, insurance_expiry)
-                   VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *""",
-                data.get("name"), data.get("trade"), data.get("phone"), data.get("email"),
-                data.get("address"), data.get("city"), data.get("state"), data.get("zip"),
-                data.get("website"), data.get("insurance_status"), data.get("insurance_expiry"),
-            )
+            async with conn.transaction():
+                row = await conn.fetchrow(
+                    """INSERT INTO vendors (name, trade, phone, email, address, city, state, zip, website, insurance_status, insurance_expiry)
+                       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *""",
+                    data.get("name"), data.get("trade"), data.get("phone"), data.get("email"),
+                    data.get("address"), data.get("city"), data.get("state"), data.get("zip"),
+                    data.get("website"), data.get("insurance_status"), data.get("insurance_expiry"),
+                )
+                # Link to the project the user was scoped to when they added
+                # this vendor — otherwise it's created but invisible the
+                # moment a project filter is applied (search_vendors inner-
+                # joins project_vendors), which looked like "vendors don't
+                # load after I add one."
+                if project_id:
+                    await conn.execute(
+                        """INSERT INTO project_vendors (project_id, vendor_id) VALUES ($1,$2)
+                           ON CONFLICT (project_id, vendor_id) DO NOTHING""",
+                        project_id, row["id"],
+                    )
             return {"success": True, "vendor": dict(row)}
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -165,7 +177,7 @@ async def get_vendor_reviews(vendor_id: int, limit: int = 10, offset: int = 0) -
         return {"success": True, "reviews": [dict(r) for r in rows]}
 
 
-async def bulk_import_vendors(vendors_array: list, user_id: int) -> dict:
+async def bulk_import_vendors(vendors_array: list, user_id: int, project_id: int | None = None) -> dict:
     pool = await get_pool()
     imported, failed = [], []
     async with pool.acquire() as conn:
@@ -188,6 +200,15 @@ async def bulk_import_vendors(vendors_array: list, user_id: int) -> dict:
                         "INSERT INTO vendor_imports (user_id, vendor_id, import_date, source) VALUES ($1,$2,NOW(),'csv')",
                         user_id, row["id"],
                     )
+                    # Same project-linking gap as create_vendor — an
+                    # imported vendor is invisible under a project filter
+                    # until it's tied to that project.
+                    if project_id:
+                        await conn.execute(
+                            """INSERT INTO project_vendors (project_id, vendor_id) VALUES ($1,$2)
+                               ON CONFLICT (project_id, vendor_id) DO NOTHING""",
+                            project_id, row["id"],
+                        )
             except Exception as e:
                 failed.append({"row": i + 1, "error": str(e)})
     return {"success": True, "imported": imported, "failed": failed}

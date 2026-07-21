@@ -26,7 +26,7 @@ const INSURANCE_STATUS = [
   { value: 'verified', label: 'Verified' }
 ];
 
-export default function AddVendorForm({ userId, onVendorAdded }) {
+export default function AddVendorForm({ userId, projectId, onVendorAdded }) {
   const [formData, setFormData] = useState({
     name: '',
     trade: '',
@@ -82,7 +82,7 @@ export default function AddVendorForm({ userId, onVendorAdded }) {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ ...formData, userId })
+        body: JSON.stringify({ ...formData, userId, project_id: projectId || undefined })
       });
 
       const data = await response.json();
