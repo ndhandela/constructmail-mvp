@@ -173,7 +173,7 @@ export default function CapitalTrackerDashboard({ userId, user, project }) {
   return (
     <div className="capital-dashboard">
       <div className="capital-dashboard-header">
-        <h2>POMAR Capital Tracker · {project.name}</h2>
+        <h2>Budget Categories</h2>
         {canEdit && (
           <button className="capital-btn-primary" onClick={() => setShowForm(true)}>+ Add category</button>
         )}
