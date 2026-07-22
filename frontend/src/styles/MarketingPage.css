@@ -8,7 +8,15 @@
   color: var(--inkwell);
 }
 
+/* The shared .hero shell is a flex row (align-items: center) sized at a
+   fixed 580px — built for the old homepage hero's single content card.
+   With the marketing pages' eyebrow/h1/p/cta as direct children, that
+   lays everything out on one line, so restack as a column and let the
+   padding set the height. */
 .marketing-hero {
+  flex-direction: column;
+  align-items: flex-start;
+  height: auto;
   padding: 160px 60px 100px;
 }
 
