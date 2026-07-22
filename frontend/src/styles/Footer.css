@@ -4,14 +4,16 @@
   padding: 60px 60px 30px;
   font-size: 14px;
   margin-top: auto;
+  text-align: center;
 }
 
 .footer-inner {
   max-width: 1200px;
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
   padding-bottom: 40px;
   border-bottom: 1px solid rgba(250, 247, 242, 0.1);
 }
@@ -19,6 +21,7 @@
 .footer-brand {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 16px;
 }
 
@@ -33,7 +36,7 @@
 .footer-columns {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
+  gap: 64px;
 }
 
 .footer-col h4 {
@@ -63,7 +66,9 @@
   margin: 0 auto;
   padding-top: 30px;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 10px 32px;
+  flex-wrap: wrap;
   font-size: 13px;
   color: rgba(250, 247, 242, 0.4);
 }
@@ -72,19 +77,13 @@
   .footer {
     padding: 40px 20px 20px;
   }
-  
+
   .footer-inner {
-    grid-template-columns: 1fr;
     gap: 40px;
   }
-  
+
   .footer-columns {
-    grid-template-columns: 1fr 1fr;
-  }
-  
-  .footer-bottom {
-    flex-direction: column;
-    gap: 8px;
-    text-align: center;
+    grid-template-columns: 1fr;
+    gap: 28px;
   }
 }

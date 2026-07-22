@@ -11,13 +11,19 @@
 /* The shared .hero shell is a flex row (align-items: center) sized at a
    fixed 580px — built for the old homepage hero's single content card.
    With the marketing pages' eyebrow/h1/p/cta as direct children, that
-   lays everything out on one line, so restack as a column and let the
-   padding set the height. */
+   lays everything out on one line, so restack as a centered column and
+   let the padding set the height. Centered to match every other page
+   hero (Pricing/Contact/About/Demo are all text-align: center). */
 .marketing-hero {
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  text-align: center;
   height: auto;
   padding: 160px 60px 100px;
+}
+
+.marketing-cta-section .hero-cta {
+  justify-content: center;
 }
 
 .marketing-body {
