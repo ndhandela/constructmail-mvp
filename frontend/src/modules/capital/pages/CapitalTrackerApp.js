@@ -37,7 +37,13 @@ export default function CapitalTrackerApp({ user, userId }) {
   if (capitalLocked) {
     return (
       <div className="capital-app">
-        <ModuleLockedNotice moduleName="POMAR Capital Tracker" companyName={user?.company} />
+        <ModuleLockedNotice
+          moduleName="POMAR Capital Tracker"
+          companyName={user?.company}
+          variant="upgrade"
+          icon="💰"
+          description="Track budgeted, committed, and actual spend by category for every project. Upgrade your plan to unlock Capital Tracker."
+        />
       </div>
     );
   }

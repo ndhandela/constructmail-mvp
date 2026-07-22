@@ -95,9 +95,6 @@ export default function Sidebar({ user }) {
   const hasActiveProject = projects.length > 0;
 
   const showTrust = user?.company_region === 'IN' && user?.active_modules?.trust;
-  // No region check — Capital Tracker is available to any company (US and
-  // India), gated only by the 'capital' feature flag.
-  const showCapital = !!user?.active_modules?.capital;
 
   return (
     <aside className="app-sidebar">
@@ -117,7 +114,6 @@ export default function Sidebar({ user }) {
       <nav className="sidebar-group">
         {ACCOUNT_LEVEL_ITEMS
           .filter((item) => item.key !== 'trust' || showTrust)
-          .filter((item) => item.key !== 'capital' || showCapital)
           .map((item) => (
             <SidebarItem
               key={item.key}

@@ -10,7 +10,26 @@ export function isModuleLocked(activeModules, key) {
   return !activeModules[key];
 }
 
-export default function ModuleLockedNotice({ moduleName, companyName }) {
+// variant="upgrade" matches modules/marketplace/pages/MarketplaceApp.js's
+// bespoke locked card — for modules that stay visible in the sidebar even
+// when locked (Marketplace, Capital Tracker), a "reach out over email"
+// notice reads oddly since the module is right there to click into. The
+// default variant is unchanged for modules that are only ever reachable
+// via direct link while locked (Mail/Clash/Vendors/Trust).
+export default function ModuleLockedNotice({ moduleName, companyName, variant = 'contact', icon, description }) {
+  if (variant === 'upgrade') {
+    return (
+      <div className="module-locked-notice">
+        <div className="module-locked-upgrade-card">
+          {icon && <div className="module-locked-upgrade-icon">{icon}</div>}
+          <h2>{moduleName}</h2>
+          <p>{description || `Upgrade your plan to unlock ${moduleName}.`}</p>
+          <a href="/contact" className="module-locked-upgrade-btn">Contact Us to Upgrade</a>
+        </div>
+      </div>
+    );
+  }
+
   const subject = encodeURIComponent(
     `Enable ${moduleName}${companyName ? ` for ${companyName}` : ''}`
   );
