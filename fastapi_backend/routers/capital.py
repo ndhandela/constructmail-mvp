@@ -9,6 +9,7 @@ feature flag, checked on every route via services/access_control.py.
 """
 
 import logging
+from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
@@ -41,8 +42,8 @@ class UpdateBudgetItemRequest(BaseModel):
 class CreateMilestoneRequest(BaseModel):
     userId: int
     name: str
-    target_date: Optional[str] = None
-    actual_date: Optional[str] = None
+    target_date: Optional[date] = None
+    actual_date: Optional[date] = None
     status: str = "not_started"
     risk_flag: bool = False
     risk_source: Optional[str] = None
@@ -52,8 +53,8 @@ class CreateMilestoneRequest(BaseModel):
 class UpdateMilestoneRequest(BaseModel):
     userId: int
     name: Optional[str] = None
-    target_date: Optional[str] = None
-    actual_date: Optional[str] = None
+    target_date: Optional[date] = None
+    actual_date: Optional[date] = None
     status: Optional[str] = None
     risk_flag: Optional[bool] = None
     risk_source: Optional[str] = None
@@ -68,7 +69,7 @@ class CreateWorkItemRequest(BaseModel):
     status: str = "not_started"
     percent_complete: float = 0
     sequence: Optional[int] = None
-    due_date: Optional[str] = None
+    due_date: Optional[date] = None
 
 
 class UpdateWorkItemRequest(BaseModel):
@@ -79,7 +80,7 @@ class UpdateWorkItemRequest(BaseModel):
     status: Optional[str] = None
     percent_complete: Optional[float] = None
     sequence: Optional[int] = None
-    due_date: Optional[str] = None
+    due_date: Optional[date] = None
 
 
 async def _require_project_member(conn, project_id: int, user_id: int):
