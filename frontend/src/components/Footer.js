@@ -14,8 +14,14 @@ export default function Footer() {
         <div className="footer-columns">
           <div className="footer-col">
             <h4>Product</h4>
-            <a href="/mail">POMAR Mail</a>
-            <a href="/contact">Book a Demo</a>
+            <a href="/mail-info">POMAR Mail</a>
+            <a href="/clash-info">POMAR Clash</a>
+            <a href="/vendors-info">POMAR Vendors</a>
+            <a href="/marketplace-info">POMAR Marketplace</a>
+            <a href="/demo">POMAR Connect</a>
+            <a href="/demo">POMAR Capital Tracker</a>
+            <a href="/demo">POMAR Trust</a>
+            <a href="/demo">Book a Demo</a>
           </div>
           <div className="footer-col">
             <h4>Company</h4>

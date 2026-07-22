@@ -14,7 +14,7 @@ export default function LandingPage({ onProductSelect }) {
       {/* === HERO ===
           Solid inkwell panel over a faint 48px blueprint grid. One design
           at every width — only clamp() scaling and flex-wrap, no separate
-          mobile layout and no absolute positioning. The DFW proof strip
+          mobile layout and no absolute positioning. The proof strip
           lives inside the hero under a hairline divider. NOTE: the shared
           .hero/.hero-title/... classes in LandingPage.css belong to the
           product marketing pages now; this section uses hero-flat-*. */}
@@ -31,17 +31,17 @@ export default function LandingPage({ onProductSelect }) {
           </p>
           <div className="hero-flat-cta">
             <button className="hero-flat-btn-primary" onClick={() => onProductSelect && onProductSelect('constructmail')}>
-              Try POMAR Mail — Free
+              Try POMAR Mail
             </button>
             <a href="/demo" className="hero-flat-btn-secondary">Book a Demo</a>
             <a href="#platform" className="hero-flat-link">Explore POMAR Clash and Vendors →</a>
           </div>
 
           <div className="hero-flat-proof">
-            <div className="hero-flat-proof-label">Built with DFW General Contractors</div>
+            <div className="hero-flat-proof-label">Built with General Contractors</div>
             <div className="hero-flat-proof-chips">
               <div className="hero-flat-chip">GC Partner</div>
-              <div className="hero-flat-chip">DFW Builder</div>
+              <div className="hero-flat-chip">Builder</div>
               <div className="hero-flat-chip">VDC Team</div>
               <div className="hero-flat-chip">Industry Advisor</div>
             </div>
@@ -142,36 +142,22 @@ export default function LandingPage({ onProductSelect }) {
               <span className="product-link">Learn more →</span>
             </div>
 
-            <div className="product-card soon">
-              <span className="product-badge badge-soon">On the Roadmap</span>
-              <h3>POMAR Specs</h3>
-              <div className="product-tagline">Submittal Intelligence</div>
-              <p>Match every submittal back to the spec section it answers — and flag what's missing — in seconds, not days.</p>
-              <span className="product-link disabled">Notify me →</span>
+            {/* Connect and Capital Tracker have no marketing page yet, so
+                their cards route to the demo page instead of goToMarketing. */}
+            <div className="product-card live" onClick={() => { window.location.href = '/demo'; }}>
+              <span className="product-badge badge-live">Live Now</span>
+              <h3>POMAR Connect</h3>
+              <div className="product-tagline">PMIS Integration</div>
+              <p>One action queue for everything POMAR detects. Review Mail and Clash signals, then push RFIs straight into Procore or Kahua — with an automation log of every action.</p>
+              <span className="product-link">Book a demo →</span>
             </div>
 
-            <div className="product-card soon">
-              <span className="product-badge badge-soon">On the Roadmap</span>
-              <h3>POMAR Field</h3>
-              <div className="product-tagline">Field-to-Model Sync</div>
-              <p>RFI answers that flow back to the model. Field photos linked to drawing locations. Decisions captured where they happen.</p>
-              <span className="product-link disabled">Notify me →</span>
-            </div>
-
-            <div className="product-card soon">
-              <span className="product-badge badge-soon">On the Roadmap</span>
-              <h3>POMAR Closeout</h3>
-              <div className="product-tagline">Handover Intelligence</div>
-              <p>Turn 18 months of project chaos into a structured owner handover package — automatically.</p>
-              <span className="product-link disabled">Notify me →</span>
-            </div>
-
-            <div className="product-card soon">
-              <span className="product-badge badge-soon">Future</span>
-              <h3>POMAR Flow</h3>
-              <div className="product-tagline">Cross-Module Automations</div>
-              <p>Trigger workflows across every POMAR module. Build rules without code. The intelligence layer becomes your operating system.</p>
-              <span className="product-link disabled">Notify me →</span>
+            <div className="product-card live" onClick={() => { window.location.href = '/demo'; }}>
+              <span className="product-badge badge-live">Live Now</span>
+              <h3>POMAR Capital Tracker</h3>
+              <div className="product-tagline">Budget Intelligence</div>
+              <p>Budget-vs-actual per project, live instead of a shared spreadsheet — budgeted, committed, and actual by category, with milestones and work-item progress alongside the dollars.</p>
+              <span className="product-link">Book a demo →</span>
             </div>
           </div>
         </div>
@@ -215,15 +201,15 @@ export default function LandingPage({ onProductSelect }) {
           <em>Build the layer over time.</em>
         </h2>
         <p className="section-body centered">
-          Both tools are free. No credit card, no commitment. Pick the one that solves
-          your biggest problem today.
+          Pick the tool that solves your biggest problem today, and add the rest
+          when you're ready.
         </p>
         <div className="hero-cta">
           <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('constructmail')}>
-            Try POMAR Mail — Free
+            Try POMAR Mail
           </button>
           <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('clash')}>
-            Try POMAR Clash — Free
+            Try POMAR Clash
           </button>
           <a href="/contact" className="btn-ghost">Talk to the Founder</a>
         </div>
