@@ -365,6 +365,15 @@ if (userId && path === '/dashboard') {
     return <AdminPortal />;
   }
 
+  // ── Logged-in users hitting the marketing root go to the dashboard ──────
+  // Without this, a logged-in userId (from localStorage) falls through to
+  // the "Landing page" branch below: Header renders in logged-in mode
+  // (avatar, "Select a project") but the body is still the public
+  // marketing LandingPage, producing a mismatched half-logged-in UI.
+  if (userId && path === '/') {
+    window.location.href = '/dashboard';
+    return null;
+  }
 
   // ── Landing page ─────────────────────────────────────────────────────────
   if (!currentProduct) {
