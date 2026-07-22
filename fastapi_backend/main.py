@@ -7,7 +7,7 @@ from fastapi.responses import PlainTextResponse
 from db import init_db, get_pool
 from routers import ai, auth, gmail, outlook, clash, procore, vendors, admin, misc, marketplace, profile, mail, projects, team, logs
 from routers import connect as connect_router
-from routers import trust, trust_uploads, trust_qpr, trust_alerts
+from routers import trust, trust_uploads, trust_qpr, trust_alerts, capital
 from services import trust_reminders
 
 
@@ -53,6 +53,7 @@ app.include_router(trust.router)
 app.include_router(trust_uploads.router)
 app.include_router(trust_qpr.router)
 app.include_router(trust_alerts.router)
+app.include_router(capital.router)
 
 
 @app.exception_handler(Exception)

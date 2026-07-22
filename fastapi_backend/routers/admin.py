@@ -157,7 +157,8 @@ async def create_company(req: CreateCompanyRequest, admin: dict = Depends(requir
                      ($1, 'clash', 'Clash Access', 'clash', true, false),
                      ($1, 'vendors', 'Vendors Access', 'vendors', true, false),
                      ($1, 'marketplace', 'Marketplace Access', 'marketplace', false, false),
-                     ($1, 'trust', 'POMAR Trust Access', 'trust', false, false)
+                     ($1, 'trust', 'POMAR Trust Access', 'trust', false, false),
+                     ($1, 'capital', 'Capital Tracker Access', 'capital', false, false)
                    ON CONFLICT (company_id, feature_key) DO NOTHING""",
                 company["id"],
             )

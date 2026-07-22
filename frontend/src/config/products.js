@@ -76,6 +76,20 @@ export const PRODUCTS = [
     regionGated: 'IN',
     licenseGated: true
   },
+  {
+    id: 'capital',
+    name: 'POMAR Capital Tracker',
+    description: 'Budget-vs-actual tracking per project — replaces spreadsheets for small GCs.',
+    detailedDescription: "Small GCs usually track budgeted, committed, and actual spend in a shared spreadsheet that's always one edit behind. POMAR Capital Tracker replaces it with a live per-project view: budget by category, what's been committed, what's actually been spent, and the variance — computed automatically, not re-typed. Available to any company, not just India-region orgs.",
+    icon: '💰',
+    path: '/capital',
+    logo: '/logos/pomar.png',
+    color: '#D97706',
+    status: 'live',
+    // No regionGated flag — unlike Trust, this is available to any company
+    // (US and India), gated only by active_modules.capital.
+    licenseGated: true
+  },
 ];
 
 export const getProductById = (id) => PRODUCTS.find(p => p.id === id);

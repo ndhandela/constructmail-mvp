@@ -50,8 +50,13 @@ export default function Header({ userId, onLogout, user }) {
   const currentPath = window.location.pathname;
   // Trust has its own project concept (trust_projects) — the shared
   // ProjectContext switcher/info panel doesn't apply there. See ProjectGate
-  // usage in App.js and the comment on TrustApp's route.
+  // usage in App.js and the comment on TrustApp's route. Capital Tracker
+  // has the same situation for a different reason: it uses the generic
+  // projects table, but drives its own picker off GET /api/capital/projects
+  // rather than the shared ProjectContext, so the header switcher would be
+  // showing a selection that has nothing to do with what's on screen.
   const onTrust = currentPath === '/trust';
+  const onCapital = currentPath === '/capital';
 
   // Platform dropdown handlers
   const onPlatformEnter = () => {
@@ -116,6 +121,8 @@ export default function Header({ userId, onLogout, user }) {
         <div className="header-center">
           {onTrust ? (
             <span className="header-project-static">POMAR Trust</span>
+          ) : onCapital ? (
+            <span className="header-project-static">POMAR Capital Tracker</span>
           ) : hasActiveProject ? (
             <div className="header-project-block">
               <div

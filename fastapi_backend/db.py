@@ -791,6 +791,49 @@ async def init_db():
             -- no company_id, e.g. each user's own "Default Project") are
             -- unaffected — Postgres unique indexes never collide two NULLs.
             CREATE UNIQUE INDEX IF NOT EXISTS projects_company_id_name_key ON projects (company_id, name);
+
+            -- POMAR Capital Tracker: budget-vs-actual tracking per project
+            -- (migration 025). Unlike Trust, this is not India/RERA-specific
+            -- and has no separate project concept of its own — it FKs
+            -- straight into the generic `projects` table every company
+            -- already has (mail/clash/vendors/marketplace all key off it),
+            -- since a budget line item is just another thing that belongs
+            -- to a project, not a new kind of project. Access is gated only
+            -- by the 'capital' feature flag (see services/access_control.py),
+            -- with no region restriction. `metadata` JSONB exists so a
+            -- future field — e.g. a linked milestone or draw reference for
+            -- the planned capital_events table — can be added without a
+            -- schema migration.
+            CREATE TABLE IF NOT EXISTS budget_items (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                category VARCHAR(100) NOT NULL,
+                budgeted_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+                committed_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+                actual_spent NUMERIC(12,2) NOT NULL DEFAULT 0,
+                notes TEXT,
+                metadata JSONB NOT NULL DEFAULT '{}',
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS budget_items_project_id_idx ON budget_items (project_id);
+
+            -- Seeds a global 'capital' flag row so it exists (defaulting OFF)
+            -- for every company immediately, the same way Mail/Clash/Vendors/
+            -- Marketplace/Trust are all just feature_flags rows — without
+            -- this, an admin would have to know to create the row from
+            -- scratch before they could ever turn Capital Tracker on.
+            INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
+            VALUES (NULL, 'capital', 'Capital Tracker', 'capital', false, true)
+            ON CONFLICT (feature_key) WHERE is_global = true DO NOTHING;
+
+            -- Placeholder global pricing row so Capital Tracker shows up in
+            -- the admin pricing page without further code changes, same as
+            -- the other modules — monthly_price is 0 until an admin sets a
+            -- real number.
+            INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active)
+            VALUES (true, NULL, 'capital', 0, 'monthly', true)
+            ON CONFLICT (module_name) WHERE is_global = true DO NOTHING;
         """)
 
         await _backfill_clash_project_ids(conn)

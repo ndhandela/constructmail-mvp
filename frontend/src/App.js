@@ -26,6 +26,7 @@ import MarketplaceApp from './modules/marketplace/pages/MarketplaceApp';
 import ProfileApp from './modules/profile/pages/ProfileApp';
 import CompanySettingsApp from './modules/profile/pages/CompanySettingsApp';
 import TrustApp from './modules/trust/pages/TrustApp';
+import CapitalTrackerApp from './modules/capital/pages/CapitalTrackerApp';
 
 // Modules
 import ConstructMailApp from './modules/constructmail/pages/ConstructMailApp';
@@ -38,7 +39,7 @@ import './styles/components.css';
 import './App.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/company-settings', '/trust'];
+const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/company-settings', '/trust', '/capital'];
 
 // The "Your Tools" landing grid and the Projects edit page share the
 // /dashboard route — the edit page is reached only via the project info
@@ -113,6 +114,7 @@ function App() {
           else if (path === '/profile') setCurrentProduct('profile');
           else if (path === '/company-settings') setCurrentProduct('company-settings');
           else if (path === '/trust') setCurrentProduct('trust');
+          else if (path === '/capital') setCurrentProduct('capital');
           else setCurrentProduct('dashboard');
           window.history.replaceState({}, document.title, window.location.pathname);
         } else {
@@ -152,6 +154,7 @@ function App() {
       if (path === '/profile') setCurrentProduct('profile');
       if (path === '/company-settings') setCurrentProduct('company-settings');
       if (path === '/trust') setCurrentProduct('trust');
+      if (path === '/capital') setCurrentProduct('capital');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
@@ -504,6 +507,22 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
       <ProjectProvider userId={userId}>
         <AppLayout userId={userId} onLogout={handleLogout} user={user}>
           <TrustApp user={user} userId={userId} />
+        </AppLayout>
+      </ProjectProvider>
+    );
+  }
+
+  // ── POMAR Capital Tracker ────────────────────────────────────────────
+  // No ProjectGate — like Trust, Capital Tracker has its own project picker
+  // (fed by GET /api/capital/projects) rather than the shared ProjectGate
+  // flow. ProjectProvider is still mounted so Sidebar sees the user's real
+  // project list. Unlike Trust, there's no region check: this module is
+  // available to any company, gated only by the 'capital' feature flag.
+  if (currentProduct === 'capital' || path === '/capital') {
+    return (
+      <ProjectProvider userId={userId}>
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <CapitalTrackerApp user={user} userId={userId} />
         </AppLayout>
       </ProjectProvider>
     );

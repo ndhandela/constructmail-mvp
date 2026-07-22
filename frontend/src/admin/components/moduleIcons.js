@@ -45,6 +45,12 @@ export const MODULE_ICONS = {
       <path d="m9 12 2 2 4-4" />
     </svg>
   ),
+  capital: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="1" x2="12" y2="23" />
+      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+    </svg>
+  ),
 };
 
 // Canonical module list for the admin flags UI. `gated: false` marks
@@ -59,6 +65,7 @@ export const MODULE_DEFS = [
   { key: 'connect', label: 'Connect', gated: false, note: 'Not license-gated' },
   { key: 'marketplace', label: 'Marketplace', gated: true },
   { key: 'trust', label: 'Trust', gated: true, note: 'India-only' },
+  { key: 'capital', label: 'Capital Tracker', gated: true },
 ];
 
 export const GATED_MODULE_KEYS = MODULE_DEFS.filter((m) => m.gated).map((m) => m.key);

@@ -64,6 +64,20 @@ const DEFAULT_FEATURES = [
     module: 'vendors',
     description: 'Bulk import vendors via CSV file',
     enabled: true
+  },
+  {
+    key: 'budget_editing',
+    name: 'Budget Editing',
+    module: 'capital',
+    description: 'Allow project owners to create and edit budget line items',
+    enabled: true
+  },
+  {
+    key: 'budget_variance_alerts',
+    name: 'Budget Variance Alerts',
+    module: 'capital',
+    description: 'Flag categories that are over budget on the dashboard',
+    enabled: true
   }
 ];
 
@@ -76,7 +90,7 @@ export default function FeatureFlagsManagement({ token }) {
   const [message, setMessage] = useState('');
   const [selectedModule, setSelectedModule] = useState('all');
 
-  const modules = ['mail', 'clash', 'vendors'];
+  const modules = ['mail', 'clash', 'vendors', 'capital'];
 
   const fetchFeatureFlags = useCallback(async () => {
     try {
@@ -147,7 +161,8 @@ export default function FeatureFlagsManagement({ token }) {
     const colors = {
       mail: '#D97706',
       clash: '#0E1B2C',
-      vendors: '#475569'
+      vendors: '#475569',
+      capital: '#D97706'
     };
     return colors[module] || '#0E1B2C';
   };
@@ -156,7 +171,8 @@ export default function FeatureFlagsManagement({ token }) {
     const labels = {
       mail: 'POMAR Mail',
       clash: 'POMAR Clash',
-      vendors: 'POMAR Vendors'
+      vendors: 'POMAR Vendors',
+      capital: 'POMAR Capital Tracker'
     };
     return labels[module] || module;
   };
