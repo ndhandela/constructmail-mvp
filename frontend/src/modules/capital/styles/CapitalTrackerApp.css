@@ -46,36 +46,6 @@
   margin: 0 auto;
 }
 
-.capital-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 28px;
-  flex-wrap: wrap;
-}
-
-.capital-project-picker {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.capital-project-picker label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--slate);
-}
-
-.capital-project-picker select {
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid #E7E0D3;
-  background: var(--white);
-  font-size: 14px;
-  min-width: 220px;
-}
-
 .capital-muted {
   color: var(--slate);
   font-size: 14px;

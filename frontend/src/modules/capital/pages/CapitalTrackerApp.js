@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useContext } from 'react';
 import ModuleLockedNotice, { isModuleLocked } from '../../../components/ModuleLockedNotice';
 import CapitalTrackerDashboard from './CapitalTrackerDashboard';
-import { API_BASE_URL } from '../capitalUtils';
+import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
 import '../styles/CapitalTrackerApp.css';
 
 export default function CapitalTrackerApp({ user, userId }) {
@@ -10,29 +10,12 @@ export default function CapitalTrackerApp({ user, userId }) {
   // feature flag.
   const capitalLocked = isModuleLocked(user?.active_modules, 'capital');
 
-  const [projects, setProjects] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] = useState(null);
-  const [loadingProjects, setLoadingProjects] = useState(true);
-
-  const fetchProjects = useCallback(async () => {
-    setLoadingProjects(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/capital/projects?userId=${userId}`);
-      const data = await res.json();
-      if (data.success) {
-        setProjects(data.projects || []);
-        setSelectedProjectId((prev) => prev || (data.projects[0] && data.projects[0].id));
-      }
-    } catch (err) {
-      console.error('Fetch capital projects error:', err);
-    } finally {
-      setLoadingProjects(false);
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    if (!capitalLocked && userId) fetchProjects();
-  }, [capitalLocked, userId, fetchProjects]);
+  // Project selection comes from the shared header/sidebar switcher, same
+  // as Mail/Clash/Vendors — no separate in-page picker.
+  const { projects, currentProjectId } = useContext(ProjectContext);
+  const selectedProject = currentProjectId !== ALL_PROJECTS
+    ? projects.find((p) => String(p.id) === String(currentProjectId))
+    : null;
 
   if (capitalLocked) {
     return (
@@ -48,8 +31,6 @@ export default function CapitalTrackerApp({ user, userId }) {
     );
   }
 
-  const selectedProject = projects.find((p) => p.id === selectedProjectId) || null;
-
   return (
     <div className="capital-app">
       <div className="capital-hero">
@@ -59,33 +40,10 @@ export default function CapitalTrackerApp({ user, userId }) {
       </div>
 
       <div className="capital-container">
-        <div className="capital-toolbar">
-          <div className="capital-project-picker">
-            <label>Project</label>
-            <select
-              value={selectedProjectId || ''}
-              onChange={(e) => setSelectedProjectId(Number(e.target.value))}
-              disabled={loadingProjects || projects.length === 0}
-            >
-              {projects.length === 0 && <option value="">No projects yet</option>}
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {loadingProjects ? (
-          <p className="capital-muted">Loading projects…</p>
-        ) : projects.length === 0 ? (
-          <p className="capital-muted">No projects yet. Create a project first, then come back here to set up its budget.</p>
+        {!selectedProject ? (
+          <p className="capital-muted">Select a project from the header to view its budget.</p>
         ) : (
-          <CapitalTrackerDashboard
-            userId={userId}
-            user={user}
-            project={selectedProject}
-            onBudgetChanged={fetchProjects}
-          />
+          <CapitalTrackerDashboard userId={userId} user={user} project={selectedProject} />
         )}
       </div>
     </div>

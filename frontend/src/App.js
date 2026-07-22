@@ -513,16 +513,19 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
   }
 
   // ── POMAR Capital Tracker ────────────────────────────────────────────
-  // No ProjectGate — like Trust, Capital Tracker has its own project picker
-  // (fed by GET /api/capital/projects) rather than the shared ProjectGate
-  // flow. ProjectProvider is still mounted so Sidebar sees the user's real
-  // project list. Unlike Trust, there's no region check: this module is
-  // available to any company, gated only by the 'capital' feature flag.
+  // Unlike Trust, Capital Tracker's budget_items hangs off the same generic
+  // projects table Mail/Clash/Vendors use, so it follows their exact
+  // pattern: the shared header/sidebar project switcher (ProjectContext)
+  // picks the project, ProjectGate blocks the page until the company has
+  // at least one. No region check — available to any company, gated only
+  // by the 'capital' feature flag.
   if (currentProduct === 'capital' || path === '/capital') {
     return (
       <ProjectProvider userId={userId}>
         <AppLayout userId={userId} onLogout={handleLogout} user={user}>
-          <CapitalTrackerApp user={user} userId={userId} />
+          <ProjectGate userId={userId} user={user}>
+            <CapitalTrackerApp user={user} userId={userId} />
+          </ProjectGate>
         </AppLayout>
       </ProjectProvider>
     );

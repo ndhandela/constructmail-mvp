@@ -134,7 +134,7 @@ function BudgetItemForm({ userId, project, item, onSaved, onCancel }) {
   );
 }
 
-export default function CapitalTrackerDashboard({ userId, user, project, onBudgetChanged }) {
+export default function CapitalTrackerDashboard({ userId, user, project }) {
   const [items, setItems] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -166,7 +166,6 @@ export default function CapitalTrackerDashboard({ userId, user, project, onBudge
     setShowForm(false);
     setEditingItem(null);
     fetchItems();
-    if (onBudgetChanged) onBudgetChanged();
   };
 
   if (!project) return null;
