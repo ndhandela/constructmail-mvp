@@ -16,14 +16,6 @@ const TRADES = [
   'Excavation'
 ];
 
-const CITIES = [
-  'Dallas',
-  'Houston',
-  'Austin',
-  'San Antonio',
-  'Fort Worth'
-];
-
 const INSURANCE_STATUS = [
   { value: '', label: 'All Insurance Status' },
   { value: 'verified', label: 'Verified' },
@@ -40,6 +32,7 @@ const SORT_OPTIONS = [
 
 function VendorSearchComponent({ filters, onFilterChange, loading }) {
   const [searchInput, setSearchInput] = useState(filters.search);
+  const [cityInput, setCityInput] = useState(filters.city);
   const [expandFilters, setExpandFilters] = useState(false);
   const debounceTimer = useRef(null);
 
@@ -48,20 +41,26 @@ function VendorSearchComponent({ filters, onFilterChange, loading }) {
   }, [filters.search]);
 
   useEffect(() => {
+    setCityInput(filters.city);
+  }, [filters.city]);
+
+  // Debounce both free-text fields (search + city) so typing doesn't fire
+  // an API request per keystroke.
+  useEffect(() => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
     }
 
     debounceTimer.current = setTimeout(() => {
-      if (searchInput !== filters.search) {
-        onFilterChange({ ...filters, search: searchInput });
+      if (searchInput !== filters.search || cityInput !== filters.city) {
+        onFilterChange({ ...filters, search: searchInput, city: cityInput });
       }
     }, 300);
 
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
-  }, [searchInput, filters, onFilterChange]);
+  }, [searchInput, cityInput, filters, onFilterChange]);
 
   const handleFilterChange = (field, value) => {
     onFilterChange({ ...filters, [field]: value });
@@ -69,17 +68,18 @@ function VendorSearchComponent({ filters, onFilterChange, loading }) {
 
   const handleClearFilters = () => {
     setSearchInput('');
+    setCityInput('');
     onFilterChange({
       search: '',
       trade: '',
-      city: 'Dallas',
+      city: '',
       min_rating: '',
       insurance_status: '',
       sort: 'newest'
     });
   };
 
-  const isFiltered = searchInput || filters.trade || filters.insurance_status || filters.min_rating;
+  const isFiltered = searchInput || filters.trade || cityInput || filters.insurance_status || filters.min_rating;
 
   return (
     <div className="vendor-search">
@@ -119,15 +119,18 @@ function VendorSearchComponent({ filters, onFilterChange, loading }) {
 
             <div className="filter-group-compact">
               <label>City</label>
-              <select
-                value={filters.city}
-                onChange={(e) => handleFilterChange('city', e.target.value)}
+              {/* Free text, not a fixed dropdown — vendors can be anywhere
+                  (was previously hardcoded to 5 TX cities with no "All
+                  Cities" option, which silently defaulted every search to
+                  city=Dallas and hid vendors added with any other city,
+                  e.g. Hyderabad). */}
+              <input
+                type="text"
+                value={cityInput}
+                onChange={(e) => setCityInput(e.target.value)}
+                placeholder="All Cities"
                 disabled={loading}
-              >
-                {CITIES.map(city => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
-              </select>
+              />
             </div>
 
             <div className="filter-group-compact">

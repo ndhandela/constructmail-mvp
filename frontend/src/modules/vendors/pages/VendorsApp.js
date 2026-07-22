@@ -20,7 +20,7 @@ export default function VendorsApp({ user, userId, onLogout }) {
   const [filters, setFilters] = useState({
     search: '',
     trade: '',
-    city: 'Dallas',
+    city: '',
     min_rating: '',
     insurance_status: '',
     sort: 'newest'
