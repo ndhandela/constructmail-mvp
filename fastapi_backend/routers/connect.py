@@ -102,7 +102,11 @@ async def enqueue_mail_signal(signal_row: dict, user_id: Optional[int] = None):
     Call this after a signal row is saved to `signals`.
     signal_type: 'rfi' | 'change_order'
     """
-    signal_type = signal_row.get("signal_type", "rfi").lower()
+    # The AI prompt (services/ai_helpers.py) emits "RFI"/"ChangeOrder", not
+    # the snake_case values connect_queue's type CHECK expects — a bare
+    # .lower() turned "ChangeOrder" into "changeorder", silently dropping
+    # every change-order signal here.
+    signal_type = signal_row.get("signal_type", "rfi").lower().replace("changeorder", "change_order")
     if signal_type not in ("rfi", "change_order"):
         return
     pool = await get_pool()

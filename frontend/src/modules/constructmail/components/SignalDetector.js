@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
 import '../styles/SignalDetector.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export default function SignalDetector({ userId, selectedEmailText }) {
+  const { currentProjectId } = useContext(ProjectContext);
   const [emailText, setEmailText] = useState('');
   const [loading, setLoading] = useState(false);
   const [signals, setSignals] = useState([]);
@@ -29,6 +31,7 @@ try {
     const response = await axios.post(`${API_BASE_URL}/api/detect-signals`, {
       emailText,
       userId: userId,
+      projectId: currentProjectId !== ALL_PROJECTS ? Number(currentProjectId) : null,
     }, {
       timeout: 30000,
     });
