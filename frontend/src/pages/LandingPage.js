@@ -1,7 +1,6 @@
 import React from 'react';
 import PomarLogo from './../components/PomarLogo';
 import { getProductById } from '../config/products';
-import heroJobsite from '../assets/hero-jobsite.png';
 import '../styles/LandingPage.css';
 
 const goToMarketing = (id) => {
@@ -13,45 +12,40 @@ export default function LandingPage({ onProductSelect }) {
     <div className="landing">
 
       {/* === HERO ===
-          Full-color jobsite photo, bottom band (blueprints + hard hat)
-          revealed across the full width — legibility comes from the
-          hero-content card's own background, not a full-height scrim. */}
-      <section className="hero">
-        <div className="hero-photo-layer" style={{ backgroundImage: `url(${heroJobsite})` }} />
-        <div className="hero-warm-edge" />
-        <div className="hero-content">
-          <div className="hero-eyebrow">Intelligence Infrastructure for Construction</div>
-          <h1 className="hero-title">
-            Your project knows everything.{' '}
-            <span className="hero-title-accent">POMAR helps it remember.</span>
+          Solid inkwell panel over a faint 48px blueprint grid. One design
+          at every width — only clamp() scaling and flex-wrap, no separate
+          mobile layout and no absolute positioning. The DFW proof strip
+          lives inside the hero under a hairline divider. NOTE: the shared
+          .hero/.hero-title/... classes in LandingPage.css belong to the
+          product marketing pages now; this section uses hero-flat-*. */}
+      <section className="hero-flat">
+        <div className="hero-flat-inner">
+          <div className="hero-flat-eyebrow">Intelligence Infrastructure for Construction</div>
+          <h1 className="hero-flat-title">
+            <span className="hero-flat-line">Your project knows everything.</span>
+            <span className="hero-flat-line hero-flat-accent">POMAR helps it remember.</span>
           </h1>
-          <p className="hero-sub">
+          <p className="hero-flat-sub">
             From inbox overload to clash report chaos, POMAR turns scattered project data into
             decisions general contractors can act on — without changing how their teams work.
           </p>
-          <div className="hero-cta">
-            <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('constructmail')}>
+          <div className="hero-flat-cta">
+            <button className="hero-flat-btn-primary" onClick={() => onProductSelect && onProductSelect('constructmail')}>
               Try POMAR Mail — Free
             </button>
-            <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('clash')}>
-              Try POMAR Clash — Free
-            </button>
-            <button className="btn-primary" onClick={() => onProductSelect && onProductSelect('vendors')}>
-              Explore POMAR Vendors
-            </button>
-            <a href="/contact" className="btn-outline-dark">Book a Demo</a>
+            <a href="/demo" className="hero-flat-btn-secondary">Book a Demo</a>
+            <a href="#platform" className="hero-flat-link">Explore POMAR Clash and Vendors →</a>
           </div>
-        </div>
-      </section>
 
-      {/* === TRUST === */}
-      <section className="trust">
-        <div className="trust-label">Built with DFW General Contractors</div>
-        <div className="trust-logos">
-          <div className="trust-placeholder">GC Partner</div>
-          <div className="trust-placeholder">DFW Builder</div>
-          <div className="trust-placeholder">VDC Team</div>
-          <div className="trust-placeholder">Industry Advisor</div>
+          <div className="hero-flat-proof">
+            <div className="hero-flat-proof-label">Built with DFW General Contractors</div>
+            <div className="hero-flat-proof-chips">
+              <div className="hero-flat-chip">GC Partner</div>
+              <div className="hero-flat-chip">DFW Builder</div>
+              <div className="hero-flat-chip">VDC Team</div>
+              <div className="hero-flat-chip">Industry Advisor</div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -104,7 +98,7 @@ export default function LandingPage({ onProductSelect }) {
       </section>
 
       {/* === PRODUCTS === */}
-      <section className="products">
+      <section className="products" id="platform">
         <div className="section-inner">
           <div className="products-header">
             <div className="section-eyebrow">Platform</div>
