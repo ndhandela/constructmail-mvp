@@ -872,6 +872,16 @@ async def init_db():
             );
             CREATE INDEX IF NOT EXISTS work_items_project_id_idx ON work_items (project_id);
             CREATE INDEX IF NOT EXISTS work_items_budget_item_id_idx ON work_items (budget_item_id);
+
+            -- Connect push (routers/connect.py push_queue_item) now makes a
+            -- real Procore call instead of a stub, so it needs honest
+            -- non-'pushed' outcomes: 'failed' for a real API error, and
+            -- 'needs_manual' for change_order items Procore can't create
+            -- freeform (see push_queue_item for why). Same idempotent
+            -- drop/re-add style as admin_users_admin_level_check above.
+            ALTER TABLE connect_queue DROP CONSTRAINT IF EXISTS connect_queue_status_check;
+            ALTER TABLE connect_queue ADD CONSTRAINT connect_queue_status_check
+                CHECK (status IN ('pending','reviewed','pushed','dismissed','failed','needs_manual'));
         """)
 
         await _backfill_clash_project_ids(conn)

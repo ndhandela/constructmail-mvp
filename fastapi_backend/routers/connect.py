@@ -7,6 +7,7 @@ POMAR Connect V1
 
 import asyncio
 import logging
+import os
 from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
@@ -17,6 +18,7 @@ from pydantic import BaseModel
 
 from db import get_pool
 from services.project_helpers import require_project_member
+from services.procore_helpers import create_rfi
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/connect", tags=["connect"])
@@ -65,6 +67,32 @@ async def _log_action(conn, *, queue_item_id, action: str, module: str,
            VALUES ($1,$2,$3,$4,$5,$6,$7)""",
         queue_item_id, action, module, status, error_message, user_id, project_id,
     )
+
+
+async def _get_procore_access_token(conn, user_id: Optional[int]) -> Optional[str]:
+    """Same decrypt pattern routers/procore.py's own endpoints use — one
+    access_token per user_id in procore_tokens, symmetrically encrypted with
+    TOKEN_ENCRYPTION_KEY."""
+    if not user_id:
+        return None
+    key = os.getenv("TOKEN_ENCRYPTION_KEY")
+    row = await conn.fetchrow(
+        "SELECT pgp_sym_decrypt(access_token::bytea, $2) AS access_token FROM procore_tokens WHERE user_id = $1",
+        str(user_id), key,
+    )
+    return row["access_token"] if row else None
+
+
+async def _get_procore_project_id(conn, project_id: Optional[int]) -> Optional[str]:
+    """The POMAR project -> Procore project mapping already set up via
+    GET/POST /api/procore/project-link (project_procore_links)."""
+    if not project_id:
+        return None
+    row = await conn.fetchrow(
+        "SELECT procore_project_id FROM project_procore_links WHERE project_id = $1",
+        project_id,
+    )
+    return row["procore_project_id"] if row else None
 
 
 # ── Task 2a: Mail → Queue (called from ai.py after signal detection) ──────────
@@ -274,9 +302,10 @@ async def update_queue_status(item_id: UUID, body: StatusUpdate):
 @router.post("/queue/{item_id}/push")
 async def push_queue_item(item_id: UUID, body: PushRequest = PushRequest()):
     """
-    Push item to Procore or Kahua.
-    Real integration: plug in Procore/Kahua SDK calls here.
-    Currently simulates push and logs the result.
+    Push item to Procore (RFIs for real; change_order returns an honest
+    "needs manual entry" result since Procore change orders require an
+    existing commitment/prime contract reference, not just a title) or
+    Kahua (not implemented — no working Kahua call exists in this repo yet).
     """
     pool = await get_pool()
     async with pool.acquire() as conn:
@@ -292,42 +321,82 @@ async def push_queue_item(item_id: UUID, body: PushRequest = PushRequest()):
 
         target = item.get("pmis_target") or "procore"
         action_label = f"{item['type'].upper()} pushed to {target.capitalize()}"
+        project_id = item.get("project_id")
 
-        # ── Procore integration stub ──────────────────────────────────────
-        # When Procore OAuth is live, replace the block below with:
-        #   from services.procore_helpers import create_rfi
-        #   rfi = await create_rfi(user_id, project_id, rfi_data)
-        # ─────────────────────────────────────────────────────────────────
-        push_success = True  # stub — always succeeds
-        error_msg = None
-
-        if push_success:
+        async def _fail(status: str, error_msg: str, http_status: int):
             await conn.execute(
-                "UPDATE connect_queue SET status='pushed', updated_at=NOW() WHERE id=$1",
+                "UPDATE connect_queue SET status=$1, updated_at=NOW() WHERE id=$2",
+                status, item_id,
+            )
+            await _log_action(
+                conn, queue_item_id=item_id, action=action_label, module=item["module"],
+                status="failed", error_message=error_msg,
+                user_id=body.user_id, project_id=project_id,
+            )
+            raise HTTPException(http_status, error_msg)
+
+        if target == "kahua":
+            await _fail("failed", "Kahua push not yet implemented", 501)
+
+        if item["type"] == "change_order":
+            message = (
+                "Procore requires an existing commitment or prime contract "
+                "(with line items) to create a change order — a title and "
+                "description alone aren't enough. This item needs manual "
+                "entry in Procore."
+            )
+            await conn.execute(
+                "UPDATE connect_queue SET status='needs_manual', updated_at=NOW() WHERE id=$1",
                 item_id,
             )
             await _log_action(
-                conn,
-                queue_item_id=item_id,
-                action=action_label,
-                module=item["module"],
-                status="success",
-                user_id=body.user_id,
-                project_id=item.get("project_id"),
+                conn, queue_item_id=item_id, action=f"{action_label} (manual entry required)",
+                module=item["module"], status="success",
+                user_id=body.user_id, project_id=project_id,
             )
-            return {"success": True, "message": f"Pushed to {target.capitalize()}"}
-        else:
-            await _log_action(
-                conn,
-                queue_item_id=item_id,
-                action=action_label,
-                module=item["module"],
-                status="failed",
-                error_message=error_msg,
-                user_id=body.user_id,
-                project_id=item.get("project_id"),
+            return {"success": True, "manual_entry_required": True, "message": message}
+
+        if item["type"] != "rfi":
+            await _fail("failed", f"Procore push for '{item['type']}' items isn't implemented yet", 501)
+
+        procore_project_id = await _get_procore_project_id(conn, project_id)
+        if not procore_project_id:
+            await _fail(
+                "failed",
+                "This project isn't linked to a Procore project yet — link it from Procore settings first.",
+                400,
             )
-            raise HTTPException(500, f"Push failed: {error_msg}")
+
+        push_user_id = body.user_id or item.get("user_id")
+        access_token = await _get_procore_access_token(conn, push_user_id)
+        if not access_token:
+            await _fail("failed", "Procore isn't connected for this user", 401)
+
+        rfi_data = {
+            "title": item["title"],
+            "description": item.get("detail") or "",
+            "priority": item.get("priority") or "medium",
+        }
+
+        try:
+            await create_rfi(access_token, procore_project_id, rfi_data)
+        except Exception as exc:
+            await _fail("failed", f"Procore RFI creation failed: {exc}", 502)
+
+        await conn.execute(
+            "UPDATE connect_queue SET status='pushed', updated_at=NOW() WHERE id=$1",
+            item_id,
+        )
+        await _log_action(
+            conn,
+            queue_item_id=item_id,
+            action=action_label,
+            module=item["module"],
+            status="success",
+            user_id=body.user_id,
+            project_id=project_id,
+        )
+        return {"success": True, "message": f"Pushed to {target.capitalize()}"}
 
 
 @router.get("/log")
