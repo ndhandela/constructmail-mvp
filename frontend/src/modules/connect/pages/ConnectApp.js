@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
+import PmisSetupCard from '../components/PmisSetupCard';
 import '../styles/ConnectApp.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
@@ -237,6 +238,11 @@ export default function ConnectApp({ userId }) {
           sub="Vendors with no flags"
           colorClass={kpis?.vendor_compliance_pct >= 80 ? 'kpi-green' : 'kpi-orange'}
         />
+      </div>
+
+      {/* PMIS connection + project mapping */}
+      <div className="pmis-setup-row">
+        <PmisSetupCard userId={userId} />
       </div>
 
       {/* Body */}
