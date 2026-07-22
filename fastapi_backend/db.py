@@ -834,6 +834,44 @@ async def init_db():
             INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active)
             VALUES (true, NULL, 'capital', 0, 'monthly', true)
             ON CONFLICT (module_name) WHERE is_global = true DO NOTHING;
+
+            -- Milestones + work items extend Capital Tracker (not a new
+            -- module — no new feature flag) with schedule/progress tracking
+            -- alongside its existing budget_items, so a category can show
+            -- "60% done but 85% spent" instead of dollars alone.
+            CREATE TABLE IF NOT EXISTS milestones (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                name VARCHAR(255) NOT NULL,
+                target_date DATE,
+                actual_date DATE,
+                status VARCHAR(20) NOT NULL DEFAULT 'not_started'
+                    CHECK (status IN ('not_started','in_progress','at_risk','complete')),
+                risk_flag BOOLEAN NOT NULL DEFAULT FALSE,
+                risk_source VARCHAR(20) CHECK (risk_source IN ('manual','mail_signal','clash_signal','connect_signal')),
+                notes TEXT,
+                metadata JSONB NOT NULL DEFAULT '{}',
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS milestones_project_id_idx ON milestones (project_id);
+
+            CREATE TABLE IF NOT EXISTS work_items (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                budget_item_id INT REFERENCES budget_items(id) ON DELETE SET NULL,
+                milestone_id INT REFERENCES milestones(id) ON DELETE SET NULL,
+                name VARCHAR(255) NOT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'not_started'
+                    CHECK (status IN ('not_started','in_progress','complete')),
+                percent_complete NUMERIC(5,2) NOT NULL DEFAULT 0,
+                sequence INT,
+                due_date DATE,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS work_items_project_id_idx ON work_items (project_id);
+            CREATE INDEX IF NOT EXISTS work_items_budget_item_id_idx ON work_items (budget_item_id);
         """)
 
         await _backfill_clash_project_ids(conn)

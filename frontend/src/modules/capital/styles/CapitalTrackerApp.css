@@ -51,6 +51,91 @@
   font-size: 14px;
 }
 
+/* ── Tabs ─────────────────────────────────────────────────────────────── */
+
+.capital-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #E7E0D3;
+}
+
+.capital-tab {
+  border: none;
+  background: transparent;
+  color: var(--slate);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.capital-tab:hover {
+  color: var(--inkwell);
+}
+
+.capital-tab-active {
+  color: var(--saffron);
+  border-bottom-color: var(--saffron);
+}
+
+.capital-tab-panel {
+  margin-bottom: 28px;
+}
+
+/* ── Status pills / risk badge (Milestones, Work Items) ──────────────── */
+
+.capital-status-pill {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--sandstone);
+  color: var(--inkwell);
+}
+
+.capital-status-complete {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.capital-status-at_risk {
+  background: #FDECEA;
+  color: var(--brick);
+}
+
+.capital-status-in_progress {
+  background: var(--saffron-soft);
+  color: var(--saffron);
+}
+
+.capital-risk-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: #FDECEA;
+  color: var(--brick);
+}
+
+.capital-checkbox-field label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--inkwell);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.capital-checkbox-field input[type="checkbox"] {
+  width: auto;
+}
+
 /* ── Dashboard ────────────────────────────────────────────────────────── */
 
 .capital-dashboard-header {
@@ -198,12 +283,14 @@
   color: var(--slate);
 }
 
-.capital-field input, .capital-field textarea {
+.capital-field input, .capital-field textarea, .capital-field select {
   padding: 9px 12px;
   border-radius: var(--radius-sm);
   border: 1px solid #E7E0D3;
   font-size: 14px;
   font-family: inherit;
+  background: var(--white);
+  color: var(--inkwell);
 }
 
 .capital-form-row {

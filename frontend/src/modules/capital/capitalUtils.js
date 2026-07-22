@@ -24,3 +24,15 @@ export function varianceColor(variance) {
 export function varianceBg(variance) {
   return variance < 0 ? '#FDECEA' : 'var(--green-bg)';
 }
+
+// spend running ahead of physical progress (spend% clears progress% by a
+// meaningful margin) is the "60% done but 85% spent" case this feature
+// exists to surface — brick/green mirrors varianceColor's same pairing.
+export function progressColor(percentComplete, spendPercent) {
+  if (percentComplete == null || spendPercent == null) return 'var(--slate)';
+  return spendPercent - percentComplete > 15 ? 'var(--brick)' : 'var(--green)';
+}
+
+export function statusLabel(status) {
+  return (status || '').split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}

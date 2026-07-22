@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { API_BASE_URL, isProjectOwner, formatCurrency, varianceColor, varianceBg } from '../capitalUtils';
+import { API_BASE_URL, isProjectOwner, formatCurrency, varianceColor, varianceBg, progressColor } from '../capitalUtils';
+import MilestonesTab from './MilestonesTab';
+import WorkItemsTab from './WorkItemsTab';
+
+const TABS = [
+  { key: 'budget', label: 'Budget' },
+  { key: 'milestones', label: 'Milestones' },
+  { key: 'workitems', label: 'Work Items' },
+];
 
 function BudgetItemForm({ userId, project, item, onSaved, onCancel }) {
   const isEdit = !!item;
@@ -135,6 +143,7 @@ function BudgetItemForm({ userId, project, item, onSaved, onCancel }) {
 }
 
 export default function CapitalTrackerDashboard({ userId, user, project }) {
+  const [activeTab, setActiveTab] = useState('budget');
   const [items, setItems] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -160,7 +169,9 @@ export default function CapitalTrackerDashboard({ userId, user, project }) {
     }
   }, [project, userId]);
 
-  useEffect(() => { fetchItems(); }, [fetchItems]);
+  useEffect(() => {
+    if (activeTab === 'budget') fetchItems();
+  }, [fetchItems, activeTab]);
 
   const handleSaved = () => {
     setShowForm(false);
@@ -172,79 +183,104 @@ export default function CapitalTrackerDashboard({ userId, user, project }) {
 
   return (
     <div className="capital-dashboard">
-      <div className="capital-dashboard-header">
-        <h2>Budget Categories</h2>
-        {canEdit && (
-          <button className="capital-btn-primary" onClick={() => setShowForm(true)}>+ Add category</button>
-        )}
+      <div className="capital-tabs">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            className={`capital-tab${activeTab === tab.key ? ' capital-tab-active' : ''}`}
+            onClick={() => setActiveTab(tab.key)}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {loading ? (
-        <p className="capital-muted">Loading budget…</p>
-      ) : (
+      {activeTab === 'milestones' && <MilestonesTab userId={userId} user={user} project={project} />}
+      {activeTab === 'workitems' && <WorkItemsTab userId={userId} user={user} project={project} />}
+
+      {activeTab === 'budget' && (
         <>
-          <div className="capital-summary-cards">
-            <div className="capital-summary-card">
-              <span className="capital-summary-label">Total Budgeted</span>
-              <span className="capital-summary-value">{formatCurrency(summary?.total_budgeted)}</span>
-            </div>
-            <div className="capital-summary-card">
-              <span className="capital-summary-label">Total Committed</span>
-              <span className="capital-summary-value">{formatCurrency(summary?.total_committed)}</span>
-            </div>
-            <div className="capital-summary-card">
-              <span className="capital-summary-label">Total Actual</span>
-              <span className="capital-summary-value">{formatCurrency(summary?.total_actual)}</span>
-            </div>
-            <div
-              className="capital-summary-card capital-summary-card-variance"
-              style={{ color: varianceColor(summary?.variance ?? 0), background: varianceBg(summary?.variance ?? 0) }}
-            >
-              <span className="capital-summary-label">Variance</span>
-              <span className="capital-summary-value">{formatCurrency(summary?.variance)}</span>
-            </div>
+          <div className="capital-dashboard-header">
+            <h2>Budget Categories</h2>
+            {canEdit && (
+              <button className="capital-btn-primary" onClick={() => setShowForm(true)}>+ Add category</button>
+            )}
           </div>
 
-          {items.length === 0 ? (
-            <p className="capital-muted">
-              No budget categories yet. {canEdit ? 'Add one to get started.' : 'Ask your project owner to set up the budget.'}
-            </p>
+          {loading ? (
+            <p className="capital-muted">Loading budget…</p>
           ) : (
-            <div className="capital-table-wrapper">
-              <table className="capital-table">
-                <thead>
-                  <tr>
-                    <th>Category</th>
-                    <th>Budgeted</th>
-                    <th>Committed</th>
-                    <th>Actual</th>
-                    <th>Variance</th>
-                    {canEdit && <th></th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item) => {
-                    const variance = Number(item.budgeted_amount) - Number(item.actual_spent);
-                    return (
-                      <tr key={item.id}>
-                        <td>{item.category}</td>
-                        <td>{formatCurrency(item.budgeted_amount)}</td>
-                        <td>{formatCurrency(item.committed_amount)}</td>
-                        <td>{formatCurrency(item.actual_spent)}</td>
-                        <td style={{ color: varianceColor(variance), fontWeight: 600 }}>
-                          {formatCurrency(variance)}
-                        </td>
-                        {canEdit && (
-                          <td>
-                            <button className="capital-link-btn" onClick={() => setEditingItem(item)}>Edit</button>
-                          </td>
-                        )}
+            <>
+              <div className="capital-summary-cards">
+                <div className="capital-summary-card">
+                  <span className="capital-summary-label">Total Budgeted</span>
+                  <span className="capital-summary-value">{formatCurrency(summary?.total_budgeted)}</span>
+                </div>
+                <div className="capital-summary-card">
+                  <span className="capital-summary-label">Total Committed</span>
+                  <span className="capital-summary-value">{formatCurrency(summary?.total_committed)}</span>
+                </div>
+                <div className="capital-summary-card">
+                  <span className="capital-summary-label">Total Actual</span>
+                  <span className="capital-summary-value">{formatCurrency(summary?.total_actual)}</span>
+                </div>
+                <div
+                  className="capital-summary-card capital-summary-card-variance"
+                  style={{ color: varianceColor(summary?.variance ?? 0), background: varianceBg(summary?.variance ?? 0) }}
+                >
+                  <span className="capital-summary-label">Variance</span>
+                  <span className="capital-summary-value">{formatCurrency(summary?.variance)}</span>
+                </div>
+              </div>
+
+              {items.length === 0 ? (
+                <p className="capital-muted">
+                  No budget categories yet. {canEdit ? 'Add one to get started.' : 'Ask your project owner to set up the budget.'}
+                </p>
+              ) : (
+                <div className="capital-table-wrapper">
+                  <table className="capital-table">
+                    <thead>
+                      <tr>
+                        <th>Category</th>
+                        <th>Budgeted</th>
+                        <th>Committed</th>
+                        <th>Actual</th>
+                        <th>Variance</th>
+                        <th>Progress</th>
+                        {canEdit && <th></th>}
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    </thead>
+                    <tbody>
+                      {items.map((item) => {
+                        const variance = Number(item.budgeted_amount) - Number(item.actual_spent);
+                        return (
+                          <tr key={item.id}>
+                            <td>{item.category}</td>
+                            <td>{formatCurrency(item.budgeted_amount)}</td>
+                            <td>{formatCurrency(item.committed_amount)}</td>
+                            <td>{formatCurrency(item.actual_spent)}</td>
+                            <td style={{ color: varianceColor(variance), fontWeight: 600 }}>
+                              {formatCurrency(variance)}
+                            </td>
+                            <td style={{ color: progressColor(item.percent_complete, item.spend_percent), fontWeight: 600 }}>
+                              {item.work_item_count > 0
+                                ? `${item.percent_complete}% done · ${item.spend_percent ?? 0}% spent`
+                                : '—'}
+                            </td>
+                            {canEdit && (
+                              <td>
+                                <button className="capital-link-btn" onClick={() => setEditingItem(item)}>Edit</button>
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
         </>
       )}
