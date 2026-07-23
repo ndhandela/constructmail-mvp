@@ -1,0 +1,160 @@
+.removal-requests-queue {
+  padding: 0;
+}
+
+.rrq-header {
+  background-color: var(--parchment);
+  padding: 32px;
+  margin-bottom: 32px;
+  border-bottom: 2px solid var(--border-light);
+}
+
+.rrq-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  color: var(--inkwell);
+  font-weight: 700;
+}
+
+.rrq-header p {
+  margin: 0;
+  max-width: 640px;
+  color: var(--slate);
+  font-size: 14px;
+}
+
+.rrq-back-btn {
+  padding: 10px 20px;
+  background-color: var(--inkwell);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.rrq-container {
+  padding: 32px;
+  max-width: 1000px;
+}
+
+.rrq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.rrq-card {
+  background-color: white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+  padding: 20px;
+}
+
+.rrq-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+
+.rrq-status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: white;
+}
+
+.rrq-status-pending  { background-color: #F59E0B; }
+.rrq-status-approved { background-color: #EF4444; }
+.rrq-status-denied   { background-color: #10B981; }
+
+.rrq-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--inkwell);
+  margin-bottom: 12px;
+}
+
+.rrq-label {
+  color: var(--slate);
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.rrq-resolve-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+}
+
+.rrq-resolve-row input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.rrq-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rrq-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.rrq-btn-approve { background-color: #EF4444; color: white; }
+.rrq-btn-deny    { background-color: var(--parchment); color: var(--inkwell); border: 1px solid var(--border-light); }
+
+.rrq-empty,
+.rrq-loading {
+  padding: 60px 40px;
+  text-align: center;
+  color: var(--slate);
+}
+
+.rrq-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background-color: white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.rrq-pagination-btn {
+  padding: 10px 20px;
+  background-color: var(--inkwell);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rrq-pagination-btn:hover:not(:disabled) { background-color: var(--saffron); }
+.rrq-pagination-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.rrq-pagination-info {
+  font-size: 13px;
+  color: var(--slate);
+  font-weight: 600;
+}

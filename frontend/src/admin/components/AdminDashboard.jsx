@@ -91,6 +91,12 @@ export default function AdminDashboard({ token, admin, onLogout, onNavigate }) {
             <h3>Logs</h3>
             <p>Server, frontend, email delivery, and admin activity logs</p>
           </div>
+
+          <div className="admin-section" onClick={() => onNavigate('removal-requests')}>
+            <div className="section-icon">🏪</div>
+            <h3>Removal Requests</h3>
+            <p>Review and resolve Marketplace listing removal requests</p>
+          </div>
         </div>
       </div>
     </div>

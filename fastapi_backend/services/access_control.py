@@ -12,6 +12,18 @@ async def require_feature_flag(conn, user_id: int, feature_key: str):
     Also the single source of truth for module access (mail/clash/vendors/
     marketplace) — those are just feature_key values like any other flag,
     there's no separate module-level check anymore."""
+    account = await conn.fetchrow(
+        "SELECT account_status FROM users WHERE id = $1", user_id,
+    )
+    if account and account["account_status"] == "lead":
+        # Lead accounts (marketplace gc-signup/claim-listing) have no
+        # company_id, which would otherwise hit the "legacy no-company
+        # account, allowed through" bypass below and get full module access
+        # for free. They get their own narrow set of marketplace-only routes
+        # instead (routers/marketplace.py), never anything gated by this
+        # function.
+        raise HTTPException(403, "Lead accounts don't have module access.")
+
     row = await conn.fetchrow(
         """SELECT c.id AS company_id FROM users u
            JOIN companies c ON c.id = u.company_id WHERE u.id = $1""",

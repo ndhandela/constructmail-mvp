@@ -97,6 +97,7 @@ export default function ActivityLogViewer({ token, onNavigate }) {
           >
             <option value="">All modules</option>
             <option value="trust">POMAR Trust</option>
+            <option value="marketplace">Marketplace</option>
           </select>
           <button
             onClick={() => onNavigate('dashboard')}

@@ -16,9 +16,124 @@ function Stars({ rating }) {
   );
 }
 
+function ClaimListingPrompt({ listingId }) {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/marketplace/claim-listing`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name, listing_id: listingId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSent(true);
+      } else {
+        setError(data.detail || 'Could not submit claim. Try again.');
+      }
+    } catch {
+      setError('Network error. Try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (sent) {
+    return (
+      <div className="mp-claim-prompt" onClick={(e) => e.stopPropagation()}>
+        <p>Check your email to confirm and start managing this listing.</p>
+      </div>
+    );
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        className="mp-claim-listing-btn"
+        onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+      >
+        Is this your business? Claim this listing
+      </button>
+    );
+  }
+
+  return (
+    <form className="mp-claim-prompt" onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
+      <input type="text" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} required />
+      <input type="email" placeholder="Work email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+      <button type="submit" disabled={submitting}>{submitting ? 'Sending…' : 'Claim this listing'}</button>
+      {error && <div className="mp-form-msg error">{error}</div>}
+    </form>
+  );
+}
+
+function GcSignupPrompt({ onSignedUp }) {
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/marketplace/gc-signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSent(true);
+        if (onSignedUp) onSignedUp();
+      } else {
+        setError(data.detail || 'Could not sign up. Try again.');
+      }
+    } catch {
+      setError('Network error. Try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (sent) {
+    return (
+      <div className="mp-gc-signup-prompt" onClick={(e) => e.stopPropagation()}>
+        <p>Check your email for a link to confirm your address and view full contact info.</p>
+      </div>
+    );
+  }
+
+  return (
+    <form className="mp-gc-signup-prompt" onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
+      <p>Sign up free to see contact info and full reviews for this vendor.</p>
+      <input type="text" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} required />
+      <input type="email" placeholder="Work email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+      <button type="submit" disabled={submitting}>{submitting ? 'Sending…' : 'Get full details'}</button>
+      {error && <div className="mp-form-msg error">{error}</div>}
+    </form>
+  );
+}
+
 export default function MarketplaceVendorCard({ listing, userId }) {
   const [expanded, setExpanded] = useState(false);
   const [reviews, setReviews] = useState([]);
+  const [fullDetails, setFullDetails] = useState(null);
+  const [needsSignup, setNeedsSignup] = useState(false);
   const [avgRating, setAvgRating] = useState(parseFloat(listing.avg_rating) || 0);
   const [reviewCount, setReviewCount] = useState(listing.review_count || 0);
   const [saved, setSaved] = useState(false);
@@ -50,21 +165,38 @@ export default function MarketplaceVendorCard({ listing, userId }) {
   };
 
   useEffect(() => {
-    if (expanded && reviews.length === 0 && listing.review_count > 0) {
-      fetchReviews();
+    if (expanded && !fullDetails && !needsSignup) {
+      fetchFullDetails();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expanded]);
 
-  const fetchReviews = async () => {
+  const fetchFullDetails = async () => {
+    // GET /listings/{id} is public and no longer returns contact info or
+    // review text for anyone — that lives behind /full, gated by a
+    // marketplace session token (see App.js's verify-token handling) rather
+    // than the plain userId param the rest of this app uses.
+    const sessionToken = localStorage.getItem('marketplace_sessionToken');
+    if (!sessionToken) {
+      setNeedsSignup(true);
+      return;
+    }
     try {
       const res = await fetch(
-        `${API_BASE_URL}/api/marketplace/listings/${listing.id}?userId=${userId}`
+        `${API_BASE_URL}/api/marketplace/listings/${listing.id}/full`,
+        { headers: { Authorization: `Bearer ${sessionToken}` } }
       );
+      if (res.status === 401) {
+        setNeedsSignup(true);
+        return;
+      }
       const data = await res.json();
-      if (data.success) setReviews(data.reviews);
+      if (data.success) {
+        setFullDetails(data.listing);
+        setReviews(data.reviews);
+      }
     } catch (err) {
-      console.error('Fetch reviews error:', err);
+      console.error('Fetch full listing details error:', err);
     }
   };
 
@@ -101,35 +233,43 @@ export default function MarketplaceVendorCard({ listing, userId }) {
           className="mp-detail"
           onClick={(e) => e.stopPropagation()}
         >
-          {listing.contact_email && (
+          {needsSignup && !fullDetails && (
+            <GcSignupPrompt onSignedUp={() => {}} />
+          )}
+
+          {listing.is_claimed === false && (
+            <ClaimListingPrompt listingId={listing.id} />
+          )}
+
+          {fullDetails && fullDetails.contact_email && (
             <div className="mp-detail-row">
               <span className="mp-detail-label">Email</span>
               <span className="mp-detail-value">
-                <a href={`mailto:${listing.contact_email}`}>{listing.contact_email}</a>
+                <a href={`mailto:${fullDetails.contact_email}`}>{fullDetails.contact_email}</a>
               </span>
             </div>
           )}
-          {listing.contact_phone && (
+          {fullDetails && fullDetails.contact_phone && (
             <div className="mp-detail-row">
               <span className="mp-detail-label">Phone</span>
-              <span className="mp-detail-value">{listing.contact_phone}</span>
+              <span className="mp-detail-value">{fullDetails.contact_phone}</span>
             </div>
           )}
-          {listing.website && (
+          {fullDetails && fullDetails.website && (
             <div className="mp-detail-row">
               <span className="mp-detail-label">Website</span>
               <span className="mp-detail-value">
-                <a href={listing.website} target="_blank" rel="noopener noreferrer">
-                  {listing.website}
+                <a href={fullDetails.website} target="_blank" rel="noopener noreferrer">
+                  {fullDetails.website}
                 </a>
               </span>
             </div>
           )}
-          {listing.description && (
-            <p className="mp-description">{listing.description}</p>
+          {fullDetails && fullDetails.description && (
+            <p className="mp-description">{fullDetails.description}</p>
           )}
 
-          {canSaveToProject && (
+          {fullDetails && canSaveToProject && (
             <button
               className="mp-save-to-project-btn"
               onClick={handleSaveToProject}
@@ -139,14 +279,17 @@ export default function MarketplaceVendorCard({ listing, userId }) {
             </button>
           )}
 
-          {/* Reviews */}
-          {reviews.length > 0 && (
+          {/* Reviews — only available once full details have unlocked */}
+          {fullDetails && reviews.length > 0 && (
             <div className="mp-reviews-section">
               <h4>Reviews</h4>
               {reviews.map((r) => (
                 <div key={r.id} className="mp-review-item">
                   <div className="mp-review-meta">
                     <Stars rating={r.rating} />
+                    {r.reviewer_company_name && (
+                      <span className="mp-review-author">{r.reviewer_company_name}</span>
+                    )}
                     <span className="mp-review-date">
                       {new Date(r.created_at).toLocaleDateString()}
                     </span>
@@ -159,11 +302,13 @@ export default function MarketplaceVendorCard({ listing, userId }) {
             </div>
           )}
 
-          <MarketplaceReviewForm
-            listingId={listing.id}
-            userId={userId}
-            onReviewSubmitted={handleReviewSubmitted}
-          />
+          {fullDetails && (
+            <MarketplaceReviewForm
+              listingId={listing.id}
+              userId={userId}
+              onReviewSubmitted={handleReviewSubmitted}
+            />
+          )}
         </div>
       )}
     </div>

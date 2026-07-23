@@ -8,6 +8,8 @@ from db import get_pool
 from services.email_service import send_email
 from services.project_helpers import accept_pending_invites
 from services.access_control import get_active_modules
+from services.magic_link import issue_magic_link
+from services.marketplace_sessions import issue_session_token
 import os
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
@@ -64,15 +66,10 @@ class UpdateRoleRequest(BaseModel):
 
 @router.post("/send-magic-link")
 async def send_magic_link(req: MagicLinkRequest, request: Request):
-    magic_token = secrets.token_hex(32)
+    origin = request.headers.get("origin", FRONTEND_URL)
     pool = await get_pool()
     async with pool.acquire() as conn:
-        await conn.execute(
-            "INSERT INTO sessions (email, magic_token) VALUES ($1, $2) ON CONFLICT (email) DO UPDATE SET magic_token = $2, expires_at = NOW() + INTERVAL '24 hours'",
-            req.email, magic_token,
-        )
-    origin = request.headers.get("origin", FRONTEND_URL)
-    magic_link = f"{origin}/auth/verify?token={magic_token}"
+        magic_link = await issue_magic_link(conn, req.email, origin)
     return {"message": "Magic link generated", "magicLink": magic_link, "email": req.email}
 
 
@@ -96,7 +93,12 @@ async def verify_token(req: VerifyTokenRequest):
         await conn.execute("UPDATE users SET last_login = NOW() WHERE id = $1", user_id)
         await conn.execute("UPDATE sessions SET is_verified = TRUE WHERE magic_token = $1", req.token)
         await accept_pending_invites(conn, user_id, email)
-    return {"success": True, "userId": user_id, "email": email}
+        # Every magic-link login (not just marketplace lead flows) gets a
+        # session token now, since GET .../full and POST .../dispute accept
+        # both lead and already-invited active accounts uniformly and need
+        # a single auth mechanism that works for both.
+        session_token = await issue_session_token(conn, user_id)
+    return {"success": True, "userId": user_id, "email": email, "sessionToken": session_token}
 
 
 @router.get("/me")

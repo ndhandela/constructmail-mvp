@@ -12,6 +12,10 @@ import MailMarketing from './pages/marketing/MailMarketing';
 import ClashMarketing from './pages/marketing/ClashMarketing';
 import VendorsMarketing from './pages/marketing/VendorsMarketing';
 import MarketplaceMarketing from './pages/marketing/MarketplaceMarketing';
+import MarketplacePublicBrowse from './pages/marketing/MarketplacePublicBrowse';
+import MarketplaceListingDetail from './pages/marketing/MarketplaceListingDetail';
+import MarketplaceTerms from './pages/marketing/MarketplaceTerms';
+import MarketplaceDisputePolicy from './pages/marketing/MarketplaceDisputePolicy';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import AppLayout from './components/AppLayout';
@@ -99,6 +103,12 @@ function App() {
         if (data.success) {
           setUserId(data.userId);
           localStorage.setItem('constructmail_userId', data.userId);
+          if (data.sessionToken) {
+            // Bearer token for the marketplace GET .../full and POST
+            // .../dispute routes only — every other request in this app
+            // still authenticates via the plain userId param above.
+            localStorage.setItem('marketplace_sessionToken', data.sessionToken);
+          }
           fetchUser(data.userId);
           // Mirrors the [userId] effect below — every product path needs its
           // own case here too, otherwise a magic-link login on (e.g.) /trust
@@ -176,6 +186,7 @@ function App() {
     setUser(null);
     setCurrentProduct(null);
     localStorage.removeItem('constructmail_userId');
+    localStorage.removeItem('marketplace_sessionToken');
   };
 
   const handleProductSelect = (productId) => {
@@ -283,6 +294,48 @@ function App() {
       <>
         <Header userId={userId} onLogout={handleLogout} user={user} />
         <MarketplaceMarketing />
+        <Footer />
+      </>
+    );
+  }
+
+  // ── Public Marketplace routes (no auth — browse/detail/legal) ────────────
+  if (path === '/marketplace/listings') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <MarketplacePublicBrowse />
+        <Footer />
+      </>
+    );
+  }
+
+  if (path.startsWith('/marketplace/listings/')) {
+    const listingId = path.slice('/marketplace/listings/'.length).split('/')[0];
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <MarketplaceListingDetail listingId={listingId} userId={userId} />
+        <Footer />
+      </>
+    );
+  }
+
+  if (path === '/marketplace/terms') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <MarketplaceTerms />
+        <Footer />
+      </>
+    );
+  }
+
+  if (path === '/marketplace/dispute-policy') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <MarketplaceDisputePolicy />
         <Footer />
       </>
     );

@@ -445,3 +445,130 @@ async def admin_update_trust_role(
         admin["id"], "trust_role_updated", "users", member_user_id, {"trust_role": req.trust_role},
     )
     return {"success": True, "trust_role": row["trust_role"]}
+
+
+# ── Marketplace: removal requests, admin-added listings, review moderation ──
+
+@router.get("/marketplace/removal-requests")
+async def list_removal_requests(
+    status: Optional[str] = None, limit: int = 50, offset: int = 0,
+    admin: dict = Depends(require_admin),
+):
+    pool = await get_pool()
+    query = """SELECT rr.*, mvd.name AS listing_name
+               FROM marketplace_removal_requests rr
+               JOIN marketplace_listings ml ON ml.id = rr.listing_id
+               LEFT JOIN marketplace_vendor_details mvd ON mvd.listing_id = ml.id
+               WHERE 1=1"""
+    params = []
+    if status:
+        params.append(status)
+        query += f" AND rr.status = ${len(params)}"
+    query += f" ORDER BY rr.created_at DESC LIMIT ${len(params)+1} OFFSET ${len(params)+2}"
+    params.extend([limit, offset])
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(query, *params)
+        total = await conn.fetchval("SELECT COUNT(*) FROM marketplace_removal_requests")
+    return {"success": True, "requests": [dict(r) for r in rows], "total": total}
+
+
+class ResolveRemovalRequestRequest(BaseModel):
+    status: str  # 'approved' | 'denied'
+    resolution_note: Optional[str] = None
+
+
+@router.patch("/marketplace/removal-requests/{request_id}")
+async def resolve_removal_request(
+    request_id: str, req: ResolveRemovalRequestRequest, admin: dict = Depends(require_admin),
+):
+    if req.status not in ("approved", "denied"):
+        raise HTTPException(400, "status must be 'approved' or 'denied'")
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        removal_request = await conn.fetchrow(
+            "SELECT * FROM marketplace_removal_requests WHERE id = $1", request_id
+        )
+        if not removal_request:
+            raise HTTPException(404, "Removal request not found")
+        async with conn.transaction():
+            updated = await conn.fetchrow(
+                """UPDATE marketplace_removal_requests
+                   SET status = $1, resolution_note = $2, resolved_by_admin_id = $3, resolved_at = NOW()
+                   WHERE id = $4 RETURNING *""",
+                req.status, req.resolution_note, admin["id"], request_id,
+            )
+            if req.status == "approved":
+                # Confirmed legitimate by Admin — only now does the listing
+                # actually come down, never automatically on request alone
+                # (see routers/marketplace.py's request_listing_removal).
+                await conn.execute(
+                    "UPDATE marketplace_listings SET status = 'removed', updated_at = NOW() WHERE id = $1",
+                    updated["listing_id"],
+                )
+    await user_service.log_admin_activity(
+        admin["id"], "removal_request_resolved", "marketplace_removal_request", None,
+        {"request_id": request_id, "status": req.status},
+    )
+    return {"success": True, "request": dict(updated)}
+
+
+class AdminCreateListingRequest(BaseModel):
+    listing_type_slug: str
+    name: str
+    trade: Optional[str] = None
+    location: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    contact_email: Optional[str] = None
+    contact_phone: Optional[str] = None
+    website: Optional[str] = None
+    description: Optional[str] = None
+    attestation_note: str
+
+
+@router.post("/marketplace/listings")
+async def admin_create_listing(req: AdminCreateListingRequest, admin: dict = Depends(require_admin)):
+    """Admin path for the same attestation-required listing add as
+    routers/marketplace.py's POST /api/marketplace/listings — the GC path
+    there requires an active, type='gc' account; this is the Admin
+    equivalent, attesting on the platform's behalf."""
+    from routers.marketplace import CreateListingRequest, _create_listing_with_attestation
+
+    create_req = CreateListingRequest(**req.dict())
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.transaction():
+            listing = await _create_listing_with_attestation(conn, create_req, None, admin.get("company_id"))
+    await user_service.log_admin_activity(
+        admin["id"], "listing_added", "marketplace_listing", None,
+        {"attestation_note": listing["attestation_note"]},
+    )
+    return {"success": True, "listing": listing}
+
+
+class HideReviewRequest(BaseModel):
+    reason: str
+
+
+@router.patch("/marketplace/reviews/{review_id}/hide")
+async def hide_review(review_id: str, req: HideReviewRequest, admin: dict = Depends(require_admin)):
+    """Admin can only hide/remove a review, never edit its content — see the
+    identical rationale on routers/marketplace.py's update_review (Section
+    230: the platform moderates visibility, it doesn't editorialize what a
+    reviewer said)."""
+    if not req.reason or not req.reason.strip():
+        raise HTTPException(400, "reason is required")
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """UPDATE marketplace_reviews
+               SET is_hidden = true, hidden_by_admin_id = $1, hidden_reason = $2, hidden_at = NOW()
+               WHERE id = $3 RETURNING *""",
+            admin["id"], req.reason.strip(), review_id,
+        )
+    if not row:
+        raise HTTPException(404, "Review not found")
+    await user_service.log_admin_activity(
+        admin["id"], "review_hidden", "marketplace_review", None, {"review_id": review_id, "reason": req.reason},
+    )
+    return {"success": True, "review": dict(row)}

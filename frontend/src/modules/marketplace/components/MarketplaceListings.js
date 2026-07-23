@@ -16,7 +16,8 @@ export default function MarketplaceListings({ userId, activeType }) {
   const fetchListings = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ userId });
+      const params = new URLSearchParams();
+      if (userId) params.set('userId', userId);
       if (activeType) params.set('type', activeType);
       const res = await fetch(`${API_BASE_URL}/api/marketplace/listings?${params}`);
       const data = await res.json();

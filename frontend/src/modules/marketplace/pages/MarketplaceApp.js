@@ -17,11 +17,13 @@ export default function MarketplaceApp({ user, userId }) {
 
   const checkLicense = async () => {
     try {
-      // Use the listings endpoint as a license probe — 403 means no license
+      // GET /listings is now public/unauthenticated (no 403 possible), so
+      // license status is checked via its own dedicated endpoint instead.
       const res = await fetch(
-        `${API_BASE_URL}/api/marketplace/listings?userId=${userId}`
+        `${API_BASE_URL}/api/marketplace/license?userId=${userId}`
       );
-      setHasLicense(res.status !== 403);
+      const data = await res.json();
+      setHasLicense(!!data.hasLicense);
     } catch {
       setHasLicense(false);
     }

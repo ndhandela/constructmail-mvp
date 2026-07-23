@@ -654,9 +654,14 @@ async def init_db():
             ALTER TABLE admin_activity_log ADD COLUMN IF NOT EXISTS user_id INT REFERENCES users(id) ON DELETE SET NULL;
             ALTER TABLE admin_activity_log ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE SET NULL;
             ALTER TABLE admin_activity_log ALTER COLUMN admin_user_id DROP NOT NULL;
-            ALTER TABLE admin_activity_log DROP CONSTRAINT IF EXISTS admin_activity_log_actor_check;
-            ALTER TABLE admin_activity_log ADD CONSTRAINT admin_activity_log_actor_check
-                CHECK (admin_user_id IS NOT NULL OR user_id IS NOT NULL);
+            -- actor_check itself is declared once, in its final/widest form,
+            -- down in the marketplace migration (026) below — NOT here.
+            -- init_db() re-runs this whole script on every startup, so
+            -- re-declaring an intermediate narrower version of the same
+            -- constraint at this point would transiently reject rows (e.g.
+            -- system-generated ones) that only satisfy the later, wider
+            -- definition, breaking every subsequent restart once such a row
+            -- exists.
 
             CREATE TABLE IF NOT EXISTS trust_projects (
                 id SERIAL PRIMARY KEY,
@@ -882,6 +887,100 @@ async def init_db():
             ALTER TABLE connect_queue DROP CONSTRAINT IF EXISTS connect_queue_status_check;
             ALTER TABLE connect_queue ADD CONSTRAINT connect_queue_status_check
                 CHECK (status IN ('pending','reviewed','pushed','dismissed','failed','needs_manual'));
+
+            -- Marketplace: public access + lead accounts (migration 026).
+            -- Public/unauthenticated signup ("lead" accounts) is a new front
+            -- door into `users` that bypasses the existing invite-only flow —
+            -- account_status distinguishes these from invited/'active' accounts
+            -- so require_feature_flag (services/access_control.py) can shut
+            -- them out of every other module while Marketplace's own routes
+            -- opt them in narrowly. account_type/account_source are separate
+            -- columns (not reused from `role`/`permission_level`) since they
+            -- describe the marketplace relationship (gc buyer vs sub vendor),
+            -- not the company-hierarchy role those existing columns capture.
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS account_type VARCHAR(10) CHECK (account_type IN ('gc','sub'));
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS account_status VARCHAR(10) NOT NULL DEFAULT 'active' CHECK (account_status IN ('lead','active'));
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS account_source VARCHAR(50);
+            -- Every existing account on this platform came through the
+            -- invite-only GC-side flow (admin.py company bootstrap /
+            -- team.py teammate invite) — POMAR has no 'sub' accounts until
+            -- marketplace claim-listing introduces them. Backfilling these
+            -- as 'gc'/'invite' (rather than leaving NULL) keeps every
+            -- already-invited user working against the new type='gc' gate
+            -- on GET .../full. Safe to leave as a standing statement: new
+            -- marketplace-lead accounts always get account_type set
+            -- explicitly at creation, so they never match this WHERE clause.
+            UPDATE users SET account_type = 'gc', account_source = COALESCE(account_source, 'invite')
+            WHERE account_type IS NULL;
+
+            ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS claimed_by INT REFERENCES users(id);
+            -- verified is computed only (services/marketplace_verification.py) —
+            -- never admin-settable — so the badge always reflects a real
+            -- project_vendors relationship. See that file for why.
+            ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS verified BOOLEAN NOT NULL DEFAULT false;
+            ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS attestation_note TEXT;
+
+            ALTER TABLE marketplace_vendor_details ADD COLUMN IF NOT EXISTS city  VARCHAR(100);
+            ALTER TABLE marketplace_vendor_details ADD COLUMN IF NOT EXISTS state VARCHAR(2);
+
+            ALTER TABLE marketplace_reviews ADD COLUMN IF NOT EXISTS is_hidden          BOOLEAN NOT NULL DEFAULT false;
+            ALTER TABLE marketplace_reviews ADD COLUMN IF NOT EXISTS hidden_by_admin_id INT REFERENCES admin_users(id);
+            ALTER TABLE marketplace_reviews ADD COLUMN IF NOT EXISTS hidden_reason      TEXT;
+            ALTER TABLE marketplace_reviews ADD COLUMN IF NOT EXISTS hidden_at          TIMESTAMPTZ;
+            ALTER TABLE marketplace_reviews ADD COLUMN IF NOT EXISTS updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+            -- Bearer-token layer for the new public-facing marketplace routes
+            -- only (GET .../full, POST .../dispute) — every other route in
+            -- this app still authenticates via a bare userId param, but those
+            -- two are reachable by the open internet (not just invited
+            -- teammates) and gate personal contact info / messaging, so a
+            -- client-supplied userId alone isn't enough proof of identity.
+            CREATE TABLE IF NOT EXISTS marketplace_session_tokens (
+                id SERIAL PRIMARY KEY,
+                token VARCHAR(64) UNIQUE NOT NULL,
+                user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '30 days'
+            );
+            CREATE INDEX IF NOT EXISTS marketplace_session_tokens_token_idx ON marketplace_session_tokens (token);
+
+            CREATE TABLE IF NOT EXISTS marketplace_dispute_messages (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                review_id UUID NOT NULL REFERENCES marketplace_reviews(id) ON DELETE CASCADE,
+                sub_account_id INT NOT NULL REFERENCES users(id),
+                message TEXT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS marketplace_removal_requests (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                listing_id UUID NOT NULL REFERENCES marketplace_listings(id) ON DELETE CASCADE,
+                requester_name  VARCHAR(255) NOT NULL,
+                requester_email VARCHAR(255) NOT NULL,
+                business_name   VARCHAR(255) NOT NULL,
+                reason TEXT NOT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','denied')),
+                resolved_by_admin_id INT REFERENCES admin_users(id),
+                resolved_at TIMESTAMPTZ,
+                resolution_note TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+
+            -- admin_activity_log's actor check (see migration 020 above) requires
+            -- a human admin_user_id or user_id. The verified-badge recompute job
+            -- (services/marketplace_verification.py) and anonymous public
+            -- removal-request submissions have no human actor at all, so the
+            -- check is widened once more with an explicit system-action escape
+            -- hatch rather than a fabricated actor id.
+            ALTER TABLE admin_activity_log ADD COLUMN IF NOT EXISTS is_system_action BOOLEAN NOT NULL DEFAULT false;
+            -- resource_id predates any UUID-keyed resource (marketplace_listings/
+            -- marketplace_reviews use UUID ids) — widened to text so
+            -- log_marketplace_activity can log against them the same way
+            -- log_admin_activity/log_trust_activity already log against INT ids.
+            ALTER TABLE admin_activity_log ALTER COLUMN resource_id TYPE VARCHAR(64) USING resource_id::VARCHAR(64);
+            ALTER TABLE admin_activity_log DROP CONSTRAINT IF EXISTS admin_activity_log_actor_check;
+            ALTER TABLE admin_activity_log ADD CONSTRAINT admin_activity_log_actor_check
+                CHECK (admin_user_id IS NOT NULL OR user_id IS NOT NULL OR is_system_action);
         """)
 
         await _backfill_clash_project_ids(conn)

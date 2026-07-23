@@ -8,6 +8,7 @@ import AdminUsersManagement from './AdminUsersManagement';
 import ActivityLogViewer from './ActivityLogViewer';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import LogsManagement from './LogsManagement';
+import RemovalRequestsQueue from './RemovalRequestsQueue';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
@@ -25,6 +26,7 @@ export default function AdminPortal() {
     if (path.includes('/activity-log')) return 'activity-log';
     if (path.includes('/analytics')) return 'analytics';
     if (path.includes('/logs')) return 'logs';
+    if (path.includes('/removal-requests')) return 'removal-requests';
     return 'dashboard';
   }
 
@@ -83,7 +85,8 @@ export default function AdminPortal() {
       users: '/admin/users',
       'activity-log': '/admin/activity-log',
       'analytics': '/admin/analytics',
-      logs: '/admin/logs'
+      logs: '/admin/logs',
+      'removal-requests': '/admin/removal-requests'
     };
     window.history.pushState({}, '', pathMap[page]);
   };
@@ -107,6 +110,8 @@ export default function AdminPortal() {
       return <ActivityLogViewer token={token} onNavigate={handleNavigate} />;
     case 'logs':
       return <LogsManagement token={token} admin={admin} onNavigate={handleNavigate} />;
+    case 'removal-requests':
+      return <RemovalRequestsQueue token={token} onNavigate={handleNavigate} />;
     default:
       return <AdminDashboard token={token} admin={admin} onLogout={handleLogout} onNavigate={handleNavigate} />;
   }

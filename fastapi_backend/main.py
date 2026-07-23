@@ -8,7 +8,7 @@ from db import init_db, get_pool
 from routers import ai, auth, gmail, outlook, clash, procore, vendors, admin, misc, marketplace, profile, mail, projects, team, logs
 from routers import connect as connect_router
 from routers import trust, trust_uploads, trust_qpr, trust_alerts, capital
-from services import trust_reminders
+from services import trust_reminders, marketplace_verification
 
 
 @asynccontextmanager
@@ -16,6 +16,7 @@ async def lifespan(app: FastAPI):
     await init_db()
     connect_router.start_scheduler()
     trust_reminders.start_scheduler()
+    marketplace_verification.start_scheduler()
     yield
 
 
@@ -44,6 +45,7 @@ app.include_router(clash.router)
 app.include_router(procore.router)
 app.include_router(vendors.router)
 app.include_router(marketplace.router)
+app.include_router(marketplace.pages_router)
 app.include_router(profile.router)
 app.include_router(team.router)
 app.include_router(admin.router)

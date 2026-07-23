@@ -180,3 +180,30 @@ async def log_trust_activity(user_id: int, company_id: int, action: str, resourc
             )
         except Exception as e:
             print("Log trust activity error:", e)
+
+
+async def log_marketplace_activity(
+    action: str, resource_type: str, resource_id, changes=None,
+    user_id: int = None, company_id: int = None, is_system: bool = False,
+):
+    """Marketplace's equivalent of log_trust_activity — this is the legal
+    paper trail for listing/review/dispute/removal-request/verified-badge
+    events (see routers/marketplace.py, routers/admin.py,
+    services/marketplace_verification.py), so every call site must supply
+    either a real actor (user_id, an invited/lead account) or is_system=True
+    (the verified-badge job, which has no human actor) — never neither;
+    admin_activity_log's actor_check constraint (migration 026 in db.py)
+    enforces this at the DB level too."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        try:
+            await conn.execute(
+                """INSERT INTO admin_activity_log
+                       (user_id, company_id, module_key, action, resource_type, resource_id, changes, is_system_action)
+                   VALUES ($1,$2,'marketplace',$3,$4,$5,$6,$7)""",
+                user_id, company_id, action, resource_type, resource_id,
+                json.dumps(changes) if changes else None,
+                is_system,
+            )
+        except Exception as e:
+            print("Log marketplace activity error:", e)
