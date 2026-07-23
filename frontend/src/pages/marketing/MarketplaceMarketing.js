@@ -21,7 +21,7 @@ export default function MarketplaceMarketing() {
         <h1 className="hero-title">{product.name}</h1>
         <p className="hero-sub">{product.description}</p>
         <div className="hero-cta">
-          <a href="/login" className="btn-primary">Explore POMAR Marketplace</a>
+          <a href="/marketplace/listings" className="btn-primary">Explore POMAR Marketplace</a>
         </div>
       </section>
 
@@ -42,7 +42,7 @@ export default function MarketplaceMarketing() {
       <section className="marketing-cta-section">
         <h2 className="section-h2 centered">Your network, multiplied by every GC on POMAR.</h2>
         <div className="hero-cta">
-          <a href="/login" className="btn-primary">Explore POMAR Marketplace</a>
+          <a href="/marketplace/listings" className="btn-primary">Explore POMAR Marketplace</a>
         </div>
       </section>
     </div>
