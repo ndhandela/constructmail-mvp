@@ -90,6 +90,21 @@ export const PRODUCTS = [
     // (US and India), gated only by active_modules.capital.
     licenseGated: true
   },
+  {
+    id: 'daily_logs',
+    name: 'POMAR Daily Logs',
+    description: 'Replace the paper logbook — crew, weather, delays, and site photos from your phone.',
+    detailedDescription: "Most crews still track daily site activity in a paper logbook or a text thread that never makes it back to the office. POMAR Daily Logs replaces it with a two-minute mobile entry: date, weather, crew count, work performed, delays and their cause, materials, safety notes, and photos — one live per-project record instead of a notebook in the site trailer. Available to any company, not just India-region orgs.",
+    icon: '📋',
+    path: '/daily-logs',
+    marketingPath: '/daily-logs-info',
+    logo: '/logos/pomar.png',
+    color: '#D97706',
+    status: 'live',
+    // No regionGated flag — unlike Trust, this is available to any company
+    // (US and India), gated only by active_modules.daily_logs.
+    licenseGated: true
+  },
 ];
 
 export const getProductById = (id) => PRODUCTS.find(p => p.id === id);

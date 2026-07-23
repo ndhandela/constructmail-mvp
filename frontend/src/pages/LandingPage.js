@@ -142,8 +142,8 @@ export default function LandingPage({ onProductSelect }) {
               <span className="product-link">Learn more →</span>
             </div>
 
-            {/* Connect and Capital Tracker have no marketing page yet, so
-                their cards route to the demo page instead of goToMarketing. */}
+            {/* Connect has no marketing page yet, so its card routes to the
+                demo page instead of goToMarketing. */}
             <div className="product-card live" onClick={() => { window.location.href = '/demo'; }}>
               <span className="product-badge badge-live">Live Now</span>
               <h3>POMAR Connect</h3>
@@ -158,6 +158,14 @@ export default function LandingPage({ onProductSelect }) {
               <div className="product-tagline">Budget Intelligence</div>
               <p>Budget-vs-actual per project, live instead of a shared spreadsheet — budgeted, committed, and actual by category, with milestones and work-item progress alongside the dollars.</p>
               <span className="product-link">Book a demo →</span>
+            </div>
+
+            <div className="product-card live" onClick={() => goToMarketing('daily_logs')}>
+              <span className="product-badge badge-live">Live Now</span>
+              <h3>POMAR Daily Logs</h3>
+              <div className="product-tagline">Field Intelligence</div>
+              <p>Replace the paper logbook. Log crew, weather, delays, and site photos from your phone in under two minutes — one live per-project record instead of a notebook in the site trailer.</p>
+              <span className="product-link">Learn more →</span>
             </div>
           </div>
         </div>

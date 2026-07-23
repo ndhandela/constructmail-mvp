@@ -108,6 +108,14 @@ const PRODUCT_ICONS = {
       <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
     </svg>
   ),
+  daily_logs: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+    </svg>
+  ),
 };
 
 const SOON_ICONS = {
@@ -179,7 +187,8 @@ export default function ProductDashboard({ user, userId, onProductSelect }) {
           .filter(p => !p.regionGated || !!user?.active_modules?.[p.id])
           .map(product => {
           const locked = (product.id === 'marketplace' && product.licenseGated && marketplaceLicensed !== true)
-            || (product.id === 'capital' && product.licenseGated && !user?.active_modules?.capital);
+            || (product.id === 'capital' && product.licenseGated && !user?.active_modules?.capital)
+            || (product.id === 'daily_logs' && product.licenseGated && !user?.active_modules?.daily_logs);
           return (
             <div
               key={product.id}

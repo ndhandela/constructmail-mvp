@@ -981,6 +981,61 @@ async def init_db():
             ALTER TABLE admin_activity_log DROP CONSTRAINT IF EXISTS admin_activity_log_actor_check;
             ALTER TABLE admin_activity_log ADD CONSTRAINT admin_activity_log_actor_check
                 CHECK (admin_user_id IS NOT NULL OR user_id IS NOT NULL OR is_system_action);
+
+            -- POMAR Daily Logs (migration 012): a per-project field logbook —
+            -- crew, weather, delays, materials, safety notes for a given day,
+            -- with optional site photos. Same shape as Capital Tracker: FKs
+            -- straight into the generic `projects` table (no region
+            -- restriction, no separate project concept of its own), gated
+            -- only by the 'daily_logs' feature flag. `metadata` JSONB exists
+            -- so a future field can be added without a schema migration.
+            CREATE TABLE IF NOT EXISTS daily_logs (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                logged_by_user_id INT NOT NULL REFERENCES users(id),
+                log_date DATE NOT NULL,
+                weather VARCHAR(100),
+                crew_count INT,
+                work_performed TEXT,
+                delays_notes TEXT,
+                delay_category VARCHAR(50) CHECK (delay_category IN ('weather','material','labor','other')),
+                materials_notes TEXT,
+                safety_notes TEXT,
+                metadata JSONB NOT NULL DEFAULT '{}',
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS daily_logs_project_id_idx ON daily_logs (project_id);
+            CREATE INDEX IF NOT EXISTS daily_logs_log_date_idx ON daily_logs (project_id, log_date DESC);
+
+            -- Photos are never inlined into daily_logs itself: storage_path is
+            -- an object key in the R2 'daily-log-photos' bucket (see
+            -- services/r2_storage.py) — unlike Trust's private bucket, this
+            -- one supports presigned GET urls since photos render in a
+            -- frontend gallery.
+            CREATE TABLE IF NOT EXISTS daily_log_photos (
+                id SERIAL PRIMARY KEY,
+                daily_log_id INT NOT NULL REFERENCES daily_logs(id) ON DELETE CASCADE,
+                storage_path TEXT NOT NULL,
+                caption VARCHAR(255),
+                uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS daily_log_photos_daily_log_id_idx ON daily_log_photos (daily_log_id);
+
+            -- Seeds a global 'daily_logs' flag row so it exists (defaulting
+            -- OFF) the same way Capital/Trust/Marketplace do — see the
+            -- 'capital' seed above for why.
+            INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
+            VALUES (NULL, 'daily_logs', 'Daily Logs', 'daily_logs', false, true)
+            ON CONFLICT (feature_key) WHERE is_global = true DO NOTHING;
+
+            -- Placeholder global pricing row so Daily Logs shows up in the
+            -- admin pricing page without further code changes, same as the
+            -- other modules — monthly_price is 0 until an admin sets a real
+            -- number.
+            INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active)
+            VALUES (true, NULL, 'daily_logs', 0, 'monthly', true)
+            ON CONFLICT (module_name) WHERE is_global = true DO NOTHING;
         """)
 
         await _backfill_clash_project_ids(conn)

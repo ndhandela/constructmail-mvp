@@ -21,6 +21,7 @@ export default function Footer() {
             <a href="/demo">POMAR Connect</a>
             <a href="/demo">POMAR Capital Tracker</a>
             <a href="/demo">POMAR Trust</a>
+            <a href="/daily-logs-info">POMAR Daily Logs</a>
             <a href="/demo">Book a Demo</a>
           </div>
           <div className="footer-col">

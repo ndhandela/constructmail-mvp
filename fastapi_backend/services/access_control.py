@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 
-MODULE_KEYS = ("mail", "clash", "vendors", "marketplace", "trust", "capital")
+MODULE_KEYS = ("mail", "clash", "vendors", "marketplace", "trust", "capital", "daily_logs")
 
 
 async def require_feature_flag(conn, user_id: int, feature_key: str):

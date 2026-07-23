@@ -12,6 +12,7 @@ import MailMarketing from './pages/marketing/MailMarketing';
 import ClashMarketing from './pages/marketing/ClashMarketing';
 import VendorsMarketing from './pages/marketing/VendorsMarketing';
 import MarketplaceMarketing from './pages/marketing/MarketplaceMarketing';
+import DailyLogsMarketing from './pages/marketing/DailyLogsMarketing';
 import MarketplacePublicBrowse from './pages/marketing/MarketplacePublicBrowse';
 import MarketplaceListingDetail from './pages/marketing/MarketplaceListingDetail';
 import MarketplaceTerms from './pages/marketing/MarketplaceTerms';
@@ -31,6 +32,7 @@ import ProfileApp from './modules/profile/pages/ProfileApp';
 import CompanySettingsApp from './modules/profile/pages/CompanySettingsApp';
 import TrustApp from './modules/trust/pages/TrustApp';
 import CapitalTrackerApp from './modules/capital/pages/CapitalTrackerApp';
+import DailyLogsApp from './modules/daily-logs/pages/DailyLogsApp';
 
 // Modules
 import ConstructMailApp from './modules/constructmail/pages/ConstructMailApp';
@@ -43,7 +45,7 @@ import './styles/components.css';
 import './App.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/company-settings', '/trust', '/capital'];
+const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/company-settings', '/trust', '/capital', '/daily-logs'];
 
 // The "Your Tools" landing grid and the Projects edit page share the
 // /dashboard route — the edit page is reached only via the project info
@@ -125,6 +127,7 @@ function App() {
           else if (path === '/company-settings') setCurrentProduct('company-settings');
           else if (path === '/trust') setCurrentProduct('trust');
           else if (path === '/capital') setCurrentProduct('capital');
+          else if (path === '/daily-logs') setCurrentProduct('daily-logs');
           else setCurrentProduct('dashboard');
           window.history.replaceState({}, document.title, window.location.pathname);
         } else {
@@ -165,6 +168,7 @@ function App() {
       if (path === '/company-settings') setCurrentProduct('company-settings');
       if (path === '/trust') setCurrentProduct('trust');
       if (path === '/capital') setCurrentProduct('capital');
+      if (path === '/daily-logs') setCurrentProduct('daily-logs');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
@@ -294,6 +298,16 @@ function App() {
       <>
         <Header userId={userId} onLogout={handleLogout} user={user} />
         <MarketplaceMarketing />
+        <Footer />
+      </>
+    );
+  }
+
+  if (path === '/daily-logs-info') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <DailyLogsMarketing />
         <Footer />
       </>
     );
@@ -578,6 +592,22 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
         <AppLayout userId={userId} onLogout={handleLogout} user={user}>
           <ProjectGate userId={userId} user={user}>
             <CapitalTrackerApp user={user} userId={userId} />
+          </ProjectGate>
+        </AppLayout>
+      </ProjectProvider>
+    );
+  }
+
+  // ── POMAR Daily Logs ─────────────────────────────────────────────────
+  // Same wiring as Capital Tracker: daily_logs hangs off the generic
+  // projects table, so it uses the shared header/sidebar project switcher
+  // and ProjectGate, gated only by the 'daily_logs' feature flag.
+  if (currentProduct === 'daily-logs' || path === '/daily-logs') {
+    return (
+      <ProjectProvider userId={userId}>
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <ProjectGate userId={userId} user={user}>
+            <DailyLogsApp user={user} userId={userId} />
           </ProjectGate>
         </AppLayout>
       </ProjectProvider>

@@ -122,6 +122,7 @@ export default function PricingManagement({ token, onNavigate }) {
                 <option value="marketplace">POMAR Marketplace</option>
                 <option value="trust">POMAR Trust</option>
                 <option value="capital">POMAR Capital Tracker</option>
+                <option value="daily_logs">POMAR Daily Logs</option>
               </select>
             </div>
 

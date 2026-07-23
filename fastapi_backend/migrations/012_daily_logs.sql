@@ -1,0 +1,19 @@
+-- Migration: 012_daily_logs.sql
+-- Documents the POMAR Daily Logs schema applied by fastapi_backend/db.py's
+-- init_db() on every startup (idempotent CREATE TABLE IF NOT EXISTS — no
+-- raw SQL to run here, this is a record of what that block does):
+--
+--   * New tables: daily_logs, daily_log_photos.
+--     daily_logs FKs straight into the generic `projects` table, same as
+--     Capital Tracker's budget_items — no separate project concept, no
+--     region restriction. One row per project per day per logger: crew
+--     count, weather, work performed, delays (+ category), materials and
+--     safety notes.
+--     daily_log_photos hangs off daily_logs (ON DELETE CASCADE). Photo
+--     bytes are never stored in Postgres — storage_path is an object key
+--     in the R2 'daily-log-photos' bucket (see services/r2_storage.py).
+--     Unlike Trust's private-only bucket, this one supports presigned GET
+--     urls, since photos are meant to render back in a frontend gallery.
+--   * Access is gated only by the 'daily_logs' feature_flags row (seeded
+--     here, defaulting OFF) — same as every other module, no separate
+--     org_modules table. See services/access_control.py.
