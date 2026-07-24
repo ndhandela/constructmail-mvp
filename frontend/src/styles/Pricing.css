@@ -1,4 +1,4 @@
-.pricing-container { min-height: 100vh; background: white; }
+.pricing-container { min-height: 100vh; background: white; font-family: 'Manrope', sans-serif; }
 
 .pricing-hero {
   background: var(--inkwell);
@@ -7,11 +7,12 @@
   text-align: center;
 }
 .pricing-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
   color: var(--saffron); font-size: 13px; font-weight: 600;
   letter-spacing: 2px; text-transform: uppercase; margin-bottom: 24px;
 }
 .pricing-hero h1 {
-  font-family: var(--font-serif); font-weight: 400; font-size: 52px;
+  font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 52px;
   line-height: 1.15; margin-bottom: 24px; letter-spacing: -1px;
   max-width: 900px; margin-left: auto; margin-right: auto;
 }
@@ -32,11 +33,12 @@
 .pricing-section.alt-bg { background: var(--parchment); }
 .pricing-content { max-width: 920px; margin: 0 auto; text-align: center; }
 .pricing-section-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
   color: var(--saffron); font-size: 13px; font-weight: 600;
   letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px;
 }
 .pricing-section h2 {
-  font-family: var(--font-serif); font-size: 34px; font-weight: 400;
+  font-family: 'Space Grotesk', sans-serif; font-size: 34px; font-weight: 700;
   color: var(--inkwell); margin-bottom: 16px;
 }
 .pricing-section > .pricing-content > p {
@@ -45,8 +47,8 @@
 }
 .pricing-product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; text-align: left; }
 .pricing-product-card {
-  background: white; border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg); padding: 28px; box-shadow: var(--shadow-sm);
+  background: white; border: 1px solid rgba(14, 27, 44, 0.1);
+  padding: 28px;
 }
 .pricing-product-tag {
   display: inline-block; background: var(--saffron-soft); color: var(--saffron-hover);

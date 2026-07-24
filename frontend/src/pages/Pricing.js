@@ -12,6 +12,11 @@ export default function Pricing() {
   return (
     <div className="pricing-container">
       <section className="pricing-hero">
+        <video className="page-hero-video" autoPlay muted loop playsInline
+          poster="/videos/hero-construction-poster.jpg">
+          <source src="/videos/hero-construction.mp4" type="video/mp4" />
+        </video>
+        <div className="page-hero-overlay"></div>
         <div className="pricing-eyebrow">Pricing</div>
         <h1>Every GC's stack is different.<br /><em>So is your price.</em></h1>
         <p className="pricing-hero-sub">

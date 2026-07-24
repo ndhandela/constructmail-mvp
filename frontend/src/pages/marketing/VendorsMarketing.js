@@ -17,6 +17,11 @@ export default function VendorsMarketing() {
   return (
     <div className="marketing-page">
       <section className="hero marketing-hero">
+        <video className="page-hero-video" autoPlay muted loop playsInline
+          poster="/videos/hero-construction-poster.jpg">
+          <source src="/videos/hero-construction.mp4" type="video/mp4" />
+        </video>
+        <div className="page-hero-overlay"></div>
         <div className="hero-eyebrow">Vendor Intelligence</div>
         <h1 className="hero-title">{product.name}</h1>
         <p className="hero-sub">{product.description}</p>

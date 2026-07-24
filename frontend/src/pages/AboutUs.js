@@ -7,6 +7,11 @@ export default function AboutUs() {
 
       {/* Hero */}
       <section className="about-hero">
+        <video className="page-hero-video" autoPlay muted loop playsInline
+          poster="/videos/hero-construction-poster.jpg">
+          <source src="/videos/hero-construction.mp4" type="video/mp4" />
+        </video>
+        <div className="page-hero-overlay"></div>
         <div className="about-eyebrow">About TechDen</div>
         <h1>
           Built by construction tech insiders,<br />

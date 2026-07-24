@@ -1,3 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+.about-hero, .pricing-hero, .demo-hero, .contact-hero, .marketing-hero {
+  position: relative;
+  overflow: hidden;
+}
+.page-hero-video {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  z-index: 0; filter: saturate(0.5) contrast(1.05) brightness(0.7);
+}
+.page-hero-overlay {
+  position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 800px 500px at 88% 8%, rgba(217,119,6,0.38), transparent 62%),
+    linear-gradient(100deg, rgba(14,27,44,0.97) 0%, rgba(14,27,44,0.85) 38%, rgba(14,27,44,0.5) 72%, rgba(217,119,6,0.28) 100%),
+    linear-gradient(0deg, #0A1522 0%, transparent 25%);
+}
+.about-hero > *:not(.page-hero-video):not(.page-hero-overlay),
+.pricing-hero > *:not(.page-hero-video):not(.page-hero-overlay),
+.demo-hero > *:not(.page-hero-video):not(.page-hero-overlay),
+.contact-hero > *:not(.page-hero-video):not(.page-hero-overlay),
+.marketing-hero > *:not(.page-hero-video):not(.page-hero-overlay) {
+  position: relative;
+  z-index: 1;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',

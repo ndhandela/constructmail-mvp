@@ -30,6 +30,11 @@ export default function Demo() {
   return (
     <div className="demo-container">
       <section className="demo-hero">
+        <video className="page-hero-video" autoPlay muted loop playsInline
+          poster="/videos/hero-construction-poster.jpg">
+          <source src="/videos/hero-construction.mp4" type="video/mp4" />
+        </video>
+        <div className="page-hero-overlay"></div>
         <div className="demo-eyebrow">See It In Action</div>
         <h1>Book a <em>Live Demo.</em></h1>
         <p className="demo-hero-sub">

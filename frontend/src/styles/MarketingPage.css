@@ -6,6 +6,7 @@
 .marketing-page {
   background: white;
   color: var(--inkwell);
+  font-family: 'Manrope', sans-serif;
 }
 
 /* The shared .hero shell is a flex row (align-items: center) sized at a
@@ -27,6 +28,18 @@
   justify-content: center;
 }
 
+/* .hero-title/.hero-sub default to dark inkwell/slate text, sized for the old
+   parchment marketing-hero background. The video hero above is dark, so
+   scope a light override to just this hero rather than touching the shared
+   LandingPage.css classes other pages may still rely on. */
+.marketing-hero .hero-title {
+  color: var(--parchment);
+}
+
+.marketing-hero .hero-sub {
+  color: rgba(250, 247, 242, 0.75);
+}
+
 .marketing-body {
   padding: 100px 60px;
 }
@@ -43,9 +56,8 @@
 .marketing-howitworks li {
   position: relative;
   padding: 20px 24px 20px 64px;
-  background: var(--parchment);
-  border-radius: var(--radius-lg);
-  border-left: 3px solid var(--saffron);
+  background: white;
+  border: 1px solid rgba(14, 27, 44, 0.1);
   font-size: 16px;
   line-height: 1.6;
   color: var(--inkwell);
@@ -57,7 +69,7 @@
   left: 22px;
   top: 18px;
   color: var(--saffron);
-  font-family: var(--font-serif);
+  font-family: 'Space Grotesk', sans-serif;
   font-weight: 700;
   font-size: 20px;
 }

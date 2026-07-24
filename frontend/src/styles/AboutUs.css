@@ -1,6 +1,7 @@
 .about-container {
   min-height: 100vh;
   background: white;
+  font-family: 'Manrope', sans-serif;
 }
 
 /* Hero */
@@ -12,6 +13,7 @@
 }
 
 .about-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
   color: var(--saffron);
   font-size: 13px;
   font-weight: 600;
@@ -21,8 +23,8 @@
 }
 
 .about-hero h1 {
-  font-family: var(--font-serif);
-  font-weight: 400;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
   font-size: 52px;
   line-height: 1.15;
   margin-bottom: 24px;
@@ -58,6 +60,7 @@
 }
 
 .about-section-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
   color: var(--saffron);
   font-size: 13px;
   font-weight: 600;
@@ -67,8 +70,8 @@
 }
 
 .about-content h2 {
-  font-family: var(--font-serif);
-  font-weight: 400;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
   font-size: 40px;
   line-height: 1.15;
   color: var(--inkwell);
@@ -102,9 +105,9 @@
 
 .about-card-num {
   color: var(--saffron);
-  font-family: var(--font-serif);
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 32px;
-  font-weight: 400;
+  font-weight: 700;
   margin-bottom: 12px;
 }
 

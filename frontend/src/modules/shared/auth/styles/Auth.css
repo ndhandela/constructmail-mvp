@@ -9,16 +9,15 @@
   justify-content: center;
   background: linear-gradient(180deg, #0E1B2C 0px, var(--parchment) 220px, white 420px, var(--parchment) 100%);
   padding: 40px 24px;
+  font-family: 'Manrope', sans-serif;
 }
 
 .auth-card {
   background: white;
-  border-radius: var(--radius-lg);
   padding: 44px 44px 36px;
   width: 100%;
   max-width: 460px;
-  box-shadow: var(--shadow-lg);
-  border-top: 4px solid var(--saffron);
+  border: 1px solid rgba(14, 27, 44, 0.1);
 }
 
 /* Logo */
@@ -31,9 +30,9 @@
 }
 
 .auth-logo-name {
-  font-family: var(--font-serif);
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 24px;
-  font-weight: 400;
+  font-weight: 700;
   color: var(--inkwell);
   letter-spacing: 2px;
 }
