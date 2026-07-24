@@ -74,7 +74,7 @@ export default function Auth({ onLoginSuccess, defaultMode = 'login' }) {
   };
 
   return (
-    <div className="auth-container" style={{ backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(250,247,242,0.96) 100%), url(/images/hero-login.jpg)" }}>
+    <div className="auth-container" style={{ backgroundImage: "linear-gradient(180deg, #0E1B2C 0px, rgba(255,255,255,0.94) 220px, rgba(250,247,242,0.96) 100%), url(/images/hero-login.jpg)" }}>
       <div className="auth-card">
 
         <div className="auth-logo">
