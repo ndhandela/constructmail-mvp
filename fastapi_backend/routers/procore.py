@@ -1,4 +1,5 @@
 import os
+import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
@@ -21,10 +22,35 @@ class ProjectLinkRequest(BaseModel):
 
 @router.get("/status")
 async def procore_status(userId: str):
+    """A real health check, not just a row-exists check: PmisSetupCard relies
+    on `connected` being trustworthy before it calls /projects, since that
+    call has no error handling of its own on the frontend. `reason`
+    distinguishes never-connected from a stored-but-broken token so the UI
+    can show a "Reconnect" recovery path instead of a generic failure."""
+    key = os.getenv("TOKEN_ENCRYPTION_KEY")
     pool = await get_pool()
     async with pool.acquire() as conn:
-        row = await conn.fetchrow("SELECT access_token FROM procore_tokens WHERE user_id = $1", userId)
-    return {"connected": row is not None}
+        row = await conn.fetchrow(
+            """SELECT pgp_sym_decrypt(access_token::bytea, $2) AS access_token,
+                      (expires_at IS NOT NULL AND expires_at < NOW()) AS is_expired
+               FROM procore_tokens WHERE user_id = $1""",
+            userId, key,
+        )
+    if not row:
+        return {"connected": False, "reason": "not_connected"}
+    if row["is_expired"]:
+        return {"connected": False, "reason": "expired"}
+
+    try:
+        await get_projects(row["access_token"])
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code in (401, 403):
+            return {"connected": False, "reason": "token_invalid"}
+        return {"connected": False, "reason": "api_error"}
+    except Exception:
+        return {"connected": False, "reason": "api_error"}
+
+    return {"connected": True}
 
 
 @router.get("/projects")

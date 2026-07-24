@@ -283,6 +283,13 @@ async def outlook_callback_get(code: str = None, error: str = None, error_descri
 
 @router.get("/procore-url")
 async def procore_url(userId: str = ""):
+    """Also the "Reconnect" entry point (PmisSetupCard) — not just first-time
+    setup. No separate reconnect endpoint needed: the callback below does an
+    ON CONFLICT UPDATE, so re-running this same flow overwrites whatever
+    token was already stored for this user rather than requiring it to be
+    cleared first. That also means a cancelled/failed reconnect attempt
+    leaves the previous (possibly still-working) token in place instead of
+    leaving the user disconnected."""
     from services.procore_helpers import get_auth_url
     return {"url": get_auth_url(userId)}
 

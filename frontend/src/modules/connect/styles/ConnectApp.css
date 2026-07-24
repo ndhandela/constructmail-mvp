@@ -536,6 +536,17 @@
   cursor: pointer;
 }
 .pmis-btn-secondary:hover { background: #FAF7F2; }
+.pmis-btn-link {
+  background: transparent;
+  border: none;
+  color: var(--slate, #475569);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 4px;
+}
+.pmis-btn-link:hover { color: #DC2626; text-decoration: underline; }
+.pmis-btn-link:disabled { color: #B9C0CB; cursor: not-allowed; text-decoration: none; }
 .pmis-select {
   padding: 8px 12px;
   border-radius: 8px;
@@ -547,6 +558,21 @@
   flex-basis: 100%;
   font-size: 0.8rem;
   color: #DC2626;
+}
+.pmis-toast {
+  flex-basis: 100%;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+.pmis-toast-success {
+  background: #DCFCE7;
+  color: #15803D;
+}
+.pmis-toast-error {
+  background: #FEE2E2;
+  color: #991B1B;
 }
 
 @media (max-width: 768px) {
