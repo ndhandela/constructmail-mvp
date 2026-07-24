@@ -20,6 +20,7 @@
   text-align: center;
   height: auto;
   padding: 160px 60px 100px;
+  background: linear-gradient(180deg, #0E1B2C 0px, var(--parchment) 140px, var(--parchment) 100%);
 }
 
 .marketing-cta-section .hero-cta {
