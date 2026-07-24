@@ -166,7 +166,7 @@
 }
 
 .hero-title {
-  font-family: var(--font-serif);
+  font-family: 'Space Grotesk', sans-serif;
   font-weight: 700;
   font-size: 38px;
   line-height: 1.28;
