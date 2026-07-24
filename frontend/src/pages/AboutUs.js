@@ -6,11 +6,7 @@ export default function AboutUs() {
     <div className="about-container">
 
       {/* Hero */}
-      <section className="about-hero">
-        <video className="page-hero-video" autoPlay muted loop playsInline
-          poster="/videos/hero-construction-poster.jpg">
-          <source src="/videos/hero-construction.mp4" type="video/mp4" />
-        </video>
+      <section className="about-hero" style={{ backgroundImage: "url(/images/hero-about.jpg)" }}>
         <div className="page-hero-overlay"></div>
         <div className="about-eyebrow">About TechDen</div>
         <h1>

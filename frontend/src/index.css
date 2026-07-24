@@ -24,6 +24,11 @@
   z-index: 1;
 }
 
+.about-hero {
+  background-size: cover;
+  background-position: center;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
