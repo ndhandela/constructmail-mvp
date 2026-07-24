@@ -617,3 +617,37 @@
   opacity: 0.6;
   cursor: default;
 }
+
+/* ── Dark header variant (homepage only) ──────────────────────────────────── */
+
+.main-header-dark {
+  background: #0E1B2C;
+  border-bottom: 1px solid rgba(240, 221, 196, 0.16);
+}
+
+.main-header-dark .header-link {
+  color: #FAF7F2;
+  opacity: 0.85;
+}
+
+.main-header-dark .header-link:hover {
+  opacity: 1;
+  color: #D97706;
+  background: rgba(240, 221, 196, 0.08);
+}
+
+.main-header-dark .header-link.active {
+  color: #D97706;
+}
+
+.main-header-dark .header-btn-login {
+  color: #FAF7F2;
+  border: 1px solid rgba(240, 221, 196, 0.4);
+}
+
+.main-header-dark .header-btn-login:hover {
+  background: rgba(240, 221, 196, 0.1);
+}
+
+/* .header-btn-book (saffron pill) needs no override — it already has enough
+   contrast against a dark background as-is. */

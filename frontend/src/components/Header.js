@@ -48,6 +48,7 @@ export default function Header({ userId, onLogout, user }) {
   const canCreateProject = PROJECT_CREATOR_ROLES.includes(user?.role);
 
   const currentPath = window.location.pathname;
+  const isHome = currentPath === '/';
   // Trust has its own project concept (trust_projects) — the shared
   // ProjectContext switcher/info panel doesn't apply there. See ProjectGate
   // usage in App.js and the comment on TrustApp's route. Capital Tracker
@@ -106,10 +107,10 @@ export default function Header({ userId, onLogout, user }) {
   const displayName = getDisplayName(user);
 
   return (
-    <header className="main-header">
+    <header className={`main-header ${isHome ? 'main-header-dark' : ''}`}>
       <div className="header-left">
         <a href={isLoggedIn ? '/dashboard' : '/'} className="header-logo-link" aria-label={isLoggedIn ? 'POMAR dashboard' : 'POMAR home'}>
-          <PomarLogo variant="light" height={28} />
+          <PomarLogo variant={isHome ? 'dark' : 'light'} height={28} />
         </a>
       </div>
 

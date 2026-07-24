@@ -19,6 +19,15 @@ export default function LandingPage({ onProductSelect }) {
           .hero/.hero-title/... classes in LandingPage.css belong to the
           product marketing pages now; this section uses hero-flat-*. */}
       <section className="hero-flat">
+        <video className="hero-flat-video" autoPlay muted loop playsInline
+          poster="/videos/hero-construction-poster.jpg">
+          <source src="/videos/hero-construction.mp4" type="video/mp4" />
+        </video>
+        <div className="hero-flat-video-overlay"></div>
+        <div className="hero-flat-scan">
+          <div className="hero-flat-tag hero-flat-tag-1">RFI SIGNAL DETECTED</div>
+          <div className="hero-flat-tag hero-flat-tag-2">CLASH REPORT — PARSED</div>
+        </div>
         <div className="hero-flat-inner">
           <div className="hero-flat-eyebrow">Intelligence Infrastructure for Construction</div>
           <h1 className="hero-flat-title">

@@ -3,9 +3,10 @@ import React from 'react';
 /**
  * POMAR Logo · single source of truth for the wordmark
  *
- * Letterforms are baked in as vector outlines (extracted from Poppins Bold),
- * not live <text>, so rendering never depends on the font being loaded —
- * guarantees the logo looks identical everywhere, with no fallback-font risk.
+ * Letterforms are baked in as vector outlines (extracted from Space Grotesk
+ * Bold via fontTools), not live <text>, so rendering never depends on the
+ * font being loaded — guarantees the logo looks identical everywhere, with
+ * no fallback-font risk.
  *
  * Props:
  *   variant: 'light' | 'dark' | 'saffron' (default: 'light')
@@ -26,9 +27,9 @@ export default function PomarLogo({ variant = 'light', height = 36, markOnly = f
         aria-label="POMAR"
       >
         <g transform="translate(50,50)">
-          <circle r="34.95" fill="none" stroke={ringOuter} strokeWidth="10.70" />
-          <circle r="14.72" fill="none" stroke={ringInner} strokeWidth="5.35" />
-          <circle r="7.76" fill={ringInner} />
+          <circle r="34.69" fill="none" stroke={ringOuter} strokeWidth="10.62" />
+          <circle r="14.61" fill="none" stroke={ringInner} strokeWidth="5.31" />
+          <circle r="7.70" fill={ringInner} />
         </g>
       </svg>
     );
@@ -37,16 +38,20 @@ export default function PomarLogo({ variant = 'light', height = 36, markOnly = f
   return (
     <svg
       height={height}
-      viewBox="85 55 1535 315"
+      viewBox="0 0 3468.0 740.0"
       xmlns="http://www.w3.org/2000/svg"
       aria-label="POMAR"
     >
-      <path d="M321.443 160.706Q321.443 186.265 309.711 207.424Q297.979 228.584 273.677 241.573Q249.375 254.562 213.341 254.562L168.927 254.562L168.927 360.150L97.278 360.150L97.278 66.012L213.341 66.012Q248.537 66.012 272.839 78.163Q297.141 90.314 309.292 111.683Q321.443 133.052 321.443 160.706M207.894 197.578Q228.425 197.578 238.481 187.941Q248.537 178.304 248.537 160.706Q248.537 143.108 238.481 133.471Q228.425 123.834 207.894 123.834L168.927 123.834L168.927 197.578" fill={letterColor} />
-      <path d="M936.864 66.012L1021.083 66.012L1021.083 360.150L949.434 360.150L949.434 183.751L883.651 360.150L825.829 360.150L759.627 183.332L759.627 360.150L687.978 360.150L687.978 66.012L772.616 66.012L855.159 269.646L936.864 66.012M1273.321 360.150L1255.723 308.194L1145.945 308.194L1128.347 360.150L1053.346 360.150L1159.772 66.012L1242.734 66.012L1349.160 360.150L1273.321 360.150M1164.800 252.886L1237.287 252.886L1200.834 145.203L1164.800 252.886M1612.292 360.150L1531.425 360.150L1470.251 249.115L1453.072 249.115L1453.072 360.150L1381.423 360.150L1381.423 66.012L1501.676 66.012Q1536.453 66.012 1560.965 78.163Q1585.476 90.314 1597.627 111.473Q1609.778 132.633 1609.778 158.611Q1609.778 187.941 1593.228 210.986Q1576.677 234.031 1544.414 243.668L1612.292 360.150M1453.072 125.510L1453.072 198.416L1497.486 198.416Q1517.179 198.416 1527.026 188.779Q1536.872 179.142 1536.872 161.544Q1536.872 144.784 1527.026 135.147Q1517.179 125.510 1497.486 125.510" fill={letterColor} />
-      <g transform="translate(505.4,210)">
-        <circle r="130.6" fill="none" stroke={ringOuter} strokeWidth="40" />
-        <circle r="55" fill="none" stroke={ringInner} strokeWidth="20" />
-        <circle r="29" fill={ringInner} />
+      <g transform="matrix(1,0,0,-1,20,720.0)">
+        <path transform="translate(0,0)" d="M66 0V700H354Q420 700 470.5 673.5Q521 647 549.5 599.0Q578 551 578 485V471Q578 406 548.5 357.5Q519 309 468.5 282.5Q418 256 354 256H198V0ZM198 376H341Q388 376 417.0 402.0Q446 428 446 473V483Q446 528 417.0 554.0Q388 580 341 580H198Z" fill={letterColor} />
+        <path transform="translate(1280,0)" d="M66 0V700H311L432 90H450L571 700H816V0H688V603H670L550 0H332L212 603H194V0Z" fill={letterColor} />
+        <path transform="translate(2162,0)" d="M18 0 202 700H432L616 0H480L442 154H192L154 0ZM223 276H411L326 617H308Z" fill={letterColor} />
+        <path transform="translate(2796,0)" d="M66 0V700H370Q436 700 485.0 677.0Q534 654 561.0 612.0Q588 570 588 513V501Q588 438 558.0 399.0Q528 360 484 342V324Q524 322 546.0 296.5Q568 271 568 229V0H436V210Q436 234 423.5 249.0Q411 264 382 264H198V0ZM198 384H356Q403 384 429.5 409.5Q456 435 456 477V487Q456 529 430.0 554.5Q404 580 356 580H198Z" fill={letterColor} />
+        <g transform="translate(942.0,350.0)">
+          <circle r="282.3" fill="none" stroke={ringOuter} strokeWidth="86.4" />
+          <circle r="118.9" fill="none" stroke={ringInner} strokeWidth="43.2" />
+          <circle r="62.7" fill={ringInner} />
+        </g>
       </g>
     </svg>
   );
