@@ -177,6 +177,14 @@ export default function DailyLogsList({ userId, user, project, refreshKey, logge
         <p className="dailylogs-muted">No logs yet for this range. Add one to start the record.</p>
       ) : (
         <div className="dailylogs-entries">
+          <div className="dailylogs-entries-columns" aria-hidden="true">
+            <span>Date</span>
+            <span>Company</span>
+            <span>Weather</span>
+            <span>Crew</span>
+            <span>Notes</span>
+            <span></span>
+          </div>
           {logs.map((log) => {
             const expanded = expandedId === log.id;
             return (
@@ -186,6 +194,7 @@ export default function DailyLogsList({ userId, user, project, refreshKey, logge
                   onClick={() => setExpandedId(expanded ? null : log.id)}
                 >
                   <span className="dailylogs-entry-date">{formatDate(log.log_date)}</span>
+                  <span className="dailylogs-entry-company">{log.author_company || '—'}</span>
                   <span className="dailylogs-entry-weather">{log.weather || '—'}</span>
                   <span className="dailylogs-entry-crew">{log.crew_count != null ? `${log.crew_count} crew` : '—'}</span>
                   <span className="dailylogs-entry-summary">{workSummary(log.work_performed)}</span>

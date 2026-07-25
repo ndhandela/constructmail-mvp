@@ -34,21 +34,27 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "https://pomar.ai")
 STALE_DAYS = 7
 
 
-async def _find_or_create_lead_account(conn, email: str, name: str) -> int:
+async def _find_or_create_lead_account(conn, email: str, name: str, company: Optional[str] = None) -> int:
     """Same shape as routers/marketplace.py's _find_or_create_lead_account
     (not shared/extracted — that one is private to marketplace.py and this
     module has its own account_source). Never demotes an existing account
-    of any type/status; only creates a brand-new lead the first time this
-    email is seen."""
+    of any type/status, and never overwrites an existing account's company
+    — only creates a brand-new lead the first time this email is seen, and
+    only that new row gets `company` set. `company` lands in users.company
+    (the legacy free-text field, since a lead account has no company_id/
+    companies row of its own) — this is what makes "author's company name"
+    resolvable for Daily Logs entries (routers/daily_logs.py's list_logs)
+    the same way it already is for a company-affiliated user via
+    company_id -> companies.name."""
     email = email.lower().strip()
     existing = await conn.fetchrow("SELECT id FROM users WHERE email = $1", email)
     if existing:
         return existing["id"]
     row = await conn.fetchrow(
-        """INSERT INTO users (email, name, account_type, account_status, account_source)
-           VALUES ($1, $2, 'sub', 'lead', 'project_vendor_invite')
+        """INSERT INTO users (email, name, account_type, account_status, account_source, company)
+           VALUES ($1, $2, 'sub', 'lead', 'project_vendor_invite', $3)
            RETURNING id""",
-        email, name,
+        email, name, company,
     )
     return row["id"]
 
@@ -79,6 +85,7 @@ class InviteVendorRequest(BaseModel):
     userId: int
     email: str
     role: Optional[str] = None
+    company: Optional[str] = None
 
 
 @router.post("/projects/{project_id}/invite")
@@ -95,7 +102,7 @@ async def invite_vendor(project_id: int, req: InviteVendorRequest):
         if not project:
             raise HTTPException(404, "Project not found")
 
-        vendor_user_id = await _find_or_create_lead_account(conn, email, email.split("@")[0])
+        vendor_user_id = await _find_or_create_lead_account(conn, email, email.split("@")[0], req.company)
         if vendor_user_id == req.userId:
             raise HTTPException(400, "You can't invite yourself")
 

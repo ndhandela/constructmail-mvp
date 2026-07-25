@@ -153,17 +153,17 @@ async def list_logs(
         # specific sub's logs from the Vendors tab) can filter to anyone.
         effective_logged_by = userId if access.is_vendor else loggedByUserId
 
-        conditions = ["project_id = $1"]
+        conditions = ["dl.project_id = $1"]
         params = [project_id]
         if from_ is not None:
             params.append(from_)
-            conditions.append(f"log_date >= ${len(params)}")
+            conditions.append(f"dl.log_date >= ${len(params)}")
         if to is not None:
             params.append(to)
-            conditions.append(f"log_date <= ${len(params)}")
+            conditions.append(f"dl.log_date <= ${len(params)}")
         if effective_logged_by is not None:
             params.append(effective_logged_by)
-            conditions.append(f"logged_by_user_id = ${len(params)}")
+            conditions.append(f"dl.logged_by_user_id = ${len(params)}")
 
         where_clause = " AND ".join(conditions)
         offset = (page - 1) * PAGE_SIZE
@@ -175,9 +175,20 @@ async def list_logs(
         params.append(offset)
         offset_param = len(params)
 
+        # author_company: same COALESCE(companies.name, users.company)
+        # resolution as a company-affiliated user's normal company lookup —
+        # works for the GC's own team (via company_id) and for an invited
+        # sub (via users.company, set at invite time — see
+        # project_vendor_access._find_or_create_lead_account) alike. Kept
+        # inline here rather than a second N+1 per-row lookup elsewhere;
+        # reuse this same join shape if the Vendors tab ever needs it too.
         rows = await conn.fetch(
-            f"""SELECT * FROM daily_logs WHERE {where_clause}
-                ORDER BY log_date DESC, id DESC
+            f"""SELECT dl.*, COALESCE(c.name, u.company) AS author_company
+                FROM daily_logs dl
+                JOIN users u ON u.id = dl.logged_by_user_id
+                LEFT JOIN companies c ON c.id = u.company_id
+                WHERE {where_clause}
+                ORDER BY dl.log_date DESC, dl.id DESC
                 LIMIT ${limit_param} OFFSET ${offset_param}""",
             *params,
         )

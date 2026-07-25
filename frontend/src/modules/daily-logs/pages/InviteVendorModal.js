@@ -9,6 +9,7 @@ export default function InviteVendorModal({ userId, project, onInvited, onCancel
   const [searching, setSearching] = useState(false);
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('');
+  const [company, setCompany] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const debounceRef = useRef(null);
@@ -45,6 +46,12 @@ export default function InviteVendorModal({ userId, project, onInvited, onCancel
   const selectVendor = (vendor) => {
     if (vendor.email) setEmail(vendor.email);
     if (vendor.trade) setRole(vendor.trade);
+    // vendor.name is the directory record's company/business name (e.g.
+    // "ABC Electrical Co"), not a person's name — vendors are company-level
+    // records (frontend/src/modules/vendors). This is what makes the
+    // invited account's author_company resolvable later (see
+    // project_vendor_access._find_or_create_lead_account).
+    if (vendor.name) setCompany(vendor.name);
     setMode('manual');
   };
 
@@ -60,6 +67,7 @@ export default function InviteVendorModal({ userId, project, onInvited, onCancel
           userId: Number(userId),
           email: email.trim(),
           role: role.trim() || null,
+          company: company.trim() || null,
         }),
       });
       const data = await res.json();
@@ -135,6 +143,15 @@ export default function InviteVendorModal({ userId, project, onInvited, onCancel
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="sub@example.com"
                 required
+                disabled={saving}
+              />
+            </div>
+            <div className="dailylogs-field">
+              <label>Company (optional)</label>
+              <input
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                placeholder="e.g. ABC Electrical Co"
                 disabled={saving}
               />
             </div>
