@@ -227,6 +227,21 @@
   cursor: not-allowed;
 }
 
+.dailylogs-btn-danger {
+  border: 1px solid var(--brick);
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--brick);
+}
+
+.dailylogs-btn-danger:hover {
+  background: #FDECEA;
+}
+
 .dailylogs-link-btn {
   border: none;
   background: transparent;

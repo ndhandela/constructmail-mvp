@@ -246,6 +246,27 @@ async def update_log(log_id: int, req: UpdateLogRequest):
     return {"success": True, "log": dict(row)}
 
 
+@router.delete("/logs/{log_id}")
+async def delete_log(log_id: int, userId: int):
+    """Same permission rule as editing (_require_can_edit_log): a company
+    owner can always delete, the logging user can delete their own log
+    within the 48-hour edit window, no one else can. daily_log_photos rows
+    cascade-delete via their FK; the underlying R2 objects are left in
+    place, same as the existing single-photo delete below — this codebase
+    has no R2 delete_object call anywhere yet."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        log = await conn.fetchrow("SELECT * FROM daily_logs WHERE id = $1", log_id)
+        if not log:
+            raise HTTPException(404, "Log not found")
+
+        await _require_can_edit_log(conn, log, userId)
+
+        await conn.execute("DELETE FROM daily_logs WHERE id = $1", log_id)
+
+    return {"success": True}
+
+
 @router.delete("/logs/{log_id}/photos/{photo_id}")
 async def delete_log_photo(log_id: int, photo_id: int, userId: int):
     pool = await get_pool()

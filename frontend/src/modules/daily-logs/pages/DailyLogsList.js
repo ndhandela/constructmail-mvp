@@ -15,7 +15,7 @@ function LogPhotos({ photos }) {
   );
 }
 
-function LogDetail({ userId, user, project, log, onDeletedPhoto, onEdited, readOnly }) {
+function LogDetail({ userId, user, project, log, onDeletedPhoto, onEdited, onDeleted, readOnly }) {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -54,6 +54,18 @@ function LogDetail({ userId, user, project, log, onDeletedPhoto, onEdited, readO
       }
     } catch (err) {
       console.error('Delete daily log photo error:', err);
+    }
+  };
+
+  const handleDeleteLog = async () => {
+    if (!window.confirm(`Delete the ${formatDate(log.log_date)} log entry? This can't be undone.`)) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/daily-logs/logs/${log.id}?userId=${userId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) onDeleted();
+    } catch (err) {
+      console.error('Delete daily log error:', err);
     }
   };
 
@@ -97,6 +109,7 @@ function LogDetail({ userId, user, project, log, onDeletedPhoto, onEdited, readO
 
           {canEdit && (
             <div className="dailylogs-form-actions">
+              <button className="dailylogs-btn-danger" onClick={handleDeleteLog}>Delete log</button>
               <button className="dailylogs-btn-secondary" onClick={() => setEditing(true)}>Edit log</button>
             </div>
           )}
@@ -186,6 +199,7 @@ export default function DailyLogsList({ userId, user, project, refreshKey, logge
                     log={log}
                     onDeletedPhoto={() => {}}
                     onEdited={fetchLogs}
+                    onDeleted={() => { setExpandedId(null); fetchLogs(); }}
                     readOnly={readOnly}
                   />
                 )}
