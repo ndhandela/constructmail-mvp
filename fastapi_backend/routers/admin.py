@@ -8,6 +8,8 @@ from typing import Optional
 from db import get_pool
 from services.admin_auth import get_current_admin, require_super_admin, require_admin, create_token, hash_password, verify_password
 from services.email_service import send_email
+from services.invoice_helpers import find_or_create_accountant_lead_account, upsert_accountant_invite
+from services.magic_link import issue_magic_link
 from services.project_helpers import accept_pending_invites
 from services import user_service
 
@@ -60,6 +62,11 @@ class CreateCompanyRequest(BaseModel):
 class UpdateCompanyDetailsRequest(BaseModel):
     region: Optional[str] = None
     entityName: Optional[str] = None
+
+
+class InviteAccountantAdminRequest(BaseModel):
+    email: str
+    name: Optional[str] = None
 
 
 @router.post("/auth/login")
@@ -159,7 +166,8 @@ async def create_company(req: CreateCompanyRequest, admin: dict = Depends(requir
                      ($1, 'marketplace', 'Marketplace Access', 'marketplace', false, false),
                      ($1, 'trust', 'POMAR Trust Access', 'trust', false, false),
                      ($1, 'capital', 'Capital Tracker Access', 'capital', false, false),
-                     ($1, 'daily_logs', 'Daily Logs Access', 'daily_logs', false, false)
+                     ($1, 'daily_logs', 'Daily Logs Access', 'daily_logs', false, false),
+                     ($1, 'invoice_tracker', 'Invoice Tracker Access', 'invoice_tracker', false, false)
                    ON CONFLICT (company_id, feature_key) DO NOTHING""",
                 company["id"],
             )
@@ -408,6 +416,65 @@ async def update_company_details(
         {"region": req.region, "entityName": req.entityName},
     )
     return {"success": True, "region": row["region"], "entity_name": row["entity_name"]}
+
+
+@router.post("/companies/{company_id}/invite-accountant")
+async def invite_accountant_admin(
+    company_id: int, req: InviteAccountantAdminRequest, admin: dict = Depends(require_super_admin),
+):
+    """Admin-portal counterpart to routers/invoice_accountant_access.py's
+    GC-owner-triggered invite_accountant — same grant, same
+    company_accountant_access row, but with invited_by_admin_id set
+    instead of invited_by_user_id since there's no acting `users` row
+    here. Doesn't require the company to have 'invoice_tracker' enabled —
+    POMAR staff may be setting this up as part of turning the module on
+    for a client, not after."""
+    email = req.email.lower().strip()
+    if not email or "@" not in email:
+        raise HTTPException(400, "A valid email is required")
+
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        company = await conn.fetchrow("SELECT id, name FROM companies WHERE id = $1", company_id)
+        if not company:
+            raise HTTPException(404, "Company not found")
+
+        accountant_user_id = await find_or_create_accountant_lead_account(
+            conn, email, req.name or email.split("@")[0],
+        )
+
+        existing = await conn.fetchrow(
+            "SELECT status FROM company_accountant_access WHERE company_id = $1 AND accountant_user_id = $2",
+            company_id, accountant_user_id,
+        )
+        if existing and existing["status"] == "accepted":
+            raise HTTPException(409, "This accountant already has access to this company")
+
+        row = await upsert_accountant_invite(conn, company_id, accountant_user_id, invited_by_admin_id=admin["id"])
+        link = await issue_magic_link(conn, email, FRONTEND_URL, path="/accountant")
+
+    is_reinvite = bool(existing)
+    try:
+        email_sent = await send_email(
+            to=email,
+            subject=f"{'Reinvited' if is_reinvite else 'Invited'} to view invoices for {company['name']} on POMAR",
+            html=f"""<div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
+              <p>You've been {'re-' if is_reinvite else ''}invited to view and download invoices
+                 for <strong>{company['name']}</strong> on POMAR Invoice Tracker.</p>
+              <a href="{link}" style="display:inline-block;padding:12px 24px;background:#D97706;color:#fff;
+                 text-decoration:none;border-radius:100px;font-weight:600;">Accept invite</a>
+              <p style="color:#666;font-size:13px;">This link expires in 24 hours.</p>
+            </div>""",
+        )
+    except Exception as e:
+        logging.error(f"invite_accountant_admin: invite email failed for {email!r}: {e}")
+        email_sent = False
+
+    await user_service.log_admin_activity(
+        admin["id"], "accountant_invited", "company_accountant_access", row["id"],
+        {"company_id": company_id, "email": email},
+    )
+    return {"success": True, "access": dict(row), "email_sent": email_sent}
 
 
 @router.get("/companies/{company_id}/team")

@@ -1,0 +1,38 @@
+-- Migration: 014_invoice_tracker.sql
+-- Documents the Invoice Tracker module added by fastapi_backend/db.py's
+-- init_db() on every startup (idempotent CREATE TABLE IF NOT EXISTS /
+-- ALTER TABLE ... ADD COLUMN IF NOT EXISTS — no raw SQL to run here, this
+-- is a record of what that block does):
+--
+--   * New table: invoices (id, company_id FK, project_id FK, work_item_id
+--     FK nullable, budget_item_id FK nullable, uploaded_by FK -> users,
+--     vendor_name, invoice_number, amount, invoice_date, due_date,
+--     status pending/paid, pdf_storage_path, notes, timestamps).
+--     project_id is required; work_item_id/budget_item_id are optional so
+--     a general project-level invoice doesn't need either. Deliberately
+--     does NOT depend on the 'capital' feature flag being on — see
+--     routers/invoices.py's own picker endpoints.
+--   * New feature flag 'invoice_tracker' (global row seeded OFF) + a
+--     placeholder module_pricing row, same pattern as every other module.
+--   * users.restricted_module (nullable) — when set,
+--     services/access_control.require_feature_flag 403s any feature_key
+--     other than this one. Lets a GC owner scope a team member to Invoice
+--     Tracker only (services/access_control.py, routers/team.py).
+--   * users.account_type CHECK widened to add 'accountant' alongside the
+--     existing 'gc'/'sub' pair (migration 026).
+--   * New table: company_accountant_access (id, company_id FK,
+--     accountant_user_id FK -> users, invited_by_user_id FK -> users
+--     nullable, invited_by_admin_id FK -> admin_users nullable, status
+--     invited/accepted/removed, timestamps). Company-scoped (not
+--     project-scoped like project_vendor_access) — an accountant invite
+--     grants read-only access to Invoice Tracker across every project in
+--     the company. Exactly one of invited_by_user_id/invited_by_admin_id
+--     is set depending on whether the invite came from a GC owner
+--     in-app (routers/invoice_accountant_access.py) or POMAR staff in the
+--     admin portal (routers/admin.py).
+--
+--   * Storage: PDFs go to a fourth, dedicated R2 bucket/credential set
+--     (R2_INVOICES_*, services/r2_storage.py) — private, no public access,
+--     presigned GET urls generated per download request (same shape as
+--     the Daily Logs photo bucket, not Trust's server-only bucket, since
+--     invoices need to be downloadable from the browser).

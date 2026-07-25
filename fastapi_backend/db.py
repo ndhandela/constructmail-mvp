@@ -1137,6 +1137,93 @@ async def init_db():
             -- already links its own budget_item_id/milestone_id, so this
             -- reuses that instead of duplicating a name field onto daily_logs.
             ALTER TABLE daily_logs ADD COLUMN IF NOT EXISTS work_item_id INT REFERENCES work_items(id) ON DELETE SET NULL;
+
+            -- POMAR Invoice Tracker (migration 028): upload and track vendor
+            -- invoice PDFs against a project. Deliberately does NOT require
+            -- the 'capital' feature flag — work_item_id/budget_item_id are
+            -- both nullable so a company can run Invoice Tracker with
+            -- Capital Tracker off, filing invoices at the project level
+            -- only (see routers/invoices.py's own work-items/budget-items
+            -- picker endpoints, which are gated by 'invoice_tracker' rather
+            -- than reusing routers/capital.py's 'capital'-gated ones).
+            -- Gated by its own 'invoice_tracker' feature flag.
+            CREATE TABLE IF NOT EXISTS invoices (
+                id SERIAL PRIMARY KEY,
+                company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+                project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                work_item_id INT REFERENCES work_items(id) ON DELETE SET NULL,
+                budget_item_id INT REFERENCES budget_items(id) ON DELETE SET NULL,
+                uploaded_by INT NOT NULL REFERENCES users(id),
+                vendor_name VARCHAR(255) NOT NULL,
+                invoice_number VARCHAR(100),
+                amount NUMERIC(12,2) NOT NULL,
+                invoice_date DATE,
+                due_date DATE,
+                status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','paid')),
+                pdf_storage_path TEXT NOT NULL,
+                notes TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS invoices_company_id_idx ON invoices (company_id);
+            CREATE INDEX IF NOT EXISTS invoices_project_id_idx ON invoices (project_id);
+            CREATE INDEX IF NOT EXISTS invoices_work_item_id_idx ON invoices (work_item_id);
+            CREATE INDEX IF NOT EXISTS invoices_budget_item_id_idx ON invoices (budget_item_id);
+            CREATE INDEX IF NOT EXISTS invoices_status_idx ON invoices (status);
+
+            -- Seeds a global 'invoice_tracker' flag row so it exists
+            -- (defaulting OFF), same as every other module — see the
+            -- 'capital' seed above for why.
+            INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
+            VALUES (NULL, 'invoice_tracker', 'Invoice Tracker', 'invoice_tracker', false, true)
+            ON CONFLICT (feature_key) WHERE is_global = true DO NOTHING;
+
+            INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active)
+            VALUES (true, NULL, 'invoice_tracker', 0, 'monthly', true)
+            ON CONFLICT (module_name) WHERE is_global = true DO NOTHING;
+
+            -- Internal team-member restriction: when set, require_feature_flag
+            -- (services/access_control.py) 403s any feature_key other than
+            -- this one — lets a GC owner scope a teammate to Invoice Tracker
+            -- only, the same spirit as project_members already scoping them
+            -- to specific projects. NULL (the default) means "no restriction
+            -- beyond the company's own flags", matching every existing team
+            -- member's behavior today.
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS restricted_module VARCHAR(50);
+
+            -- External accountant accounts: a third users.account_type
+            -- alongside the marketplace 'gc'/'sub' pair (migration 026). An
+            -- accountant is read-only and company-scoped (not project-scoped
+            -- like project_vendor_access) — see services/invoice_helpers.py.
+            ALTER TABLE users DROP CONSTRAINT IF EXISTS users_account_type_check;
+            ALTER TABLE users ADD CONSTRAINT users_account_type_check CHECK (account_type IN ('gc','sub','accountant'));
+
+            -- Company-scoped accountant invite/access, deliberately separate
+            -- from project_vendor_access (project-scoped) and project_members
+            -- (broad, all-module grants for the owning company's own staff) —
+            -- mirrors project_vendor_access's status machine but keyed on
+            -- company_id since an accountant's job is "see every invoice this
+            -- GC has", not one project. invited_by_user_id is the GC owner
+            -- who triggered an in-app invite (routers/invoice_accountant_access.py);
+            -- invited_by_admin_id is set instead when POMAR staff trigger it
+            -- from the admin portal (routers/admin.py) — exactly one of the
+            -- two is ever set, the same either-actor idiom as
+            -- admin_activity_log's actor check above.
+            CREATE TABLE IF NOT EXISTS company_accountant_access (
+                id SERIAL PRIMARY KEY,
+                company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+                accountant_user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                invited_by_user_id INT REFERENCES users(id),
+                invited_by_admin_id INT REFERENCES admin_users(id),
+                status VARCHAR(20) NOT NULL DEFAULT 'invited' CHECK (status IN ('invited','accepted','removed')),
+                invited_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                accepted_at TIMESTAMPTZ,
+                removed_at TIMESTAMPTZ,
+                UNIQUE(company_id, accountant_user_id),
+                CHECK (invited_by_user_id IS NOT NULL OR invited_by_admin_id IS NOT NULL)
+            );
+            CREATE INDEX IF NOT EXISTS company_accountant_access_accountant_user_id_idx ON company_accountant_access (accountant_user_id);
+            CREATE INDEX IF NOT EXISTS company_accountant_access_company_id_idx ON company_accountant_access (company_id);
         """)
 
         await _backfill_clash_project_ids(conn)

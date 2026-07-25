@@ -107,12 +107,13 @@ async def get_me(userId: int):
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
             "SELECT id, email, name, full_name, company, role, permission_level, company_id, trust_role, "
+            "restricted_module, account_type, account_status, "
             "(password_hash IS NOT NULL) AS has_password FROM users WHERE id = $1", userId
         )
         if not row:
             raise HTTPException(401, "User not found")
         user = dict(row)
-        user["active_modules"] = await get_active_modules(conn, user["company_id"])
+        user["active_modules"] = await get_active_modules(conn, user["company_id"], userId)
         user["company_region"] = await conn.fetchval(
             "SELECT region FROM companies WHERE id = $1", user["company_id"]
         ) if user["company_id"] else None
@@ -130,6 +131,19 @@ async def get_me(userId: int):
             userId,
         )
         user["pending_vendor_invites"] = [dict(r) for r in pending_invites]
+        # Same idea for pending Invoice Tracker accountant invites — see
+        # routers/invoice_accountant_access.py.
+        pending_accountant_invites = await conn.fetch(
+            """SELECT caa.id AS access_id, caa.company_id, c.name AS company_name, caa.invited_at,
+                      COALESCE(u2.name, 'A POMAR administrator') AS invited_by_name
+               FROM company_accountant_access caa
+               JOIN companies c ON c.id = caa.company_id
+               LEFT JOIN users u2 ON u2.id = caa.invited_by_user_id
+               WHERE caa.accountant_user_id = $1 AND caa.status = 'invited'
+               ORDER BY caa.invited_at DESC""",
+            userId,
+        )
+        user["pending_accountant_invites"] = [dict(r) for r in pending_accountant_invites]
     return user
 
 

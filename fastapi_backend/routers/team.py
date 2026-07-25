@@ -5,6 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from db import get_pool
+from services.access_control import MODULE_KEYS
 from services.email_service import send_email
 from services.project_helpers import accept_pending_invites
 
@@ -18,10 +19,19 @@ class InviteTeammateRequest(BaseModel):
     email: str
     fullName: str
     projectIds: list[int] = []
+    # Scopes the new teammate to exactly one module (e.g. "invoice_tracker")
+    # instead of the company's full set of enabled modules — see
+    # services/access_control.require_feature_flag, which 403s any other
+    # feature_key once this is set. None (the default) keeps today's
+    # behavior: full access to whatever the company has enabled.
+    restrictedModule: Optional[str] = None
 
 
 @router.post("/invite")
 async def invite_teammate(req: InviteTeammateRequest):
+    if req.restrictedModule is not None and req.restrictedModule not in MODULE_KEYS:
+        raise HTTPException(400, f"restrictedModule must be one of {MODULE_KEYS}")
+
     email = req.email.lower().strip()
     pool = await get_pool()
     async with pool.acquire() as conn:
@@ -45,11 +55,12 @@ async def invite_teammate(req: InviteTeammateRequest):
             company = await conn.fetchrow("SELECT name FROM companies WHERE id = $1", owner["company_id"])
             user = await conn.fetchrow(
                 """INSERT INTO users (email, name, full_name, company, company_id, permission_level,
-                                       password_hash, invite_token, invite_token_expires, created_at)
-                   VALUES ($1,$2,$3,$4,$5,'member',NULL,$6,$7,NOW())
+                                       password_hash, invite_token, invite_token_expires, restricted_module, created_at)
+                   VALUES ($1,$2,$3,$4,$5,'member',NULL,$6,$7,$8,NOW())
                    RETURNING id""",
                 email, req.fullName.strip(), req.fullName.strip(),
                 company["name"] if company else None, owner["company_id"], invite_token, invite_expires,
+                req.restrictedModule,
             )
             await accept_pending_invites(conn, user["id"], email)
 
@@ -95,12 +106,43 @@ async def list_team(userId: int):
         if not requester["company_id"]:
             return {"success": True, "team": []}
         rows = await conn.fetch(
-            """SELECT id, email, full_name, name, permission_level, trust_role,
+            """SELECT id, email, full_name, name, permission_level, trust_role, restricted_module,
                       (invite_token IS NOT NULL) as invite_pending, created_at
                FROM users WHERE company_id = $1 ORDER BY created_at ASC""",
             requester["company_id"],
         )
     return {"success": True, "team": [dict(r) for r in rows]}
+
+
+class UpdateRestrictedModuleRequest(BaseModel):
+    requesterId: int
+    restricted_module: Optional[str] = None  # null clears it
+
+
+@router.put("/{member_user_id}/restricted-module")
+async def update_member_restricted_module(member_user_id: int, req: UpdateRestrictedModuleRequest):
+    if req.restricted_module is not None and req.restricted_module not in MODULE_KEYS:
+        raise HTTPException(400, f"restricted_module must be one of {MODULE_KEYS}")
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        requester = await conn.fetchrow(
+            "SELECT company_id, permission_level FROM users WHERE id = $1", req.requesterId
+        )
+        member = await conn.fetchrow(
+            "SELECT company_id, permission_level FROM users WHERE id = $1", member_user_id
+        )
+        if not requester or not member or requester["company_id"] != member["company_id"]:
+            raise HTTPException(403, "Not authorized")
+        if requester["permission_level"] != "owner":
+            raise HTTPException(403, "Only the company owner can change this")
+        if member["permission_level"] == "owner":
+            raise HTTPException(400, "The company owner can't be restricted to a single module")
+
+        row = await conn.fetchrow(
+            "UPDATE users SET restricted_module = $1 WHERE id = $2 RETURNING id, restricted_module",
+            req.restricted_module, member_user_id,
+        )
+    return {"success": True, "restricted_module": row["restricted_module"]}
 
 
 class UpdateTrustRoleRequest(BaseModel):

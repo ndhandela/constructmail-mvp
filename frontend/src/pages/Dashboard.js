@@ -116,6 +116,14 @@ const PRODUCT_ICONS = {
       <line x1="16" y1="17" x2="8" y2="17"/>
     </svg>
   ),
+  invoice_tracker: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 2h9a2 2 0 0 1 2 2v16l-3-2-3 2-3-2-3 2V4a2 2 0 0 1 2-2z"/>
+      <line x1="8" y1="7" x2="16" y2="7"/>
+      <line x1="8" y1="11" x2="16" y2="11"/>
+      <line x1="8" y1="15" x2="12" y2="15"/>
+    </svg>
+  ),
 };
 
 const SOON_ICONS = {
@@ -185,10 +193,15 @@ export default function ProductDashboard({ user, userId, onProductSelect }) {
           // should never learn Trust exists at all.
           .filter(p => !p.regionGated || user?.company_region === p.regionGated)
           .filter(p => !p.regionGated || !!user?.active_modules?.[p.id])
+          // A team member scoped to one module (users.restricted_module —
+          // see services/access_control.py) only ever sees that module's
+          // card here, mirroring components/Sidebar.js's same filter.
+          .filter(p => !user?.restricted_module || p.id === user.restricted_module)
           .map(product => {
           const locked = (product.id === 'marketplace' && product.licenseGated && marketplaceLicensed !== true)
             || (product.id === 'capital' && product.licenseGated && !user?.active_modules?.capital)
-            || (product.id === 'daily_logs' && product.licenseGated && !user?.active_modules?.daily_logs);
+            || (product.id === 'daily_logs' && product.licenseGated && !user?.active_modules?.daily_logs)
+            || (product.id === 'invoice_tracker' && product.licenseGated && !user?.active_modules?.invoice_tracker);
           return (
             <div
               key={product.id}

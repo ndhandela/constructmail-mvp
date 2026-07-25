@@ -61,6 +61,14 @@ const ICONS = {
       <polyline points="10 9 9 9 8 9" />
     </svg>
   ),
+  invoice_tracker: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 2h9a2 2 0 0 1 2 2v16l-3-2-3 2-3-2-3 2V4a2 2 0 0 1 2-2z" />
+      <line x1="8" y1="7" x2="16" y2="7" />
+      <line x1="8" y1="11" x2="16" y2="11" />
+      <line x1="8" y1="15" x2="12" y2="15" />
+    </svg>
+  ),
 };
 
 const PROJECT_SCOPED_ITEMS = [
@@ -75,6 +83,7 @@ const ACCOUNT_LEVEL_ITEMS = [
   { key: 'trust', path: '/trust', label: 'Trust' },
   { key: 'capital', path: '/capital', label: 'Capital Tracker' },
   { key: 'daily_logs', path: '/daily-logs', label: 'Daily Logs' },
+  { key: 'invoice_tracker', path: '/invoices', label: 'Invoice Tracker' },
 ];
 
 function SidebarItem({ item, active, disabled }) {
@@ -106,17 +115,27 @@ export default function Sidebar({ user }) {
 
   const showTrust = user?.company_region === 'IN' && user?.active_modules?.trust;
 
+  // A team member scoped to one module (users.restricted_module — see
+  // services/access_control.py) gets a sidebar that shows only that
+  // module: every other entry 403s server-side anyway, so hiding them
+  // here isn't the real enforcement, just matching the UI to it (same
+  // "server side enforces, client side just reflects" split as
+  // ModuleLockedNotice/isModuleLocked elsewhere in this file).
+  const restrictedModule = user?.restricted_module || null;
+
   return (
     <aside className="app-sidebar">
       <nav className="sidebar-group">
-        {PROJECT_SCOPED_ITEMS.map((item) => (
-          <SidebarItem
-            key={item.key}
-            item={item}
-            active={currentPath === item.path}
-            disabled={!hasActiveProject}
-          />
-        ))}
+        {PROJECT_SCOPED_ITEMS
+          .filter((item) => !restrictedModule)
+          .map((item) => (
+            <SidebarItem
+              key={item.key}
+              item={item}
+              active={currentPath === item.path}
+              disabled={!hasActiveProject}
+            />
+          ))}
       </nav>
 
       <div className="sidebar-divider" />
@@ -124,6 +143,7 @@ export default function Sidebar({ user }) {
       <nav className="sidebar-group">
         {ACCOUNT_LEVEL_ITEMS
           .filter((item) => item.key !== 'trust' || showTrust)
+          .filter((item) => !restrictedModule || item.key === restrictedModule)
           .map((item) => (
             <SidebarItem
               key={item.key}

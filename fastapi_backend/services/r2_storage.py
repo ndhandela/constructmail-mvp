@@ -16,6 +16,12 @@ download_trust_file's docstring: no public/shareable URL is ever generated).
 Daily log photos are site photos meant to render in a frontend gallery, so
 they need presigned GET urls handed back to the browser — a capability
 deliberately not added to the Trust bucket/functions above.
+
+Invoice Tracker uses a FOURTH, separate bucket/credential set (R2_INVOICES_*,
+below) rather than reusing an existing one — invoice PDFs carry vendor/
+financial data and get their own dedicated bucket, same "presigned GET,
+short expiry, regenerated per read" shape as Daily Logs (not Trust's
+server-only shape), since invoices need to be downloadable from the browser.
 """
 
 import asyncio
@@ -123,6 +129,72 @@ async def get_daily_log_photo_url(storage_path: str, expires_in: int = 3600) -> 
         return _get_dailylogs_client().generate_presigned_url(
             "get_object",
             Params={"Bucket": _dailylogs_bucket(), "Key": storage_path},
+            ExpiresIn=expires_in,
+        )
+
+    return await asyncio.to_thread(_presign)
+
+
+# ── Invoice Tracker PDF bucket ──────────────────────────────────────────
+# Fourth, separate client/bucket/credentials — see the module docstring for
+# why. Reuses the same lazy-singleton + asyncio.to_thread shape as the two
+# buckets above rather than introducing a new one.
+
+_invoices_client = None
+
+
+def _get_invoices_client():
+    global _invoices_client
+    if _invoices_client is None:
+        _invoices_client = boto3.client(
+            "s3",
+            endpoint_url=os.environ["R2_INVOICES_ENDPOINT_URL"],
+            aws_access_key_id=os.environ["R2_INVOICES_ACCESS_KEY_ID"],
+            aws_secret_access_key=os.environ["R2_INVOICES_SECRET_ACCESS_KEY"],
+            region_name="auto",
+        )
+    return _invoices_client
+
+
+def _invoices_bucket() -> str:
+    return os.environ["R2_INVOICES_BUCKET_NAME"]
+
+
+def _invoices_storage_key(company_id: int, project_id: int, upload_token: str, filename: str) -> str:
+    safe_name = os.path.basename(filename)
+    return f"invoice-pdfs/{company_id}/{project_id}/{upload_token}/{safe_name}"
+
+
+async def upload_invoice_pdf(company_id: int, project_id: int, upload_token: str, filename: str, content: bytes) -> str:
+    """upload_token is a caller-generated random id (routers/invoices.py
+    uses secrets.token_hex), not the invoices.id row — the PDF is uploaded
+    before the row exists (its pdf_storage_path column is NOT NULL, so the
+    row can only be inserted once the key is known), unlike Daily Logs
+    where photos are a separate table inserted after their parent log row."""
+    key = _invoices_storage_key(company_id, project_id, upload_token, filename)
+
+    def _put():
+        _get_invoices_client().put_object(Bucket=_invoices_bucket(), Key=key, Body=content)
+
+    await asyncio.to_thread(_put)
+    return key
+
+
+# Short expiry (15 min, well under Daily Logs' 1 hour default) — invoice
+# PDFs carry vendor/financial data, so the signed-download endpoint
+# (routers/invoices.py) is meant to be called right before the browser
+# uses the link, not cached for a long gallery-style session.
+INVOICE_URL_EXPIRES_IN = 900
+
+
+async def get_invoice_pdf_url(storage_path: str, expires_in: int = INVOICE_URL_EXPIRES_IN) -> str:
+    """Presigned GET url, not cached/stored — regenerated on every request
+    (routers/invoices.py's download-url endpoint) so nothing durable in
+    Postgres or the frontend ever holds a link past its short expiry."""
+    def _presign():
+        return _get_invoices_client().generate_presigned_url(
+            "get_object",
+            Params={"Bucket": _invoices_bucket(), "Key": storage_path},
             ExpiresIn=expires_in,
         )
 

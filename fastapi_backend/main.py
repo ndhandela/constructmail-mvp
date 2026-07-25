@@ -8,6 +8,7 @@ from db import init_db, get_pool
 from routers import ai, auth, gmail, outlook, clash, procore, vendors, admin, misc, marketplace, profile, mail, projects, team, logs
 from routers import connect as connect_router
 from routers import trust, trust_uploads, trust_qpr, trust_alerts, capital, daily_logs, project_vendor_access
+from routers import invoices, invoice_accountant_access
 from services import trust_reminders, marketplace_verification
 
 
@@ -59,6 +60,8 @@ app.include_router(capital.router)
 app.include_router(capital.project_router)
 app.include_router(daily_logs.router)
 app.include_router(project_vendor_access.router)
+app.include_router(invoices.router)
+app.include_router(invoice_accountant_access.router)
 
 
 @app.exception_handler(Exception)

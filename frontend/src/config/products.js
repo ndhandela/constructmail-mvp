@@ -106,6 +106,20 @@ export const PRODUCTS = [
     // (US and India), gated only by active_modules.daily_logs.
     licenseGated: true
   },
+  {
+    id: 'invoice_tracker',
+    name: 'POMAR Invoice Tracker',
+    description: 'Upload and track vendor invoices against your projects and budget.',
+    detailedDescription: "Vendor invoices usually live scattered across email and paper. POMAR Invoice Tracker gives every project a single place to upload invoice PDFs, tag them to a work item or budget line, and track paid vs. pending — with read-only access you can extend to an outside accountant without giving them the rest of POMAR.",
+    icon: '🧾',
+    path: '/invoices',
+    logo: '/logos/pomar.png',
+    color: '#D97706',
+    status: 'live',
+    // No regionGated flag — available to any company, gated only by
+    // active_modules.invoice_tracker.
+    licenseGated: true
+  },
 ];
 
 export const getProductById = (id) => PRODUCTS.find(p => p.id === id);

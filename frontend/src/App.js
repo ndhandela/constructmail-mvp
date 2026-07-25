@@ -34,6 +34,8 @@ import CompanySettingsApp from './modules/profile/pages/CompanySettingsApp';
 import TrustApp from './modules/trust/pages/TrustApp';
 import CapitalTrackerApp from './modules/capital/pages/CapitalTrackerApp';
 import DailyLogsApp from './modules/daily-logs/pages/DailyLogsApp';
+import InvoiceTrackerApp from './modules/invoices/pages/InvoiceTrackerApp';
+import AccountantInvoiceView from './modules/invoices/pages/AccountantInvoiceView';
 
 // Modules
 import ConstructMailApp from './modules/constructmail/pages/ConstructMailApp';
@@ -46,7 +48,7 @@ import './styles/components.css';
 import './App.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/company-settings', '/trust', '/capital', '/daily-logs'];
+const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/company-settings', '/trust', '/capital', '/daily-logs', '/invoices'];
 
 // The "Your Tools" landing grid and the Projects edit page share the
 // /dashboard route — the edit page is reached only via the project info
@@ -129,6 +131,7 @@ function App() {
           else if (path === '/trust') setCurrentProduct('trust');
           else if (path === '/capital') setCurrentProduct('capital');
           else if (path === '/daily-logs') setCurrentProduct('daily-logs');
+          else if (path === '/invoices') setCurrentProduct('invoices');
           else setCurrentProduct('dashboard');
           window.history.replaceState({}, document.title, window.location.pathname);
         } else {
@@ -170,6 +173,7 @@ function App() {
       if (path === '/trust') setCurrentProduct('trust');
       if (path === '/capital') setCurrentProduct('capital');
       if (path === '/daily-logs') setCurrentProduct('daily-logs');
+      if (path === '/invoices') setCurrentProduct('invoices');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
@@ -403,6 +407,33 @@ function App() {
     );
   }
 
+  // ── Invoice Tracker external accountant — standalone, no chrome ─────────
+  // Deliberately outside PRODUCT_PATHS/currentProduct entirely: no
+  // AppLayout/Header/Sidebar, no SelectRole gate (an accountant account
+  // never has a role and never should), no ProjectProvider — this account
+  // type only ever sees this one screen. See
+  // modules/invoices/pages/AccountantInvoiceView.js.
+  if (path === '/accountant') {
+    if (!userId) {
+      sessionStorage.setItem('postLoginPath', path);
+      window.location.href = '/login';
+      return null;
+    }
+    return <AccountantInvoiceView user={user} userId={userId} onLogout={handleLogout} />;
+  }
+
+  // ── Accountant accounts never reach anywhere but /accountant ────────────
+  // An accountant has no role, no company_id, and no project_members rows —
+  // letting them fall through to the normal SelectRole/dashboard/product
+  // machinery below would show a confusing half-broken shell instead of a
+  // clean block (and, worse, a module page whose "locked" check treats an
+  // empty active_modules as *unlocked* for a no-company account). Redirect
+  // unconditionally to the one route this account type is allowed to see.
+  if (userId && user?.account_type === 'accountant' && path !== '/accountant') {
+    window.location.href = '/accountant';
+    return null;
+  }
+
   // ── Logged-out user hitting a product route — redirect to login ──────────
   if (!userId && PRODUCT_PATHS.includes(path)) {
     sessionStorage.setItem('postLoginPath', path);
@@ -619,6 +650,25 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
         <AppLayout userId={userId} onLogout={handleLogout} user={user}>
           <ProjectGate userId={userId} user={user}>
             <DailyLogsApp user={user} userId={userId} />
+          </ProjectGate>
+        </AppLayout>
+      </ProjectProvider>
+    );
+  }
+
+  // ── POMAR Invoice Tracker ────────────────────────────────────────────
+  // Same wiring as Capital Tracker/Daily Logs — invoices hang off the
+  // generic projects table, so it uses the shared header/sidebar project
+  // switcher and ProjectGate, gated only by the 'invoice_tracker' feature
+  // flag. This is the normal in-app teammate view; the external
+  // accountant's read-only view is a completely separate route (see
+  // /accountant above), not this one.
+  if (currentProduct === 'invoices' || path === '/invoices') {
+    return (
+      <ProjectProvider userId={userId}>
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <ProjectGate userId={userId} user={user}>
+            <InvoiceTrackerApp user={user} userId={userId} />
           </ProjectGate>
         </AppLayout>
       </ProjectProvider>

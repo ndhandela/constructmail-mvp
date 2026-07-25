@@ -6,14 +6,22 @@ function teamMemberDisplayName(m) {
   return m.full_name || m.name || m.email;
 }
 
-export default function CompanyTeamSection({ userId, isOwner, companyId, trustEnabled }) {
+export default function CompanyTeamSection({ userId, isOwner, companyId, trustEnabled, invoiceTrackerEnabled }) {
   const [team, setTeam] = useState([]);
   const [loading, setLoading] = useState(true);
   const [trustRoleState, setTrustRoleState] = useState({});
+  const [restrictedModuleState, setRestrictedModuleState] = useState({});
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteFullName, setInviteFullName] = useState('');
+  const [inviteRestricted, setInviteRestricted] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [msg, setMsg] = useState(null);
+
+  const [accountantEmail, setAccountantEmail] = useState('');
+  const [accountantName, setAccountantName] = useState('');
+  const [invitingAccountant, setInvitingAccountant] = useState(false);
+  const [accountantMsg, setAccountantMsg] = useState(null);
+  const [accountants, setAccountants] = useState([]);
 
   const [companyProjects, setCompanyProjects] = useState([]);
   const [selectedInviteProjectIds, setSelectedInviteProjectIds] = useState(new Set());
@@ -39,6 +47,19 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
   }, [userId]);
 
   useEffect(() => { fetchTeam(); }, [fetchTeam]);
+
+  const fetchAccountants = useCallback(async () => {
+    if (!companyId || !isOwner) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/invoice-accountants/companies/${companyId}?userId=${userId}`);
+      const data = await res.json();
+      if (data.success) setAccountants(data.accountants || []);
+    } catch (err) {
+      console.error('Fetch accountants error:', err);
+    }
+  }, [companyId, isOwner, userId]);
+
+  useEffect(() => { if (invoiceTrackerEnabled) fetchAccountants(); }, [invoiceTrackerEnabled, fetchAccountants]);
 
   useEffect(() => {
     if (!companyId) {
@@ -78,6 +99,7 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
           email: inviteEmail.trim(),
           fullName: inviteFullName.trim(),
           projectIds: Array.from(selectedInviteProjectIds),
+          restrictedModule: inviteRestricted ? 'invoice_tracker' : null,
         }),
       });
       const data = await res.json();
@@ -88,6 +110,7 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
       setMsg({ type: 'success', text: `Invite sent to ${inviteEmail}.` });
       setInviteEmail('');
       setInviteFullName('');
+      setInviteRestricted(false);
       fetchTeam();
     } catch (err) {
       console.error('Invite teammate error:', err);
@@ -146,6 +169,59 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
     } catch (err) {
       console.error('Update trust role error:', err);
       setTrustRoleState((prev) => ({ ...prev, [memberId]: { saving: false, error: 'Network error.' } }));
+    }
+  };
+
+  const handleRestrictedModuleChange = async (memberId, restrictedModule) => {
+    setRestrictedModuleState((prev) => ({ ...prev, [memberId]: { saving: true } }));
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/team/${memberId}/restricted-module`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requesterId: Number(userId), restricted_module: restrictedModule || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setRestrictedModuleState((prev) => ({ ...prev, [memberId]: { saving: false, error: data.detail || 'Could not update access.' } }));
+        return;
+      }
+      setTeam((prev) => prev.map((m) => (m.id === memberId ? { ...m, restricted_module: data.restricted_module } : m)));
+      setRestrictedModuleState((prev) => ({ ...prev, [memberId]: { saving: false } }));
+    } catch (err) {
+      console.error('Update restricted module error:', err);
+      setRestrictedModuleState((prev) => ({ ...prev, [memberId]: { saving: false, error: 'Network error.' } }));
+    }
+  };
+
+  const handleInviteAccountant = async (e) => {
+    e.preventDefault();
+    if (!accountantEmail.trim()) return;
+    setInvitingAccountant(true);
+    setAccountantMsg(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/invoice-accountants/companies/${companyId}/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: Number(userId),
+          email: accountantEmail.trim(),
+          name: accountantName.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAccountantMsg({ type: 'error', text: data.detail || 'Could not send invite.' });
+        return;
+      }
+      setAccountantMsg({ type: 'success', text: `Invite sent to ${accountantEmail}.` });
+      setAccountantEmail('');
+      setAccountantName('');
+      fetchAccountants();
+    } catch (err) {
+      console.error('Invite accountant error:', err);
+      setAccountantMsg({ type: 'error', text: 'Network error. Try again.' });
+    } finally {
+      setInvitingAccountant(false);
     }
   };
 
@@ -238,6 +314,29 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
               </div>
             )}
 
+            {invoiceTrackerEnabled && m.permission_level !== 'owner' && (
+              <div className="team-access-panel" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span className="profile-readonly-note">Module access:</span>
+                {isOwner ? (
+                  <select
+                    value={m.restricted_module || ''}
+                    onChange={(e) => handleRestrictedModuleChange(m.id, e.target.value)}
+                    disabled={restrictedModuleState[m.id]?.saving}
+                  >
+                    <option value="">Full access (all enabled modules)</option>
+                    <option value="invoice_tracker">Invoice Tracker only</option>
+                  </select>
+                ) : (
+                  <span className="team-role-pill">
+                    {m.restricted_module === 'invoice_tracker' ? 'Invoice Tracker only' : 'Full access'}
+                  </span>
+                )}
+                {restrictedModuleState[m.id]?.error && (
+                  <span className="profile-msg error">{restrictedModuleState[m.id].error}</span>
+                )}
+              </div>
+            )}
+
             {isOwner && editingMemberId === m.id && (
               <div className="team-access-panel">
                 {memberProjectsLoading ? (
@@ -327,6 +426,19 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
               </div>
             )}
 
+            {invoiceTrackerEnabled && (
+              <div className="profile-field" style={{ marginBottom: 16 }}>
+                <label className="team-access-checkbox-item" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="checkbox"
+                    checked={inviteRestricted}
+                    onChange={(e) => setInviteRestricted(e.target.checked)}
+                  />
+                  Restrict this teammate to Invoice Tracker only (no other module access)
+                </label>
+              </div>
+            )}
+
             <div className="profile-save-row">
               <button type="submit" className="profile-save-btn" disabled={inviting}>
                 {inviting ? 'Sending…' : 'Send invite'}
@@ -339,6 +451,59 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
         <div className="profile-readonly-note" style={{ marginTop: 20 }}>
           Only the company owner can invite teammates.
         </div>
+      )}
+
+      {invoiceTrackerEnabled && isOwner && (
+        <>
+          <p className="profile-section-title" style={{ marginTop: 32 }}>Invoice Tracker accountants</p>
+          <p className="profile-readonly-note" style={{ marginBottom: 12 }}>
+            A separate, read-only invite — an accountant can view and download invoices for this
+            company only. No sidebar, no other modules, and no upload/edit/delete access.
+          </p>
+
+          {accountants.length > 0 && (
+            <div className="team-member-list" style={{ marginBottom: 20 }}>
+              {accountants.map((a) => (
+                <div className="team-member-row" key={a.access_id}>
+                  <div>
+                    <div className="team-member-name">{a.accountant_name || a.accountant_email}</div>
+                    <div className="team-member-email">{a.accountant_email}</div>
+                  </div>
+                  <span className={`team-role-pill team-role-${a.status}`}>{a.status}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <form onSubmit={handleInviteAccountant}>
+            <div className="profile-form-row">
+              <div className="profile-field">
+                <label>Name (optional)</label>
+                <input
+                  type="text"
+                  placeholder="Ada Ledger"
+                  value={accountantName}
+                  onChange={(e) => setAccountantName(e.target.value)}
+                />
+              </div>
+              <div className="profile-field">
+                <label>Email</label>
+                <input
+                  type="email"
+                  placeholder="accountant@firm.com"
+                  value={accountantEmail}
+                  onChange={(e) => setAccountantEmail(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="profile-save-row">
+              <button type="submit" className="profile-save-btn" disabled={invitingAccountant}>
+                {invitingAccountant ? 'Sending…' : 'Invite accountant'}
+              </button>
+              {accountantMsg && <span className={`profile-msg ${accountantMsg.type}`}>{accountantMsg.text}</span>}
+            </div>
+          </form>
+        </>
       )}
     </>
   );

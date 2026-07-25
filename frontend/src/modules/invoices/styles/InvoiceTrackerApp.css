@@ -1,0 +1,302 @@
+.invoices-app {
+  min-height: calc(100vh - 140px);
+  background-color: var(--parchment);
+  padding: 0 0 60px;
+}
+
+.invoices-hero {
+  text-align: center;
+  margin-bottom: 36px;
+  padding: 48px 24px 0;
+}
+
+.invoices-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--saffron);
+  background: var(--saffron-soft);
+  border: 1px solid rgba(217, 119, 6, 0.2);
+  border-radius: var(--radius-pill);
+  padding: 4px 14px;
+  margin-bottom: 16px;
+}
+
+.invoices-hero h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--inkwell);
+  margin: 0 0 12px;
+  line-height: 1.2;
+}
+
+.invoices-hero p {
+  font-size: 15px;
+  color: var(--slate);
+  line-height: 1.65;
+  margin: 0 auto;
+  max-width: 640px;
+}
+
+.invoices-container {
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.invoices-muted {
+  color: var(--slate);
+  font-size: 14px;
+}
+
+/* ── Toolbar / filters ────────────────────────────────────────────────── */
+
+.invoices-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.invoices-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.invoices-filters select,
+.invoices-filters input {
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #E7E0D3;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--white);
+  color: var(--inkwell);
+}
+
+.invoices-filter-sep {
+  font-size: 13px;
+  color: var(--slate);
+}
+
+/* ── Table ────────────────────────────────────────────────────────────── */
+
+.invoices-table-wrapper {
+  background: var(--white);
+  border: 1px solid #E7E0D3;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+}
+
+.invoices-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.invoices-table th {
+  text-align: left;
+  color: var(--slate);
+  font-weight: 600;
+  padding: 12px 16px;
+  border-bottom: 1px solid #E7E0D3;
+  white-space: nowrap;
+}
+
+.invoices-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #F0EAE0;
+  color: var(--inkwell);
+  white-space: nowrap;
+}
+
+.invoices-table tr:last-child td {
+  border-bottom: none;
+}
+
+.invoices-row-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.invoices-link-btn {
+  border: none;
+  background: transparent;
+  color: var(--saffron);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.invoices-link-btn:hover {
+  text-decoration: underline;
+}
+
+.invoices-link-btn-danger {
+  color: var(--brick);
+}
+
+/* ── Status pill (also a toggle button when canWrite) ────────────────── */
+
+.invoices-status-pill {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--sandstone);
+  color: var(--inkwell);
+  border: none;
+  cursor: default;
+}
+
+button.invoices-status-pill {
+  cursor: pointer;
+}
+
+.invoices-status-paid {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.invoices-status-pending {
+  background: var(--saffron-soft);
+  color: var(--saffron);
+}
+
+/* ── Buttons / forms (shared by the upload/edit modal) ───────────────── */
+
+.invoices-btn-primary, .invoices-btn-secondary {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.invoices-btn-primary {
+  background: var(--saffron);
+  color: var(--white);
+}
+
+.invoices-btn-primary:disabled {
+  background: #E5C9A8;
+  cursor: not-allowed;
+}
+
+.invoices-btn-secondary {
+  background: var(--parchment);
+  color: var(--inkwell);
+  border: 1px solid #E7E0D3;
+}
+
+.invoices-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.invoices-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--slate);
+}
+
+.invoices-field input, .invoices-field textarea, .invoices-field select {
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #E7E0D3;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--white);
+  color: var(--inkwell);
+}
+
+.invoices-form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.invoices-form-row .invoices-field {
+  flex: 1;
+}
+
+.invoices-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.invoices-error {
+  background: #FDECEA;
+  color: var(--brick);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  margin: 10px 0;
+}
+
+.invoices-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 27, 44, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.invoices-modal {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: 28px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.invoices-modal h3 {
+  margin: 0 0 16px;
+  color: var(--inkwell);
+}
+
+/* ── Standalone accountant view (no AppLayout/Sidebar) ───────────────── */
+
+.invoices-accountant-shell {
+  min-height: 100vh;
+  background-color: var(--parchment);
+}
+
+.invoices-accountant-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background: var(--white);
+  border-bottom: 1px solid #E7E0D3;
+}
+
+.invoices-accountant-header-brand {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--inkwell);
+}
+
+.invoices-accountant-header-company {
+  font-size: 13px;
+  color: var(--slate);
+}

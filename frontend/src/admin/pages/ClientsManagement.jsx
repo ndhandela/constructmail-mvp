@@ -241,6 +241,74 @@ function CompanyTrustPanel({ token, company, onDetailsSaved }) {
   );
 }
 
+// Admin-portal counterpart to CompanyTeamSection's GC-owner-triggered
+// accountant invite (frontend/src/modules/profile/components/CompanyTeamSection.js)
+// — same grant, same company_accountant_access row, triggered by POMAR
+// staff instead of the GC owner. Doesn't require Invoice Tracker to
+// already be enabled for the company (see routers/admin.py's
+// invite_accountant_admin docstring).
+function CompanyAccountantInvite({ token, company }) {
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [sending, setSending] = useState(false);
+  const [msg, setMsg] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setSending(true);
+    setMsg(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/companies/${company.id}/invite-accountant`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ email: email.trim(), name: name.trim() || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMsg({ type: 'error', text: data.detail || 'Could not send invite.' });
+        return;
+      }
+      setMsg({
+        type: data.email_sent === false ? 'error' : 'success',
+        text: data.email_sent === false
+          ? `Invite created, but the email failed to send to ${email}.`
+          : `Invite sent to ${email}.`,
+      });
+      setEmail('');
+      setName('');
+    } catch (err) {
+      console.error('Invite accountant error:', err);
+      setMsg({ type: 'error', text: 'Network error. Try again.' });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: 16, borderTop: '1px solid #E7E0D3', paddingTop: 16 }}>
+      <p className="detail-label">Invite an Invoice Tracker accountant</p>
+      <p style={{ fontSize: 13, color: '#6B6155', marginBottom: 12 }}>
+        Read-only access to view and download this company's invoices — no sidebar, no other modules.
+      </p>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <div className="add-company-field">
+          <label>Name (optional)</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} disabled={sending} />
+        </div>
+        <div className="add-company-field">
+          <label>Email</label>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={sending} required />
+        </div>
+        <button type="submit" className="save-modules-btn" disabled={sending}>
+          {sending ? 'Sending…' : 'Invite Accountant'}
+        </button>
+        {msg && <span className={`modules-msg modules-msg--${msg.type}`}>{msg.text}</span>}
+      </form>
+    </div>
+  );
+}
+
 // Exported so other admin pages (e.g. the redesigned Feature Flags company
 // list) can reuse the exact same company-creation flow instead of building
 // a second, divergent "add a company" form for the same `companies` table.
@@ -438,6 +506,7 @@ export default function ClientsManagement({ token, admin, onNavigate }) {
                             </div>
                           </div>
                           <CompanyTrustPanel token={token} company={company} onDetailsSaved={fetchCompanies} />
+                          <CompanyAccountantInvite token={token} company={company} />
                         </td>
                       </tr>
                     )}

@@ -88,6 +88,7 @@ export default function CompanySettingsApp({ userId }) {
               isOwner={profile?.permission_level === 'owner'}
               companyId={profile?.company_id}
               trustEnabled={!!profile?.active_modules?.trust}
+              invoiceTrackerEnabled={!!profile?.active_modules?.invoice_tracker}
             />
           </div>
         )}
