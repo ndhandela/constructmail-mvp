@@ -50,12 +50,17 @@ export default function AdminPortal() {
       if (response.ok) {
         const data = await response.json();
         setAdmin(data.admin);
-      } else {
+      } else if (response.status === 401) {
+        // Only a real auth failure (expired/invalid token) should log the
+        // admin out. A transient 5xx (e.g. the backend still cold-starting
+        // right after a deploy) shouldn't wipe a token that's actually
+        // still valid — AdminDashboard's own fetch will retry.
         handleLogout();
       }
     } catch (err) {
+      // Network error — leave the token in place rather than logging the
+      // admin out for a blip; same reasoning as the 5xx case above.
       console.error('Token verification error:', err);
-      handleLogout();
     }
   };
 

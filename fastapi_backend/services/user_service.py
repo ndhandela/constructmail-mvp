@@ -157,7 +157,11 @@ async def log_admin_activity(admin_user_id: int, action: str, resource_type: str
             await conn.execute(
                 """INSERT INTO admin_activity_log (admin_user_id, action, resource_type, resource_id, changes)
                    VALUES ($1,$2,$3,$4,$5)""",
-                admin_user_id, action, resource_type, resource_id,
+                admin_user_id, action, resource_type,
+                # admin_activity_log.resource_id is varchar(64), not int —
+                # callers pass ints (admin/row ids), so cast explicitly
+                # rather than relying on asyncpg to coerce it.
+                str(resource_id) if resource_id is not None else None,
                 json.dumps(changes) if changes else None,
             )
         except Exception as e:

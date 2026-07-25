@@ -16,16 +16,20 @@ export default function AdminDashboard({ token, admin, onLogout, onNavigate }) {
           }
         });
 
-        if (!response.ok) {
+        if (response.status === 401) {
+          // Only a real auth failure should log the admin out — a
+          // transient 5xx (cold-starting backend, brief network blip)
+          // shouldn't punt someone who just logged in back to the login
+          // screen; fall through and just stop the spinner instead.
           onLogout();
           return;
         }
-
-        const data = await response.json();
-        setAdmin(data.admin);
+        if (response.ok) {
+          const data = await response.json();
+          setAdmin(data.admin);
+        }
       } catch (err) {
         console.error('Fetch admin error:', err);
-        onLogout();
       } finally {
         setLoading(false);
       }
