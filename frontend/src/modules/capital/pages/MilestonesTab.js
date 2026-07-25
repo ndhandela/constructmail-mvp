@@ -3,9 +3,10 @@ import { API_BASE_URL, isProjectOwner, statusLabel } from '../capitalUtils';
 
 const STATUS_OPTIONS = ['not_started', 'in_progress', 'at_risk', 'complete'];
 
-function MilestoneForm({ userId, project, milestone, onSaved, onCancel }) {
+function MilestoneForm({ userId, project, milestone, workItems, onSaved, onCancel }) {
   const isEdit = !!milestone;
   const [form, setForm] = useState({
+    work_item_id: milestone?.work_item_id ?? '',
     name: milestone?.name || '',
     target_date: milestone?.target_date ? milestone.target_date.slice(0, 10) : '',
     actual_date: milestone?.actual_date ? milestone.actual_date.slice(0, 10) : '',
@@ -18,6 +19,10 @@ function MilestoneForm({ userId, project, milestone, onSaved, onCancel }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.work_item_id) {
+      setError('Select a work item.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
@@ -26,6 +31,7 @@ function MilestoneForm({ userId, project, milestone, onSaved, onCancel }) {
         : `${API_BASE_URL}/api/capital/projects/${project.id}/milestones`;
       const body = {
         userId: Number(userId),
+        work_item_id: Number(form.work_item_id),
         name: form.name.trim(),
         target_date: form.target_date || null,
         actual_date: form.actual_date || null,
@@ -55,6 +61,21 @@ function MilestoneForm({ userId, project, milestone, onSaved, onCancel }) {
     <div className="capital-modal-overlay" onClick={onCancel}>
       <form className="capital-modal" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
         <h3>{isEdit ? `Edit ${milestone.name}` : 'New milestone'}</h3>
+
+        <div className="capital-field">
+          <label>Work Item</label>
+          <select
+            value={form.work_item_id}
+            onChange={(e) => setForm((f) => ({ ...f, work_item_id: e.target.value }))}
+            required
+            disabled={saving}
+          >
+            <option value="">— Select a work item —</option>
+            {workItems.map((wi) => (
+              <option key={wi.id} value={wi.id}>{wi.name}</option>
+            ))}
+          </select>
+        </div>
 
         <div className="capital-field">
           <label>Name</label>
@@ -138,19 +159,24 @@ function MilestoneForm({ userId, project, milestone, onSaved, onCancel }) {
 
 export default function MilestonesTab({ userId, user, project }) {
   const [milestones, setMilestones] = useState([]);
+  const [workItems, setWorkItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState(null);
 
   const canEdit = isProjectOwner(project, user);
 
-  const fetchMilestones = useCallback(async () => {
+  const fetchAll = useCallback(async () => {
     if (!project) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/capital/projects/${project.id}/milestones?userId=${userId}`);
-      const data = await res.json();
-      if (data.success) setMilestones(data.milestones || []);
+      const [msRes, wiRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/capital/projects/${project.id}/milestones?userId=${userId}`),
+        fetch(`${API_BASE_URL}/api/capital/projects/${project.id}/work-items?userId=${userId}`),
+      ]);
+      const [msData, wiData] = await Promise.all([msRes.json(), wiRes.json()]);
+      if (msData.success) setMilestones(msData.milestones || []);
+      if (wiData.success) setWorkItems(wiData.work_items || []);
     } catch (err) {
       console.error('Fetch milestones error:', err);
     } finally {
@@ -158,25 +184,38 @@ export default function MilestonesTab({ userId, user, project }) {
     }
   }, [project, userId]);
 
-  useEffect(() => { fetchMilestones(); }, [fetchMilestones]);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const handleSaved = () => {
     setShowForm(false);
     setEditingMilestone(null);
-    fetchMilestones();
+    fetchAll();
   };
+
+  const noWorkItems = !loading && workItems.length === 0;
 
   return (
     <div className="capital-tab-panel">
       <div className="capital-dashboard-header">
         <h2>Milestones</h2>
         {canEdit && (
-          <button className="capital-btn-primary" onClick={() => setShowForm(true)}>+ Add milestone</button>
+          <button
+            className="capital-btn-primary"
+            onClick={() => setShowForm(true)}
+            disabled={noWorkItems}
+            title={noWorkItems ? 'Add a work item first' : undefined}
+          >
+            + Add milestone
+          </button>
         )}
       </div>
 
       {loading ? (
         <p className="capital-muted">Loading milestones…</p>
+      ) : noWorkItems ? (
+        <p className="capital-muted">
+          No work items yet. {canEdit ? 'Add a work item first, then add milestones under it.' : 'Ask your project owner to set up work items.'}
+        </p>
       ) : milestones.length === 0 ? (
         <p className="capital-muted">
           No milestones yet. {canEdit ? 'Add one to start tracking schedule.' : 'Ask your project owner to set up milestones.'}
@@ -187,6 +226,7 @@ export default function MilestonesTab({ userId, user, project }) {
             <thead>
               <tr>
                 <th>Name</th>
+                <th>Work Item</th>
                 <th>Target Date</th>
                 <th>Actual Date</th>
                 <th>Status</th>
@@ -198,6 +238,7 @@ export default function MilestonesTab({ userId, user, project }) {
               {milestones.map((m) => (
                 <tr key={m.id}>
                   <td>{m.name}</td>
+                  <td>{m.work_item_name}</td>
                   <td>{m.target_date ? m.target_date.slice(0, 10) : '—'}</td>
                   <td>{m.actual_date ? m.actual_date.slice(0, 10) : '—'}</td>
                   <td>
@@ -221,10 +262,10 @@ export default function MilestonesTab({ userId, user, project }) {
       )}
 
       {showForm && (
-        <MilestoneForm userId={userId} project={project} onSaved={handleSaved} onCancel={() => setShowForm(false)} />
+        <MilestoneForm userId={userId} project={project} workItems={workItems} onSaved={handleSaved} onCancel={() => setShowForm(false)} />
       )}
       {editingMilestone && (
-        <MilestoneForm userId={userId} project={project} milestone={editingMilestone} onSaved={handleSaved} onCancel={() => setEditingMilestone(null)} />
+        <MilestoneForm userId={userId} project={project} milestone={editingMilestone} workItems={workItems} onSaved={handleSaved} onCancel={() => setEditingMilestone(null)} />
       )}
     </div>
   );

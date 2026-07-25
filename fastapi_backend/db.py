@@ -797,31 +797,48 @@ async def init_db():
             -- unaffected — Postgres unique indexes never collide two NULLs.
             CREATE UNIQUE INDEX IF NOT EXISTS projects_company_id_name_key ON projects (company_id, name);
 
-            -- POMAR Capital Tracker: budget-vs-actual tracking per project
-            -- (migration 025). Unlike Trust, this is not India/RERA-specific
-            -- and has no separate project concept of its own — it FKs
-            -- straight into the generic `projects` table every company
-            -- already has (mail/clash/vendors/marketplace all key off it),
-            -- since a budget line item is just another thing that belongs
-            -- to a project, not a new kind of project. Access is gated only
-            -- by the 'capital' feature flag (see services/access_control.py),
-            -- with no region restriction. `metadata` JSONB exists so a
-            -- future field — e.g. a linked milestone or draw reference for
-            -- the planned capital_events table — can be added without a
-            -- schema migration.
-            CREATE TABLE IF NOT EXISTS budget_items (
+            -- POMAR Capital Tracker (migration 025, restructured in
+            -- migration 013 so work_items is the root entity). Unlike
+            -- Trust, this is not India/RERA-specific and has no separate
+            -- project concept of its own — everything FKs straight into
+            -- the generic `projects` table every company already has
+            -- (mail/clash/vendors/marketplace all key off it). Access is
+            -- gated only by the 'capital' feature flag (see
+            -- services/access_control.py), with no region restriction.
+            --
+            -- Model: a project has work_items (the actual named tasks —
+            -- "Pour footings", "Rough-in electrical"). Each work item can
+            -- have milestones (schedule) and budget_items (cost) hanging
+            -- off it directly. categories are project-scoped and shared
+            -- across every work item in the project (e.g. "Electrical"
+            -- tags budget_items under several different work items), which
+            -- is what lets spend roll up by category across the whole
+            -- project instead of staying siloed inside one work item — see
+            -- services/capital_helpers.get_spend_by_category.
+            --
+            -- migration 013 assumes these tables are empty when it first
+            -- runs (a prod truncation, not a backfill — the old schema had
+            -- budget_items/milestones as project-level with no work_item_id
+            -- at all, so there is nothing sane to backfill). The ALTER ...
+            -- SET NOT NULL calls below will fail if run against rows that
+            -- predate work_item_id/category_id.
+            CREATE TABLE IF NOT EXISTS work_items (
                 id SERIAL PRIMARY KEY,
                 project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-                category VARCHAR(100) NOT NULL,
-                budgeted_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
-                committed_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
-                actual_spent NUMERIC(12,2) NOT NULL DEFAULT 0,
-                notes TEXT,
-                metadata JSONB NOT NULL DEFAULT '{}',
+                name VARCHAR(255) NOT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'not_started'
+                    CHECK (status IN ('not_started','in_progress','complete')),
+                percent_complete NUMERIC(5,2) NOT NULL DEFAULT 0,
+                sequence INT,
+                due_date DATE,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
-            CREATE INDEX IF NOT EXISTS budget_items_project_id_idx ON budget_items (project_id);
+            CREATE INDEX IF NOT EXISTS work_items_project_id_idx ON work_items (project_id);
+            -- Pre-migration-013 columns from when work_items pointed at
+            -- budget_items/milestones instead of the other way around.
+            ALTER TABLE work_items DROP COLUMN IF EXISTS budget_item_id;
+            ALTER TABLE work_items DROP COLUMN IF EXISTS milestone_id;
 
             -- Seeds a global 'capital' flag row so it exists (defaulting OFF)
             -- for every company immediately, the same way Mail/Clash/Vendors/
@@ -839,6 +856,15 @@ async def init_db():
             INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active)
             VALUES (true, NULL, 'capital', 0, 'monthly', true)
             ON CONFLICT (module_name) WHERE is_global = true DO NOTHING;
+
+            CREATE TABLE IF NOT EXISTS categories (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                name VARCHAR(100) NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS categories_project_id_idx ON categories (project_id);
+            CREATE UNIQUE INDEX IF NOT EXISTS categories_project_id_name_key ON categories (project_id, name);
 
             -- Milestones + work items extend Capital Tracker (not a new
             -- module — no new feature flag) with schedule/progress tracking
@@ -860,23 +886,38 @@ async def init_db():
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
             CREATE INDEX IF NOT EXISTS milestones_project_id_idx ON milestones (project_id);
+            -- A milestone now belongs to exactly one work item instead of
+            -- sitting directly on the project.
+            ALTER TABLE milestones ADD COLUMN IF NOT EXISTS work_item_id INT REFERENCES work_items(id) ON DELETE CASCADE;
+            ALTER TABLE milestones ALTER COLUMN work_item_id SET NOT NULL;
+            CREATE INDEX IF NOT EXISTS milestones_work_item_id_idx ON milestones (work_item_id);
 
-            CREATE TABLE IF NOT EXISTS work_items (
+            -- Budget-vs-actual tracking, one row per work item per category.
+            -- `metadata` JSONB exists so a future field — e.g. a linked
+            -- draw reference for the planned capital_events table — can be
+            -- added without a schema migration.
+            CREATE TABLE IF NOT EXISTS budget_items (
                 id SERIAL PRIMARY KEY,
                 project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-                budget_item_id INT REFERENCES budget_items(id) ON DELETE SET NULL,
-                milestone_id INT REFERENCES milestones(id) ON DELETE SET NULL,
-                name VARCHAR(255) NOT NULL,
-                status VARCHAR(20) NOT NULL DEFAULT 'not_started'
-                    CHECK (status IN ('not_started','in_progress','complete')),
-                percent_complete NUMERIC(5,2) NOT NULL DEFAULT 0,
-                sequence INT,
-                due_date DATE,
+                budgeted_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+                committed_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+                actual_spent NUMERIC(12,2) NOT NULL DEFAULT 0,
+                notes TEXT,
+                metadata JSONB NOT NULL DEFAULT '{}',
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
-            CREATE INDEX IF NOT EXISTS work_items_project_id_idx ON work_items (project_id);
-            CREATE INDEX IF NOT EXISTS work_items_budget_item_id_idx ON work_items (budget_item_id);
+            CREATE INDEX IF NOT EXISTS budget_items_project_id_idx ON budget_items (project_id);
+            -- category is now a shared FK into the project-scoped
+            -- `categories` table instead of a free-text column on this row,
+            -- and every budget item belongs to exactly one work item.
+            ALTER TABLE budget_items DROP COLUMN IF EXISTS category;
+            ALTER TABLE budget_items ADD COLUMN IF NOT EXISTS work_item_id INT REFERENCES work_items(id) ON DELETE CASCADE;
+            ALTER TABLE budget_items ADD COLUMN IF NOT EXISTS category_id INT REFERENCES categories(id) ON DELETE RESTRICT;
+            ALTER TABLE budget_items ALTER COLUMN work_item_id SET NOT NULL;
+            ALTER TABLE budget_items ALTER COLUMN category_id SET NOT NULL;
+            CREATE INDEX IF NOT EXISTS budget_items_work_item_id_idx ON budget_items (work_item_id);
+            CREATE INDEX IF NOT EXISTS budget_items_category_id_idx ON budget_items (category_id);
 
             -- Connect push (routers/connect.py push_queue_item) now makes a
             -- real Procore call instead of a stub, so it needs honest

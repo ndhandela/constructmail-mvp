@@ -56,6 +56,7 @@ app.include_router(trust_uploads.router)
 app.include_router(trust_qpr.router)
 app.include_router(trust_alerts.router)
 app.include_router(capital.router)
+app.include_router(capital.project_router)
 app.include_router(daily_logs.router)
 app.include_router(project_vendor_access.router)
 

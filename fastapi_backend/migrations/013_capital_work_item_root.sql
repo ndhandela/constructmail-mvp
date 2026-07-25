@@ -1,0 +1,39 @@
+-- Migration: 013_capital_work_item_root.sql
+-- Documents the Capital Tracker restructure applied by
+-- fastapi_backend/db.py's init_db() on every startup (idempotent
+-- CREATE TABLE IF NOT EXISTS / ALTER TABLE ... ADD COLUMN IF NOT EXISTS —
+-- no raw SQL to run here, this is a record of what that block does):
+--
+--   * work_items is now the root entity. It drops budget_item_id and
+--     milestone_id (it used to point at one budget item and one milestone;
+--     now those tables point back at it).
+--   * New table: categories (id, project_id FK, name) — project-scoped and
+--     shared across every work item in the project, unlike the old
+--     per-row `budget_items.category` free-text column. Unique on
+--     (project_id, name).
+--   * milestones gains a required work_item_id FK (ON DELETE CASCADE) — a
+--     milestone now belongs to exactly one work item instead of sitting
+--     directly on the project.
+--   * budget_items drops its `category` text column and gains two required
+--     FKs: work_item_id (ON DELETE CASCADE — a budget item belongs to
+--     exactly one work item) and category_id (ON DELETE RESTRICT — a
+--     category in use by a budget item can't be deleted out from under it).
+--
+-- Deploy order matters: the ALTER ... SET NOT NULL calls this migration
+-- runs will fail if milestones/budget_items still have pre-restructure
+-- rows (which predate work_item_id/category_id and would violate the new
+-- NOT NULL constraints). This migration assumes those tables are empty —
+-- i.e. it must run AFTER the prod data truncation, not before.
+--
+--   * Backend: category endpoints moved to project scope
+--     (GET/POST /api/projects/{id}/categories, reusable across every work
+--     item in the project instead of a per-work-item add flow). New
+--     rollup endpoint GET /api/projects/{id}/spend-by-category sums
+--     budget_item.budgeted_amount/.actual_spent grouped by category_id
+--     across every work item in the project. The existing per-work-item
+--     rollup moved from services/capital_helpers.get_project_progress_summary
+--     to get_spend_by_work_item (GET /api/capital/projects/{id}/spend-by-work-item),
+--     re-pointed at the new work_item_id FK instead of the old
+--     budget-category-mediated join.
+--   * Access is gated only by the existing 'capital' feature_flags row —
+--     no new flag, no separate module.

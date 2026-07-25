@@ -3,12 +3,10 @@ import { API_BASE_URL, isProjectOwner, statusLabel } from '../capitalUtils';
 
 const STATUS_OPTIONS = ['not_started', 'in_progress', 'complete'];
 
-function WorkItemForm({ userId, project, workItem, budgetItems, milestones, onSaved, onCancel }) {
+function WorkItemForm({ userId, project, workItem, onSaved, onCancel }) {
   const isEdit = !!workItem;
   const [form, setForm] = useState({
     name: workItem?.name || '',
-    budget_item_id: workItem?.budget_item_id ?? '',
-    milestone_id: workItem?.milestone_id ?? '',
     status: workItem?.status || 'not_started',
     percent_complete: workItem?.percent_complete ?? 0,
     due_date: workItem?.due_date ? workItem.due_date.slice(0, 10) : '',
@@ -27,8 +25,6 @@ function WorkItemForm({ userId, project, workItem, budgetItems, milestones, onSa
       const body = {
         userId: Number(userId),
         name: form.name.trim(),
-        budget_item_id: form.budget_item_id ? Number(form.budget_item_id) : null,
-        milestone_id: form.milestone_id ? Number(form.milestone_id) : null,
         status: form.status,
         percent_complete: Number(form.percent_complete) || 0,
         due_date: form.due_date || null,
@@ -65,35 +61,6 @@ function WorkItemForm({ userId, project, workItem, budgetItems, milestones, onSa
             required
             disabled={saving}
           />
-        </div>
-
-        <div className="capital-form-row">
-          <div className="capital-field">
-            <label>Budget Category</label>
-            <select
-              value={form.budget_item_id}
-              onChange={(e) => setForm((f) => ({ ...f, budget_item_id: e.target.value }))}
-              disabled={saving}
-            >
-              <option value="">— None —</option>
-              {budgetItems.map((bi) => (
-                <option key={bi.id} value={bi.id}>{bi.category}</option>
-              ))}
-            </select>
-          </div>
-          <div className="capital-field">
-            <label>Milestone</label>
-            <select
-              value={form.milestone_id}
-              onChange={(e) => setForm((f) => ({ ...f, milestone_id: e.target.value }))}
-              disabled={saving}
-            >
-              <option value="">— None —</option>
-              {milestones.map((m) => (
-                <option key={m.id} value={m.id}>{m.name}</option>
-              ))}
-            </select>
-          </div>
         </div>
 
         <div className="capital-form-row">
@@ -147,27 +114,19 @@ function WorkItemForm({ userId, project, workItem, budgetItems, milestones, onSa
 
 export default function WorkItemsTab({ userId, user, project }) {
   const [workItems, setWorkItems] = useState([]);
-  const [budgetItems, setBudgetItems] = useState([]);
-  const [milestones, setMilestones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
 
   const canEdit = isProjectOwner(project, user);
 
-  const fetchAll = useCallback(async () => {
+  const fetchWorkItems = useCallback(async () => {
     if (!project) return;
     setLoading(true);
     try {
-      const [wiRes, biRes, msRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/capital/projects/${project.id}/work-items?userId=${userId}`),
-        fetch(`${API_BASE_URL}/api/capital/projects/${project.id}/items?userId=${userId}`),
-        fetch(`${API_BASE_URL}/api/capital/projects/${project.id}/milestones?userId=${userId}`),
-      ]);
-      const [wiData, biData, msData] = await Promise.all([wiRes.json(), biRes.json(), msRes.json()]);
-      if (wiData.success) setWorkItems(wiData.work_items || []);
-      if (biData.success) setBudgetItems(biData.items || []);
-      if (msData.success) setMilestones(msData.milestones || []);
+      const res = await fetch(`${API_BASE_URL}/api/capital/projects/${project.id}/work-items?userId=${userId}`);
+      const data = await res.json();
+      if (data.success) setWorkItems(data.work_items || []);
     } catch (err) {
       console.error('Fetch work items error:', err);
     } finally {
@@ -175,16 +134,13 @@ export default function WorkItemsTab({ userId, user, project }) {
     }
   }, [project, userId]);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => { fetchWorkItems(); }, [fetchWorkItems]);
 
   const handleSaved = () => {
     setShowForm(false);
     setEditingItem(null);
-    fetchAll();
+    fetchWorkItems();
   };
-
-  const categoryName = (id) => budgetItems.find((bi) => bi.id === id)?.category || '—';
-  const milestoneName = (id) => milestones.find((m) => m.id === id)?.name || '—';
 
   return (
     <div className="capital-tab-panel">
@@ -199,7 +155,9 @@ export default function WorkItemsTab({ userId, user, project }) {
         <p className="capital-muted">Loading work items…</p>
       ) : workItems.length === 0 ? (
         <p className="capital-muted">
-          No work items yet. {canEdit ? 'Add one to start tracking progress.' : 'Ask your project owner to set up work items.'}
+          {canEdit
+            ? 'No work items yet. Add one to start setting up this project\'s Capital Tracker — milestones and budget items are both added under a work item.'
+            : 'No work items yet. Ask your project owner to set up work items.'}
         </p>
       ) : (
         <div className="capital-table-wrapper">
@@ -207,8 +165,6 @@ export default function WorkItemsTab({ userId, user, project }) {
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Budget Category</th>
-                <th>Milestone</th>
                 <th>Status</th>
                 <th>% Complete</th>
                 <th>Due Date</th>
@@ -219,8 +175,6 @@ export default function WorkItemsTab({ userId, user, project }) {
               {workItems.map((wi) => (
                 <tr key={wi.id}>
                   <td>{wi.name}</td>
-                  <td>{categoryName(wi.budget_item_id)}</td>
-                  <td>{milestoneName(wi.milestone_id)}</td>
                   <td>
                     <span className={`capital-status-pill capital-status-${wi.status}`}>
                       {statusLabel(wi.status)}
@@ -241,10 +195,10 @@ export default function WorkItemsTab({ userId, user, project }) {
       )}
 
       {showForm && (
-        <WorkItemForm userId={userId} project={project} budgetItems={budgetItems} milestones={milestones} onSaved={handleSaved} onCancel={() => setShowForm(false)} />
+        <WorkItemForm userId={userId} project={project} onSaved={handleSaved} onCancel={() => setShowForm(false)} />
       )}
       {editingItem && (
-        <WorkItemForm userId={userId} project={project} workItem={editingItem} budgetItems={budgetItems} milestones={milestones} onSaved={handleSaved} onCancel={() => setEditingItem(null)} />
+        <WorkItemForm userId={userId} project={project} workItem={editingItem} onSaved={handleSaved} onCancel={() => setEditingItem(null)} />
       )}
     </div>
   );

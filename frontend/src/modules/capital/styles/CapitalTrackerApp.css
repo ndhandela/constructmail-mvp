@@ -344,3 +344,106 @@
   margin: 0 0 16px;
   color: var(--inkwell);
 }
+
+/* ── Category picker (searchable/creatable combobox) ─────────────────── */
+
+.capital-category-picker {
+  position: relative;
+}
+
+.capital-category-picker-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: var(--white);
+  border: 1px solid #E7E0D3;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md, var(--shadow-lg));
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.capital-category-picker-menu li {
+  margin: 0;
+}
+
+.capital-category-picker-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 8px 10px;
+  font-size: 14px;
+  color: var(--inkwell);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.capital-category-picker-menu button:hover:not(:disabled) {
+  background: var(--parchment);
+}
+
+.capital-category-picker-create {
+  color: var(--saffron);
+  font-weight: 600;
+}
+
+.capital-category-picker-empty {
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--slate);
+}
+
+/* ── Spend by category (simple bar rollup) ───────────────────────────── */
+
+.capital-bar-row {
+  display: grid;
+  grid-template-columns: 160px 1fr 90px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #F0EAE0;
+}
+
+.capital-bar-row:last-child {
+  border-bottom: none;
+}
+
+.capital-bar-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--inkwell);
+}
+
+.capital-bar-track {
+  position: relative;
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--sandstone);
+  overflow: hidden;
+}
+
+.capital-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  border-radius: var(--radius-pill);
+  background: var(--saffron);
+}
+
+.capital-bar-fill-over {
+  background: var(--brick);
+}
+
+.capital-bar-value {
+  font-size: 12px;
+  color: var(--slate);
+  text-align: right;
+}
