@@ -16,6 +16,11 @@ export default function DailyLogsMarketing() {
   return (
     <div className="marketing-page">
       <section className="hero marketing-hero">
+        <video className="page-hero-video" autoPlay muted loop playsInline
+          poster="/videos/hero-daily-logs-poster.jpg">
+          <source src="/videos/hero-daily-logs.mp4" type="video/mp4" />
+        </video>
+        <div className="page-hero-overlay"></div>
         <div className="hero-eyebrow">Field Intelligence</div>
         <h1 className="hero-title">{product.name}</h1>
         <p className="hero-sub">Replace the paper logbook. Log crew, weather, delays, and site photos from your phone in under two minutes.</p>
