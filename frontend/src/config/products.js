@@ -83,6 +83,7 @@ export const PRODUCTS = [
     detailedDescription: "Small GCs usually track budgeted, committed, and actual spend in a shared spreadsheet that's always one edit behind. POMAR Capital Tracker replaces it with a live per-project view: budget by category, what's been committed, what's actually been spent, and the variance — computed automatically, not re-typed. Available to any company, not just India-region orgs.",
     icon: '💰',
     path: '/capital',
+    marketingPath: '/capital-info',
     logo: '/logos/pomar.png',
     color: '#D97706',
     status: 'live',

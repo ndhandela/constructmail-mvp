@@ -13,6 +13,7 @@ import ClashMarketing from './pages/marketing/ClashMarketing';
 import VendorsMarketing from './pages/marketing/VendorsMarketing';
 import MarketplaceMarketing from './pages/marketing/MarketplaceMarketing';
 import DailyLogsMarketing from './pages/marketing/DailyLogsMarketing';
+import CapitalMarketing from './pages/marketing/CapitalMarketing';
 import MarketplacePublicBrowse from './pages/marketing/MarketplacePublicBrowse';
 import MarketplaceListingDetail from './pages/marketing/MarketplaceListingDetail';
 import MarketplaceTerms from './pages/marketing/MarketplaceTerms';
@@ -308,6 +309,16 @@ function App() {
       <>
         <Header userId={userId} onLogout={handleLogout} user={user} />
         <DailyLogsMarketing />
+        <Footer />
+      </>
+    );
+  }
+
+  if (path === '/capital-info') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <CapitalMarketing />
         <Footer />
       </>
     );

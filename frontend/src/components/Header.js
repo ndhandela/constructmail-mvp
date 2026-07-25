@@ -29,7 +29,7 @@ function getInitials(name) {
 
 // Platform dropdown shown to logged-out visitors — links to public marketing
 // pages (product.marketingPath), never to the authenticated app routes.
-const PLATFORM_DROPDOWN_IDS = ['constructmail', 'clash', 'vendors', 'marketplace', 'daily_logs'];
+const PLATFORM_DROPDOWN_IDS = ['constructmail', 'clash', 'vendors', 'marketplace', 'daily_logs', 'capital'];
 
 export default function Header({ userId, onLogout, user }) {
   const isLoggedIn = !!userId;

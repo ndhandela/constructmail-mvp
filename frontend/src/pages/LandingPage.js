@@ -161,12 +161,12 @@ export default function LandingPage({ onProductSelect }) {
               <span className="product-link">Book a demo →</span>
             </div>
 
-            <div className="product-card live" onClick={() => { window.location.href = '/demo'; }}>
+            <div className="product-card live" onClick={() => goToMarketing('capital')}>
               <span className="product-badge badge-live">Live Now</span>
               <h3>POMAR Capital Tracker</h3>
               <div className="product-tagline">Budget Intelligence</div>
               <p>Budget-vs-actual per project, live instead of a shared spreadsheet — budgeted, committed, and actual by category, with milestones and work-item progress alongside the dollars.</p>
-              <span className="product-link">Book a demo →</span>
+              <span className="product-link">Learn more →</span>
             </div>
 
             <div className="product-card live" onClick={() => goToMarketing('daily_logs')}>
