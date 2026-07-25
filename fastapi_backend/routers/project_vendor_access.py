@@ -15,6 +15,7 @@ import os
 from datetime import date, timedelta
 from typing import Optional
 
+import bcrypt
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -40,21 +41,43 @@ async def _find_or_create_lead_account(conn, email: str, name: str, company: Opt
     module has its own account_source). Never demotes an existing account
     of any type/status, and never overwrites an existing account's company
     — only creates a brand-new lead the first time this email is seen, and
-    only that new row gets `company` set. `company` lands in users.company
-    (the legacy free-text field, since a lead account has no company_id/
-    companies row of its own) — this is what makes "author's company name"
-    resolvable for Daily Logs entries (routers/daily_logs.py's list_logs)
-    the same way it already is for a company-affiliated user via
-    company_id -> companies.name."""
+    only that new row gets `company`/`company_id` set.
+
+    When `company` is given, this also finds-or-creates (by exact
+    case-insensitive name match — never a duplicate row for the same
+    company) a real `companies` row and links the new user via company_id,
+    the same way admin.py's create_company links a new GC owner. Without
+    this, an invited sub's company only ever existed as free text on their
+    own user row and never showed up in the admin Companies list. `company`
+    itself still also lands in users.company (the legacy free-text field)
+    since that's what makes "author's company name" resolvable for Daily
+    Logs entries (routers/daily_logs.py's list_logs) without a join for
+    accounts that predate this company_id link."""
     email = email.lower().strip()
     existing = await conn.fetchrow("SELECT id FROM users WHERE email = $1", email)
     if existing:
         return existing["id"]
+
+    company = (company or "").strip() or None
+    company_id = None
+    if company:
+        async with conn.transaction():
+            existing_company = await conn.fetchrow(
+                "SELECT id FROM companies WHERE lower(name) = lower($1)", company,
+            )
+            if existing_company:
+                company_id = existing_company["id"]
+            else:
+                new_company = await conn.fetchrow(
+                    "INSERT INTO companies (name) VALUES ($1) RETURNING id", company,
+                )
+                company_id = new_company["id"]
+
     row = await conn.fetchrow(
-        """INSERT INTO users (email, name, account_type, account_status, account_source, company)
-           VALUES ($1, $2, 'sub', 'lead', 'project_vendor_invite', $3)
+        """INSERT INTO users (email, name, account_type, account_status, account_source, company, company_id)
+           VALUES ($1, $2, 'sub', 'lead', 'project_vendor_invite', $3, $4)
            RETURNING id""",
-        email, name, company,
+        email, name, company, company_id,
     )
     return row["id"]
 
@@ -131,6 +154,7 @@ async def invite_vendor(project_id: int, req: InviteVendorRequest):
 
 class AcceptVendorRequest(BaseModel):
     userId: int
+    password: Optional[str] = None
 
 
 @router.post("/{access_id}/accept")
@@ -145,7 +169,28 @@ async def accept_vendor_invite(access_id: int, req: AcceptVendorRequest):
         if access["status"] != "invited":
             raise HTTPException(400, f"This invite is {access['status']}, not pending")
 
+        # A lead account (created by the invite itself, per
+        # _find_or_create_lead_account) has no password — the magic link
+        # that got them here signs them into a session, but without a
+        # password they could never log in again afterward. Require one as
+        # part of this same accept action rather than a separate step,
+        # since a follow-up email isn't an option here (BREVO_API_KEY is
+        # unset in local dev, so anything depending on a second email would
+        # be silently untestable). A sub who already has a password (e.g.
+        # accepting a second project's invite) isn't asked again.
+        user = await conn.fetchrow("SELECT password_hash FROM users WHERE id = $1", req.userId)
+        needs_password = user and not user["password_hash"]
+        if needs_password:
+            if not req.password or len(req.password) < 8:
+                raise HTTPException(400, "Set a password (at least 8 characters) to accept this invite.")
+
         async with conn.transaction():
+            if needs_password:
+                password_hash = bcrypt.hashpw(req.password.encode(), bcrypt.gensalt(12)).decode()
+                await conn.execute(
+                    "UPDATE users SET password_hash = $1 WHERE id = $2", password_hash, req.userId,
+                )
+
             row = await conn.fetchrow(
                 """UPDATE project_vendor_access SET status = 'accepted', accepted_at = NOW()
                    WHERE id = $1 RETURNING *""",

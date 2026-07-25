@@ -13,21 +13,50 @@ const TABS = [
   { key: 'vendors', label: 'Vendors' },
 ];
 
-function VendorInviteBanner({ invites, userId, onAccepted }) {
+function VendorInviteBanner({ invites, userId, user, onAccepted }) {
   const [acceptingId, setAcceptingId] = useState(null);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+
+  // A lead account (created by the invite itself) has no password yet —
+  // require setting one as part of this same accept action, since a magic
+  // link alone would otherwise leave them unable to log in again later.
+  // A sub who already has a password (accepting a second project's invite)
+  // isn't asked again.
+  const needsPassword = !user?.has_password;
 
   const accept = async (invite) => {
+    setError('');
+    if (needsPassword) {
+      if (password.length < 8) {
+        setError('Password must be at least 8 characters.');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError('Passwords do not match.');
+        return;
+      }
+    }
     setAcceptingId(invite.access_id);
     try {
       const res = await fetch(`${API_BASE_URL}/api/project-vendors/${invite.access_id}/accept`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: Number(userId) }),
+        body: JSON.stringify({
+          userId: Number(userId),
+          ...(needsPassword ? { password } : {}),
+        }),
       });
       const data = await res.json();
-      if (data.success) onAccepted();
+      if (data.success) {
+        onAccepted();
+      } else {
+        setError(data.detail || 'Could not accept invite.');
+      }
     } catch (err) {
       console.error('Accept vendor invite error:', err);
+      setError('Network error. Try again.');
     } finally {
       setAcceptingId(null);
     }
@@ -35,6 +64,33 @@ function VendorInviteBanner({ invites, userId, onAccepted }) {
 
   return (
     <div className="dailylogs-invite-banner">
+      {needsPassword && (
+        <div className="dailylogs-invite-card dailylogs-invite-password-setup">
+          <p>Set a password for your account so you can log back in later — this account was created by the invite below and has no password yet.</p>
+          <div className="dailylogs-form-row">
+            <div className="dailylogs-field">
+              <label>Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="dailylogs-field">
+              <label>Confirm password</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+      {error && <div className="dailylogs-error">{error}</div>}
       {invites.map((invite) => (
         <div key={invite.access_id} className="dailylogs-invite-card">
           <div>
@@ -107,6 +163,7 @@ export default function DailyLogsApp({ user, userId }) {
           <VendorInviteBanner
             invites={pendingInvites}
             userId={userId}
+            user={user}
             // Full reload rather than refreshProjects(): this app has no
             // client router (see AppLayout.js), and a reload is the only
             // way to also refetch `user.pending_vendor_invites` (fetched

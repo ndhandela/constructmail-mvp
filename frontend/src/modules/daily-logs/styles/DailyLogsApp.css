@@ -558,6 +558,19 @@
   color: var(--inkwell);
 }
 
+.dailylogs-invite-password-setup {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.dailylogs-invite-password-setup p {
+  margin: 0 0 12px;
+}
+
+.dailylogs-invite-password-setup .dailylogs-form-row {
+  margin-bottom: 0;
+}
+
 /* ── Invite modal: search/manual toggle + results ────────────────────── */
 
 .dailylogs-invite-mode-toggle {
