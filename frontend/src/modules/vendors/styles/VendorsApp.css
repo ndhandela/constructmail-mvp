@@ -102,7 +102,6 @@
   padding: 32px;
   margin-bottom: 32px;
   box-shadow: var(--shadow-sm);
-  border: 2px solid var(--saffron);
   animation: slideDown 0.3s ease-out;
 }
 

@@ -16,7 +16,7 @@
 .reviews-aggregate {
   background: var(--parchment, #faf8f4);
   border: 1px solid var(--border-light, #e5e7eb);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 20px;
   margin-bottom: 16px;
 }
@@ -95,7 +95,7 @@
   background: var(--inkwell, #1a1a2e);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
@@ -112,7 +112,7 @@
 .review-form {
   background: var(--parchment, #faf8f4);
   border: 1px solid var(--border-light, #e5e7eb);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 20px;
 }
 
@@ -172,7 +172,7 @@
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--border-light, #e5e7eb);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 13px;
   font-family: inherit;
   resize: vertical;
@@ -201,7 +201,7 @@
   background: var(--saffron, #f59e0b);
   color: var(--inkwell, #1a1a2e);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-weight: 700;
   font-size: 14px;
   cursor: pointer;
@@ -241,7 +241,7 @@
 .review-card {
   background: var(--parchment, #faf8f4);
   border: 1px solid var(--border-light, #e5e7eb);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 16px;
   transition: border-color 0.2s;
 }
@@ -311,7 +311,6 @@
   font-style: italic;
   margin: 0;
   line-height: 1.5;
-  border-left: 3px solid var(--saffron, #f59e0b);
   padding-left: 10px;
 }
 
