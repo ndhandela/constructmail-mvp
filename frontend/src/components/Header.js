@@ -106,10 +106,10 @@ export default function Header({ userId, onLogout, user }) {
   const displayName = getDisplayName(user);
 
   return (
-    <header className={`main-header ${!isLoggedIn ? 'main-header-dark' : ''}`}>
+    <header className="main-header main-header-dark">
       <div className="header-left">
         <a href={isLoggedIn ? '/dashboard' : '/'} className="header-logo-link" aria-label={isLoggedIn ? 'POMAR dashboard' : 'POMAR home'}>
-          <PomarLogo variant={!isLoggedIn ? 'dark' : 'light'} height={28} />
+          <PomarLogo variant="dark" height={28} />
         </a>
       </div>
 
