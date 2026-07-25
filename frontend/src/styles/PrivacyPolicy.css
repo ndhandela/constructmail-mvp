@@ -1,6 +1,7 @@
 .privacy-container {
   min-height: 100vh;
   background: white;
+  font-family: 'Manrope', sans-serif;
 }
 
 .privacy-hero {
@@ -11,6 +12,7 @@
 }
 
 .privacy-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
   color: var(--saffron);
   font-size: 13px;
   font-weight: 600;
@@ -20,8 +22,8 @@
 }
 
 .privacy-hero h1 {
-  font-family: var(--font-serif);
-  font-weight: 400;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
   font-size: 56px;
   margin-bottom: 12px;
   letter-spacing: -1px;
@@ -48,8 +50,8 @@
 
 .privacy-content h2 {
   color: var(--inkwell);
-  font-family: var(--font-serif);
-  font-weight: 400;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
   font-size: 26px;
   margin-bottom: 16px;
   letter-spacing: -0.3px;
