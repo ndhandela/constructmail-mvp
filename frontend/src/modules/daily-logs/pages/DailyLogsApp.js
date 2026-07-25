@@ -2,8 +2,58 @@ import React, { useContext, useState } from 'react';
 import ModuleLockedNotice, { isModuleLocked } from '../../../components/ModuleLockedNotice';
 import DailyLogsList from './DailyLogsList';
 import DailyLogForm from './DailyLogForm';
+import VendorsTab from './VendorsTab';
 import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
+import { isProjectOwner } from '../../capital/capitalUtils';
+import { API_BASE_URL } from '../dailyLogsUtils';
 import '../styles/DailyLogsApp.css';
+
+const TABS = [
+  { key: 'logs', label: 'Logs' },
+  { key: 'vendors', label: 'Vendors' },
+];
+
+function VendorInviteBanner({ invites, userId, onAccepted }) {
+  const [acceptingId, setAcceptingId] = useState(null);
+
+  const accept = async (invite) => {
+    setAcceptingId(invite.access_id);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/project-vendors/${invite.access_id}/accept`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: Number(userId) }),
+      });
+      const data = await res.json();
+      if (data.success) onAccepted();
+    } catch (err) {
+      console.error('Accept vendor invite error:', err);
+    } finally {
+      setAcceptingId(null);
+    }
+  };
+
+  return (
+    <div className="dailylogs-invite-banner">
+      {invites.map((invite) => (
+        <div key={invite.access_id} className="dailylogs-invite-card">
+          <div>
+            <strong>{invite.invited_by_name}</strong> invited you to log site work on{' '}
+            <strong>{invite.project_name}</strong>
+            {invite.role ? ` as ${invite.role}` : ''}.
+          </div>
+          <button
+            className="dailylogs-btn-primary"
+            disabled={acceptingId === invite.access_id}
+            onClick={() => accept(invite)}
+          >
+            {acceptingId === invite.access_id ? 'Accepting…' : 'Accept'}
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function DailyLogsApp({ user, userId }) {
   // No region check here on purpose — like Capital Tracker, Daily Logs is
@@ -20,6 +70,10 @@ export default function DailyLogsApp({ user, userId }) {
 
   const [showForm, setShowForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [activeTab, setActiveTab] = useState('logs');
+
+  const owner = isProjectOwner(selectedProject, user);
+  const pendingInvites = user?.pending_vendor_invites || [];
 
   if (dailyLogsLocked) {
     return (
@@ -49,24 +103,58 @@ export default function DailyLogsApp({ user, userId }) {
       </div>
 
       <div className="dailylogs-container">
+        {pendingInvites.length > 0 && (
+          <VendorInviteBanner
+            invites={pendingInvites}
+            userId={userId}
+            // Full reload rather than refreshProjects(): this app has no
+            // client router (see AppLayout.js), and a reload is the only
+            // way to also refetch `user.pending_vendor_invites` (fetched
+            // once at the App.js top level on load) so the banner clears
+            // for the invite that was just accepted.
+            onAccepted={() => window.location.reload()}
+          />
+        )}
+
         {!selectedProject ? (
           <p className="dailylogs-muted">Select a project from the header to view its logs.</p>
         ) : (
           <>
-            <div className="dailylogs-dashboard-header">
-              <h2>Daily Logs</h2>
-              <button className="dailylogs-btn-primary" onClick={() => setShowForm(true)}>+ New log</button>
-            </div>
+            {owner && (
+              <div className="dailylogs-tabs">
+                {TABS.map((tab) => (
+                  <button
+                    key={tab.key}
+                    className={`dailylogs-tab${activeTab === tab.key ? ' dailylogs-tab-active' : ''}`}
+                    onClick={() => setActiveTab(tab.key)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
-            <DailyLogsList userId={userId} user={user} project={selectedProject} refreshKey={refreshKey} />
+            {owner && activeTab === 'vendors' ? (
+              <VendorsTab userId={userId} user={user} project={selectedProject} />
+            ) : (
+              <>
+                <div className="dailylogs-dashboard-header">
+                  <h2>Daily Logs</h2>
+                  <button className="dailylogs-btn-primary" onClick={() => setShowForm(true)}>+ New log</button>
+                </div>
 
-            {showForm && (
-              <DailyLogForm
-                userId={userId}
-                project={selectedProject}
-                onSaved={handleSaved}
-                onCancel={() => setShowForm(false)}
-              />
+                <DailyLogsList userId={userId} user={user} project={selectedProject} refreshKey={refreshKey} />
+
+                {showForm && (
+                  <DailyLogForm
+                    userId={userId}
+                    project={selectedProject}
+                    user={user}
+                    onSaved={handleSaved}
+                    onCancel={() => setShowForm(false)}
+                  />
+                )}
+              </>
             )}
           </>
         )}

@@ -1036,6 +1036,66 @@ async def init_db():
             INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active)
             VALUES (true, NULL, 'daily_logs', 0, 'monthly', true)
             ON CONFLICT (module_name) WHERE is_global = true DO NOTHING;
+
+            -- Vendor Management (migration 027): lets a GC invite an outside
+            -- company's user ("sub") onto one project, scoped to Daily Logs
+            -- only for now. Deliberately NOT project_members — that table's
+            -- roles (owner/contributor/viewer) are broad, all-module grants
+            -- meant for the project-owning company's own staff, and this
+            -- feature explicitly does not want that for a stranger's account.
+            -- One row per (project_id, vendor_user_id) — invite/accept/
+            -- remove/reinvite all flip this same row's status rather than
+            -- inserting a new one, so the full history lives on one id.
+            -- `role` is a freeform trade/specialty label the inviting GC
+            -- types in (e.g. "Electrical") since vendor_user_id is very
+            -- often a brand-new lead account, not a `vendors` directory row.
+            -- Access is enforced by services/vendor_access.require_module_access,
+            -- not services/access_control.require_feature_flag — that
+            -- function unconditionally 403s any account_status='lead' user,
+            -- and invited subs are exactly that, so a separate path is
+            -- required, not redundant.
+            CREATE TABLE IF NOT EXISTS project_vendor_access (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                vendor_user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                invited_by_user_id INT NOT NULL REFERENCES users(id),
+                role VARCHAR(100),
+                status VARCHAR(20) NOT NULL DEFAULT 'invited' CHECK (status IN ('invited','accepted','removed')),
+                invited_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                accepted_at TIMESTAMPTZ,
+                removed_at TIMESTAMPTZ,
+                UNIQUE(project_id, vendor_user_id)
+            );
+            CREATE INDEX IF NOT EXISTS project_vendor_access_vendor_user_id_idx ON project_vendor_access (vendor_user_id);
+            CREATE INDEX IF NOT EXISTS project_vendor_access_project_id_idx ON project_vendor_access (project_id);
+
+            -- Per-individual, per-module trial/license tracking for users who
+            -- reach a module through a vendor-access grant, not through a
+            -- company's feature_flags row. A sub invited onto three different
+            -- GCs' projects has ONE 'daily_logs' row here, not three, and
+            -- it's independent of company_id (a lead account has none). NOT
+            -- redundant with feature_flags: feature_flags is per-company
+            -- licensing for the inviting GC's own org; this is per-individual
+            -- trial state for the outside sub. Both get checked, on the
+            -- "member" vs "vendor" branch respectively, inside
+            -- services/vendor_access.require_module_access.
+            CREATE TABLE IF NOT EXISTS module_subscriptions (
+                id SERIAL PRIMARY KEY,
+                user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                module VARCHAR(50) NOT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'trial' CHECK (status IN ('trial','active','canceled')),
+                tier VARCHAR(50),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                UNIQUE(user_id, module)
+            );
+
+            -- Optional work-item tag on a daily log. FKs into work_items, not
+            -- budget_items: budget_items has no name field suited to a
+            -- dropdown; work_items is the actual named-task concept and
+            -- already links its own budget_item_id/milestone_id, so this
+            -- reuses that instead of duplicating a name field onto daily_logs.
+            ALTER TABLE daily_logs ADD COLUMN IF NOT EXISTS work_item_id INT REFERENCES work_items(id) ON DELETE SET NULL;
         """)
 
         await _backfill_clash_project_ids(conn)

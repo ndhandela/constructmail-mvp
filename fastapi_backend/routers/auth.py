@@ -115,6 +115,20 @@ async def get_me(userId: int):
         user["company_region"] = await conn.fetchval(
             "SELECT region FROM companies WHERE id = $1", user["company_id"]
         ) if user["company_id"] else None
+        # Surfaces any pending Vendor Management invites on every /me call
+        # (already fetched on every page load) rather than a dedicated
+        # endpoint — see routers/project_vendor_access.py.
+        pending_invites = await conn.fetch(
+            """SELECT pva.id AS access_id, pva.project_id, p.name AS project_name, pva.role, pva.invited_at,
+                      u2.name AS invited_by_name
+               FROM project_vendor_access pva
+               JOIN projects p ON p.id = pva.project_id
+               JOIN users u2 ON u2.id = pva.invited_by_user_id
+               WHERE pva.vendor_user_id = $1 AND pva.status = 'invited'
+               ORDER BY pva.invited_at DESC""",
+            userId,
+        )
+        user["pending_vendor_invites"] = [dict(r) for r in pending_invites]
     return user
 
 

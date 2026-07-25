@@ -9,7 +9,14 @@ import '../styles/ProjectGate.css';
 export default function ProjectGate({ userId, user, children }) {
   const { projects, loading, refreshProjects } = useContext(ProjectContext);
 
-  if (loading || projects.length > 0) {
+  // A vendor with a pending (not yet accepted) invite has zero projects by
+  // definition — accepting is what grants the first one (see
+  // routers/project_vendor_access.py). Without this bypass, they'd never
+  // reach the invite-accept banner (rendered by the module page itself,
+  // e.g. DailyLogsApp.js) to get past this screen in the first place.
+  const hasPendingVendorInvite = (user?.pending_vendor_invites?.length ?? 0) > 0;
+
+  if (loading || projects.length > 0 || hasPendingVendorInvite) {
     return children;
   }
 

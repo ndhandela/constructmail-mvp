@@ -33,13 +33,39 @@ class InviteRequest(BaseModel):
 async def get_projects(userId: int):
     pool = await get_pool()
     async with pool.acquire() as conn:
+        # UNION'd with an accepted project_vendor_access grant so an
+        # invited sub sees the GC's project in their switcher without
+        # becoming a project_members row (which would grant them broad,
+        # all-module access — see services/vendor_access.py). member_role
+        # is set to the sentinel 'vendor' for that branch: isProjectOwner()
+        # on the frontend only ever matches 'owner', so this never trips
+        # any owner-only affordance, and every module besides Daily Logs
+        # still 403s a vendor via the existing feature_flags lead-account
+        # block regardless of this project being selectable.
         rows = await conn.fetch(
-            """SELECT p.id, p.name, p.project_number, p.client_name, p.status, p.location,
-                      p.start_date, pm.role AS member_role
-               FROM projects p
-               JOIN project_members pm ON pm.project_id = p.id
-               WHERE pm.user_id = $1
-               ORDER BY p.created_at""",
+            """
+            SELECT id, name, project_number, client_name, status, location, start_date, member_role
+            FROM (
+                SELECT p.id, p.name, p.project_number, p.client_name, p.status, p.location,
+                       p.start_date, p.created_at, pm.role AS member_role
+                FROM projects p
+                JOIN project_members pm ON pm.project_id = p.id
+                WHERE pm.user_id = $1
+
+                UNION
+
+                SELECT p.id, p.name, p.project_number, p.client_name, p.status, p.location,
+                       p.start_date, p.created_at, 'vendor' AS member_role
+                FROM projects p
+                JOIN project_vendor_access pva ON pva.project_id = p.id
+                WHERE pva.vendor_user_id = $1 AND pva.status = 'accepted'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM project_members pm2
+                      WHERE pm2.project_id = p.id AND pm2.user_id = $1
+                  )
+            ) combined
+            ORDER BY created_at
+            """,
             userId,
         )
     return {"success": True, "projects": [dict(r) for r in rows]}

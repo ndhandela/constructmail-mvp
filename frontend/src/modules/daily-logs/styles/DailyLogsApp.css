@@ -370,3 +370,200 @@
   font-size: 13px;
   line-height: 1;
 }
+
+/* ── Tabs (Logs / Vendors) ────────────────────────────────────────────── */
+
+.dailylogs-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #E7E0D3;
+}
+
+.dailylogs-tab {
+  border: none;
+  background: transparent;
+  color: var(--slate);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.dailylogs-tab:hover {
+  color: var(--inkwell);
+}
+
+.dailylogs-tab-active {
+  color: var(--saffron);
+  border-bottom-color: var(--saffron);
+}
+
+.dailylogs-tab-panel {
+  margin-bottom: 28px;
+}
+
+/* ── Vendor table ─────────────────────────────────────────────────────── */
+
+.dailylogs-table-wrapper {
+  background: var(--white);
+  border: 1px solid #E7E0D3;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+}
+
+.dailylogs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.dailylogs-table th {
+  text-align: left;
+  color: var(--slate);
+  font-weight: 600;
+  padding: 12px 16px;
+  border-bottom: 1px solid #E7E0D3;
+}
+
+.dailylogs-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #F0EAE0;
+  color: var(--inkwell);
+  vertical-align: middle;
+}
+
+.dailylogs-table tr:last-child td {
+  border-bottom: none;
+}
+
+.dailylogs-vendor-name {
+  font-weight: 600;
+}
+
+.dailylogs-vendor-email {
+  color: var(--slate);
+  font-size: 12px;
+}
+
+.dailylogs-vendor-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.dailylogs-icon-btn {
+  border: 1px solid #E7E0D3;
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.dailylogs-icon-btn:hover {
+  border-color: var(--saffron);
+}
+
+/* ── Status badges ────────────────────────────────────────────────────── */
+
+.dailylogs-status-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+}
+
+.dailylogs-status-invited {
+  background: var(--saffron-soft);
+  color: var(--saffron);
+}
+
+.dailylogs-status-active {
+  background: #E3F5EA;
+  color: #1E7A46;
+}
+
+.dailylogs-status-stale {
+  background: #FDECEA;
+  color: var(--brick);
+}
+
+.dailylogs-status-removed {
+  background: #F0EAE0;
+  color: var(--slate);
+}
+
+/* ── Pending-invite banner ────────────────────────────────────────────── */
+
+.dailylogs-invite-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.dailylogs-invite-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--saffron-soft);
+  border: 1px solid rgba(217, 119, 6, 0.2);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  font-size: 14px;
+  color: var(--inkwell);
+}
+
+/* ── Invite modal: search/manual toggle + results ────────────────────── */
+
+.dailylogs-invite-mode-toggle {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #E7E0D3;
+}
+
+.dailylogs-invite-mode-toggle .dailylogs-tab {
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.dailylogs-vendor-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.dailylogs-vendor-search-result {
+  text-align: left;
+  border: 1px solid #E7E0D3;
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--inkwell);
+  cursor: pointer;
+}
+
+.dailylogs-vendor-search-result:hover {
+  border-color: var(--saffron);
+}
+
+/* ── Wide modal (view-logs) ───────────────────────────────────────────── */
+
+.dailylogs-modal-wide {
+  max-width: 720px;
+}

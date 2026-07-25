@@ -2,11 +2,14 @@
 POMAR Daily Logs — per-project field logbook (crew, weather, delays,
 materials, safety, site photos).
 
-Same shape as Capital Tracker: daily_logs hangs directly off the generic
-`projects` table, so access follows the same project_members membership
-every other module (Mail/Clash/Vendors/Capital) already uses. No region
-restriction. The only extra gate is the 'daily_logs' feature flag, checked
-on every route via services/access_control.py.
+Access is gated by services/vendor_access.require_module_access rather than
+the plain project_members + feature_flags pattern every other module uses
+directly — Daily Logs is reachable two ways: a normal company project
+member (member path, still enforces the 'daily_logs' feature flag), or an
+outside sub with an accepted project_vendor_access grant + a
+module_subscriptions trial/active row (vendor path, see
+routers/project_vendor_access.py). A vendor caller is additionally scoped
+to only their own log entries wherever logs are listed/read.
 
 Photos are uploaded synchronously on create, the same way Trust's upload
 endpoint (routers/trust_uploads.py) pushes raw bytes to R2 before
@@ -22,7 +25,7 @@ from pydantic import BaseModel
 
 from db import get_pool
 from services import r2_storage
-from services.access_control import require_feature_flag
+from services.vendor_access import require_module_access
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/daily-logs", tags=["Daily Logs"])
@@ -41,28 +44,20 @@ class UpdateLogRequest(BaseModel):
     delay_category: Optional[str] = None
     materials_notes: Optional[str] = None
     safety_notes: Optional[str] = None
-
-
-async def _require_project_member(conn, project_id: int, user_id: int):
-    member = await conn.fetchrow(
-        "SELECT role FROM project_members WHERE project_id = $1 AND user_id = $2",
-        project_id, user_id,
-    )
-    if not member:
-        raise HTTPException(403, "You do not have access to this project")
-    return member
+    work_item_id: Optional[int] = None
 
 
 async def _require_can_edit_log(conn, log, user_id: int):
     """Mirrors capital.py's _require_project_owner shape, but the rule here
     is time-boxed rather than role-boxed: the logging user can edit within
     EDIT_WINDOW of log_date, company owners can always edit, and everyone
-    else (including other project members) cannot — a field log is one
-    person's on-the-day record, not a shared spreadsheet row."""
+    else (including other project members, and a vendor viewing another
+    vendor's log) cannot — a field log is one person's on-the-day record,
+    not a shared spreadsheet row."""
     user = await conn.fetchrow("SELECT permission_level FROM users WHERE id = $1", user_id)
     if user and user["permission_level"] == "owner":
         return
-    await _require_project_member(conn, log["project_id"], user_id)
+    await require_module_access(conn, user_id, log["project_id"], "daily_logs")
     if log["logged_by_user_id"] != user_id:
         raise HTTPException(403, "Only the logging user or a company owner can edit this log")
     if date.today() - log["log_date"] > timedelta(days=2):
@@ -87,6 +82,7 @@ async def create_log(
     delay_category: Optional[str] = Form(None),
     materials_notes: Optional[str] = Form(None),
     safety_notes: Optional[str] = Form(None),
+    work_item_id: Optional[int] = Form(None),
     photos: List[UploadFile] = File(default=[]),
 ):
     if delay_category and delay_category not in DELAY_CATEGORIES:
@@ -94,21 +90,27 @@ async def create_log(
 
     pool = await get_pool()
     async with pool.acquire() as conn:
-        await require_feature_flag(conn, userId, "daily_logs")
-
         project = await conn.fetchrow("SELECT id, company_id FROM projects WHERE id = $1", project_id)
         if not project:
             raise HTTPException(404, "Project not found")
 
-        await _require_project_member(conn, project_id, userId)
+        await require_module_access(conn, userId, project_id, "daily_logs")
+
+        if work_item_id is not None:
+            work_item = await conn.fetchrow(
+                "SELECT id FROM work_items WHERE id = $1 AND project_id = $2", work_item_id, project_id,
+            )
+            if not work_item:
+                raise HTTPException(404, "Work item not found on this project")
 
         log = await conn.fetchrow(
             """INSERT INTO daily_logs (project_id, logged_by_user_id, log_date, weather, crew_count,
-                                        work_performed, delays_notes, delay_category, materials_notes, safety_notes)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+                                        work_performed, delays_notes, delay_category, materials_notes,
+                                        safety_notes, work_item_id)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
                RETURNING *""",
             project_id, userId, log_date, weather, crew_count,
-            work_performed, delays_notes, delay_category, materials_notes, safety_notes,
+            work_performed, delays_notes, delay_category, materials_notes, safety_notes, work_item_id,
         )
         log_id = log["id"]
 
@@ -137,14 +139,19 @@ async def list_logs(
     page: int = 1,
     from_: Optional[date] = Query(None, alias="from"),
     to: Optional[date] = None,
+    loggedByUserId: Optional[int] = None,
 ):
     if page < 1:
         raise HTTPException(400, "page must be >= 1")
 
     pool = await get_pool()
     async with pool.acquire() as conn:
-        await require_feature_flag(conn, userId, "daily_logs")
-        await _require_project_member(conn, project_id, userId)
+        access = await require_module_access(conn, userId, project_id, "daily_logs")
+
+        # A vendor only ever sees their own logs, regardless of what's
+        # passed in loggedByUserId; a company member (e.g. a GC viewing a
+        # specific sub's logs from the Vendors tab) can filter to anyone.
+        effective_logged_by = userId if access.is_vendor else loggedByUserId
 
         conditions = ["project_id = $1"]
         params = [project_id]
@@ -154,6 +161,9 @@ async def list_logs(
         if to is not None:
             params.append(to)
             conditions.append(f"log_date <= ${len(params)}")
+        if effective_logged_by is not None:
+            params.append(effective_logged_by)
+            conditions.append(f"logged_by_user_id = ${len(params)}")
 
         where_clause = " AND ".join(conditions)
         offset = (page - 1) * PAGE_SIZE
@@ -185,8 +195,9 @@ async def get_log(log_id: int, userId: int):
         if not log:
             raise HTTPException(404, "Log not found")
 
-        await require_feature_flag(conn, userId, "daily_logs")
-        await _require_project_member(conn, log["project_id"], userId)
+        access = await require_module_access(conn, userId, log["project_id"], "daily_logs")
+        if access.is_vendor and log["logged_by_user_id"] != userId:
+            raise HTTPException(403, "You can only view your own logs")
 
         photo_rows = await conn.fetch(
             "SELECT * FROM daily_log_photos WHERE daily_log_id = $1 ORDER BY uploaded_at", log_id,
@@ -207,12 +218,18 @@ async def update_log(log_id: int, req: UpdateLogRequest):
         if not log:
             raise HTTPException(404, "Log not found")
 
-        await require_feature_flag(conn, req.userId, "daily_logs")
         await _require_can_edit_log(conn, log, req.userId)
+
+        if req.work_item_id is not None:
+            work_item = await conn.fetchrow(
+                "SELECT id FROM work_items WHERE id = $1 AND project_id = $2", req.work_item_id, log["project_id"],
+            )
+            if not work_item:
+                raise HTTPException(404, "Work item not found on this project")
 
         fields, values = [], []
         for column in ("weather", "crew_count", "work_performed", "delays_notes",
-                        "delay_category", "materials_notes", "safety_notes"):
+                        "delay_category", "materials_notes", "safety_notes", "work_item_id"):
             value = getattr(req, column)
             if value is not None:
                 values.append(value)
@@ -237,7 +254,6 @@ async def delete_log_photo(log_id: int, photo_id: int, userId: int):
         if not log:
             raise HTTPException(404, "Log not found")
 
-        await require_feature_flag(conn, userId, "daily_logs")
         await _require_can_edit_log(conn, log, userId)
 
         photo = await conn.fetchrow(

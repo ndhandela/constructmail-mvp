@@ -15,7 +15,7 @@ function LogPhotos({ photos }) {
   );
 }
 
-function LogDetail({ userId, user, project, log, onDeletedPhoto, onEdited }) {
+function LogDetail({ userId, user, project, log, onDeletedPhoto, onEdited, readOnly }) {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -37,7 +37,10 @@ function LogDetail({ userId, user, project, log, onDeletedPhoto, onEdited }) {
 
   useEffect(() => { fetchDetail(); }, [fetchDetail]);
 
-  const canEdit = canEditLog(log, user, userId);
+  // readOnly suppresses edit/delete affordances regardless of what
+  // canEditLog would otherwise allow — a GC viewing a sub's log from the
+  // Vendors tab's "view logs" modal should never see an edit button there.
+  const canEdit = !readOnly && canEditLog(log, user, userId);
 
   const handleDeletePhoto = async (photoId) => {
     if (!window.confirm('Remove this photo?')) return;
@@ -59,6 +62,7 @@ function LogDetail({ userId, user, project, log, onDeletedPhoto, onEdited }) {
       <DailyLogForm
         userId={userId}
         project={project}
+        user={user}
         log={log}
         onSaved={() => { setEditing(false); fetchDetail(); onEdited(); }}
         onCancel={() => setEditing(false)}
@@ -102,7 +106,7 @@ function LogDetail({ userId, user, project, log, onDeletedPhoto, onEdited }) {
   );
 }
 
-export default function DailyLogsList({ userId, user, project, refreshKey }) {
+export default function DailyLogsList({ userId, user, project, refreshKey, loggedByUserId, readOnly }) {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -118,6 +122,7 @@ export default function DailyLogsList({ userId, user, project, refreshKey }) {
       const params = new URLSearchParams({ userId: String(userId), page: String(page) });
       if (fromDate) params.set('from', fromDate);
       if (toDate) params.set('to', toDate);
+      if (loggedByUserId) params.set('loggedByUserId', String(loggedByUserId));
       const res = await fetch(`${API_BASE_URL}/api/daily-logs/projects/${project.id}/logs?${params.toString()}`);
       const data = await res.json();
       if (data.success) {
@@ -129,7 +134,7 @@ export default function DailyLogsList({ userId, user, project, refreshKey }) {
     } finally {
       setLoading(false);
     }
-  }, [project, userId, page, fromDate, toDate]);
+  }, [project, userId, page, fromDate, toDate, loggedByUserId]);
 
   useEffect(() => { fetchLogs(); }, [fetchLogs, refreshKey]);
 
@@ -181,6 +186,7 @@ export default function DailyLogsList({ userId, user, project, refreshKey }) {
                     log={log}
                     onDeletedPhoto={() => {}}
                     onEdited={fetchLogs}
+                    readOnly={readOnly}
                   />
                 )}
               </div>

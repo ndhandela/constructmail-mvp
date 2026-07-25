@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { API_BASE_URL, DELAY_CATEGORIES, WEATHER_OPTIONS, delayCategoryLabel } from '../dailyLogsUtils';
+import { isProjectOwner } from '../../capital/capitalUtils';
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -49,7 +50,7 @@ function PhotoDropzone({ files, onFilesAdded, onRemove }) {
   );
 }
 
-export default function DailyLogForm({ userId, project, log, onSaved, onCancel }) {
+export default function DailyLogForm({ userId, project, user, log, onSaved, onCancel }) {
   const isEdit = !!log;
   const [form, setForm] = useState({
     log_date: log?.log_date ? log.log_date.slice(0, 10) : todayISO(),
@@ -60,10 +61,28 @@ export default function DailyLogForm({ userId, project, log, onSaved, onCancel }
     delay_category: log?.delay_category || '',
     materials_notes: log?.materials_notes || '',
     safety_notes: log?.safety_notes || '',
+    work_item_id: log?.work_item_id ?? '',
   });
   const [photoFiles, setPhotoFiles] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  // Work items are a GC/Capital-Tracker concept — only the project owner
+  // ever sees this dropdown, and only when the project actually has work
+  // items (omit entirely rather than show an empty select). Scoping the
+  // fetch to owners only also means a vendor's own log form never calls
+  // the Capital work-items endpoint, which still hard-gates on the
+  // company 'capital' feature flag a lead-status vendor would never pass.
+  const [workItems, setWorkItems] = useState([]);
+  const canPickWorkItem = isProjectOwner(project, user);
+
+  useEffect(() => {
+    if (!canPickWorkItem || !project) return;
+    fetch(`${API_BASE_URL}/api/capital/projects/${project.id}/work-items?userId=${userId}`)
+      .then((res) => res.json())
+      .then((data) => { if (data.success) setWorkItems(data.work_items || []); })
+      .catch(() => {});
+  }, [canPickWorkItem, project, userId]);
 
   const addFiles = (newFiles) => {
     const images = newFiles.filter((f) => f.type.startsWith('image/'));
@@ -93,6 +112,7 @@ export default function DailyLogForm({ userId, project, log, onSaved, onCancel }
             delay_category: form.delay_category || null,
             materials_notes: form.materials_notes.trim() || null,
             safety_notes: form.safety_notes.trim() || null,
+            work_item_id: form.work_item_id === '' ? null : Number(form.work_item_id),
           }),
         });
       } else {
@@ -106,6 +126,7 @@ export default function DailyLogForm({ userId, project, log, onSaved, onCancel }
         if (form.delay_category) formData.append('delay_category', form.delay_category);
         if (form.materials_notes.trim()) formData.append('materials_notes', form.materials_notes.trim());
         if (form.safety_notes.trim()) formData.append('safety_notes', form.safety_notes.trim());
+        if (form.work_item_id !== '') formData.append('work_item_id', String(Number(form.work_item_id)));
         photoFiles.forEach((file) => formData.append('photos', file));
 
         res = await fetch(`${API_BASE_URL}/api/daily-logs/projects/${project.id}/logs`, {
@@ -176,6 +197,20 @@ export default function DailyLogForm({ userId, project, log, onSaved, onCancel }
             disabled={saving}
           />
         </div>
+
+        {canPickWorkItem && workItems.length > 0 && (
+          <div className="dailylogs-field">
+            <label>Work item (optional)</label>
+            <select
+              value={form.work_item_id}
+              onChange={(e) => setForm((f) => ({ ...f, work_item_id: e.target.value }))}
+              disabled={saving}
+            >
+              <option value="">— None —</option>
+              {workItems.map((wi) => <option key={wi.id} value={wi.id}>{wi.name}</option>)}
+            </select>
+          </div>
+        )}
 
         <div className="dailylogs-form-row">
           <div className="dailylogs-field" style={{ flex: 2 }}>
