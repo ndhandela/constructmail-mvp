@@ -3,7 +3,7 @@ import traceback
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse
 from db import init_db, get_pool
 from routers import ai, auth, gmail, outlook, clash, procore, vendors, admin, misc, marketplace, profile, mail, projects, team, logs
 from routers import connect as connect_router
@@ -71,4 +71,10 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
             )
     except Exception:
         logging.exception("Failed to log unhandled exception to system_logs")
-    return PlainTextResponse("Internal Server Error", status_code=500)
+    # JSON, not plain text: every frontend fetch call does `await res.json()`
+    # unconditionally (matching FastAPI's own {"detail": ...} shape from
+    # HTTPException), so a plain-text body throws a parse error client-side
+    # that gets swallowed by the calling code's generic catch block —
+    # turning a real server error into a misleading "Network error" message
+    # with no indication of what actually failed.
+    return JSONResponse({"detail": "Internal Server Error"}, status_code=500)
