@@ -124,6 +124,12 @@ const PRODUCT_ICONS = {
       <line x1="8" y1="15" x2="12" y2="15"/>
     </svg>
   ),
+  documents: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="13 2 13 8 19 8"/>
+    </svg>
+  ),
 };
 
 const SOON_ICONS = {
@@ -201,7 +207,8 @@ export default function ProductDashboard({ user, userId, onProductSelect }) {
           const locked = (product.id === 'marketplace' && product.licenseGated && marketplaceLicensed !== true)
             || (product.id === 'capital' && product.licenseGated && !user?.active_modules?.capital)
             || (product.id === 'daily_logs' && product.licenseGated && !user?.active_modules?.daily_logs)
-            || (product.id === 'invoice_tracker' && product.licenseGated && !user?.active_modules?.invoice_tracker);
+            || (product.id === 'invoice_tracker' && product.licenseGated && !user?.active_modules?.invoice_tracker)
+            || (product.id === 'documents' && product.licenseGated && !user?.active_modules?.documents);
           return (
             <div
               key={product.id}

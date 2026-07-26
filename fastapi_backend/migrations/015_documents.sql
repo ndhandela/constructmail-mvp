@@ -1,0 +1,33 @@
+-- Migration: 015_documents.sql
+-- Documents the Documents module added by fastapi_backend/db.py's init_db()
+-- on every startup (idempotent CREATE TABLE IF NOT EXISTS — no raw SQL to
+-- run here, this is a record of what that block does):
+--
+--   * New table: documents (id, company_id FK -> companies [the project's
+--     owning GC, denormalized from projects.company_id, same idiom as
+--     invoices.company_id], project_id FK, filename, r2_key, content_type,
+--     size_bytes, uploaded_by_user_id FK -> users, uploader_company_id FK
+--     -> companies [whichever company actually uploaded — may be a Sub],
+--     category free-text nullable, created_at, deleted_at soft-delete).
+--   * New table: document_access_grants (id, document_id FK -> documents,
+--     granted_to_company_id FK -> companies, granted_by_user_id FK ->
+--     users, created_at, revoked_at nullable). A GC's explicit grant of one
+--     document to one Sub company; UNIQUE(document_id, granted_to_company_id)
+--     lets a revoked grant be re-issued in place.
+--   * New feature flag 'documents' (global row seeded OFF) + a placeholder
+--     module_pricing row, same pattern as every other module.
+--
+--   * Access model (services/document_helpers.py): "GC on this project" is
+--     never a stored role — resolved per request by comparing the caller's
+--     company_id against projects.company_id. Getting onto a project at all
+--     reuses the two existing cross-company mechanisms (project_members for
+--     a real company's own staff, project_vendor_access for a Daily-Logs-style
+--     lead sub account) rather than a new invite system. A GC sees every
+--     document on the project; a Sub sees only uploader_company_id = its own
+--     company plus documents with an active document_access_grants row for
+--     its company_id.
+--
+--   * Storage: files go to a fifth, dedicated R2 bucket/credential set
+--     (R2_DOCUMENTS_*, services/r2_storage.py) — private, presigned GET urls
+--     generated per download request, same shape as the Invoice Tracker and
+--     Daily Logs buckets.

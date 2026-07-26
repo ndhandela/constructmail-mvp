@@ -22,6 +22,12 @@ below) rather than reusing an existing one — invoice PDFs carry vendor/
 financial data and get their own dedicated bucket, same "presigned GET,
 short expiry, regenerated per read" shape as Daily Logs (not Trust's
 server-only shape), since invoices need to be downloadable from the browser.
+
+POMAR Documents uses a FIFTH, separate bucket/credential set (R2_DOCUMENTS_*,
+below) — a GC and its Subs share project documents across company
+boundaries, so keeping this on its own bucket avoids ever mixing document
+objects into another module's namespace. Same "presigned GET, regenerated
+per read" shape as Invoice Tracker.
 """
 
 import asyncio
@@ -195,6 +201,66 @@ async def get_invoice_pdf_url(storage_path: str, expires_in: int = INVOICE_URL_E
         return _get_invoices_client().generate_presigned_url(
             "get_object",
             Params={"Bucket": _invoices_bucket(), "Key": storage_path},
+            ExpiresIn=expires_in,
+        )
+
+    return await asyncio.to_thread(_presign)
+
+
+# ── POMAR Documents bucket ──────────────────────────────────────────────
+# Fifth, separate client/bucket/credentials — see the module docstring for
+# why. Reuses the same lazy-singleton + asyncio.to_thread shape as the
+# buckets above.
+
+_documents_client = None
+
+
+def _get_documents_client():
+    global _documents_client
+    if _documents_client is None:
+        _documents_client = boto3.client(
+            "s3",
+            endpoint_url=os.environ["R2_DOCUMENTS_ENDPOINT_URL"],
+            aws_access_key_id=os.environ["R2_DOCUMENTS_ACCESS_KEY_ID"],
+            aws_secret_access_key=os.environ["R2_DOCUMENTS_SECRET_ACCESS_KEY"],
+            region_name="auto",
+        )
+    return _documents_client
+
+
+def _documents_bucket() -> str:
+    return os.environ["R2_DOCUMENTS_BUCKET_NAME"]
+
+
+def _documents_storage_key(company_id: int, project_id: int, document_id: int, filename: str) -> str:
+    safe_name = os.path.basename(filename)
+    return f"documents/{company_id}/{project_id}/{document_id}/{safe_name}"
+
+
+async def upload_document(company_id: int, project_id: int, document_id: int, filename: str, content: bytes) -> str:
+    """Unlike upload_invoice_pdf, document_id here is a real documents.id —
+    routers/documents.py inserts the row first (inside a transaction, r2_key
+    set once this call returns) so the key can use the actual id rather than
+    a caller-generated token, per the module's key-naming spec."""
+    key = _documents_storage_key(company_id, project_id, document_id, filename)
+
+    def _put():
+        _get_documents_client().put_object(Bucket=_documents_bucket(), Key=key, Body=content)
+
+    await asyncio.to_thread(_put)
+    return key
+
+
+DOCUMENT_URL_EXPIRES_IN = 900
+
+
+async def get_document_url(storage_path: str, expires_in: int = DOCUMENT_URL_EXPIRES_IN) -> str:
+    """Presigned GET url, not cached/stored — regenerated on every request
+    (routers/documents.py's download endpoint)."""
+    def _presign():
+        return _get_documents_client().generate_presigned_url(
+            "get_object",
+            Params={"Bucket": _documents_bucket(), "Key": storage_path},
             ExpiresIn=expires_in,
         )
 

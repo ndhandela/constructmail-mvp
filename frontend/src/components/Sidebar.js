@@ -69,6 +69,12 @@ const ICONS = {
       <line x1="8" y1="15" x2="12" y2="15" />
     </svg>
   ),
+  documents: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="13 2 13 8 19 8" />
+    </svg>
+  ),
 };
 
 const PROJECT_SCOPED_ITEMS = [
@@ -84,6 +90,7 @@ const ACCOUNT_LEVEL_ITEMS = [
   { key: 'capital', path: '/capital', label: 'Capital Tracker' },
   { key: 'daily_logs', path: '/daily-logs', label: 'Daily Logs' },
   { key: 'invoice_tracker', path: '/invoices', label: 'Invoice Tracker' },
+  { key: 'documents', path: '/documents', label: 'Documents' },
 ];
 
 function SidebarItem({ item, active, disabled }) {

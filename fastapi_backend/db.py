@@ -1224,6 +1224,62 @@ async def init_db():
             );
             CREATE INDEX IF NOT EXISTS company_accountant_access_accountant_user_id_idx ON company_accountant_access (accountant_user_id);
             CREATE INDEX IF NOT EXISTS company_accountant_access_company_id_idx ON company_accountant_access (company_id);
+
+            -- POMAR Documents (migration 015): project-scoped document
+            -- storage shared between a GC and its Subs. company_id is the
+            -- project's owning company (denormalized from projects.company_id,
+            -- same idiom as invoices.company_id) — uploader_company_id is
+            -- whichever company's user actually uploaded it, which may be a
+            -- Sub, not the owner. Access is resolved per-request from these
+            -- two, never cached (see services/document_helpers.py): a GC
+            -- sees every document on its project; a Sub sees only its own
+            -- uploader_company_id and documents explicitly granted to its
+            -- company via document_access_grants below. Gated by its own
+            -- 'documents' feature flag.
+            CREATE TABLE IF NOT EXISTS documents (
+                id SERIAL PRIMARY KEY,
+                company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+                project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                filename VARCHAR(255) NOT NULL,
+                r2_key TEXT NOT NULL,
+                content_type VARCHAR(100),
+                size_bytes BIGINT,
+                uploaded_by_user_id INT NOT NULL REFERENCES users(id),
+                uploader_company_id INT NOT NULL REFERENCES companies(id),
+                category VARCHAR(100),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                deleted_at TIMESTAMPTZ
+            );
+            CREATE INDEX IF NOT EXISTS documents_project_id_idx ON documents (project_id);
+            CREATE INDEX IF NOT EXISTS documents_company_id_idx ON documents (company_id);
+            CREATE INDEX IF NOT EXISTS documents_uploader_company_id_idx ON documents (uploader_company_id);
+
+            -- A GC's explicit grant of one document to one Sub company.
+            -- revoked_at nullable + the unique constraint below let a grant
+            -- be re-issued after revocation via ON CONFLICT ... SET
+            -- revoked_at = NULL rather than accumulating duplicate rows
+            -- (routers/documents.py's grant endpoint).
+            CREATE TABLE IF NOT EXISTS document_access_grants (
+                id SERIAL PRIMARY KEY,
+                document_id INT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+                granted_to_company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+                granted_by_user_id INT NOT NULL REFERENCES users(id),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                revoked_at TIMESTAMPTZ,
+                UNIQUE(document_id, granted_to_company_id)
+            );
+            CREATE INDEX IF NOT EXISTS document_access_grants_document_id_idx ON document_access_grants (document_id);
+            CREATE INDEX IF NOT EXISTS document_access_grants_company_id_idx ON document_access_grants (granted_to_company_id);
+
+            -- Seeds a global 'documents' flag row so it exists (defaulting
+            -- OFF), same pattern as every other module.
+            INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
+            VALUES (NULL, 'documents', 'Documents', 'documents', false, true)
+            ON CONFLICT (feature_key) WHERE is_global = true DO NOTHING;
+
+            INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active)
+            VALUES (true, NULL, 'documents', 0, 'monthly', true)
+            ON CONFLICT (module_name) WHERE is_global = true DO NOTHING;
         """)
 
         await _backfill_clash_project_ids(conn)

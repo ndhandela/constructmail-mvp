@@ -36,6 +36,7 @@ import CapitalTrackerApp from './modules/capital/pages/CapitalTrackerApp';
 import DailyLogsApp from './modules/daily-logs/pages/DailyLogsApp';
 import InvoiceTrackerApp from './modules/invoices/pages/InvoiceTrackerApp';
 import AccountantInvoiceView from './modules/invoices/pages/AccountantInvoiceView';
+import DocumentsApp from './modules/documents/pages/DocumentsApp';
 
 // Modules
 import ConstructMailApp from './modules/constructmail/pages/ConstructMailApp';
@@ -48,7 +49,7 @@ import './styles/components.css';
 import './App.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/company-settings', '/trust', '/capital', '/daily-logs', '/invoices'];
+const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/company-settings', '/trust', '/capital', '/daily-logs', '/invoices', '/documents'];
 
 // The "Your Tools" landing grid and the Projects edit page share the
 // /dashboard route — the edit page is reached only via the project info
@@ -132,6 +133,7 @@ function App() {
           else if (path === '/capital') setCurrentProduct('capital');
           else if (path === '/daily-logs') setCurrentProduct('daily-logs');
           else if (path === '/invoices') setCurrentProduct('invoices');
+          else if (path === '/documents') setCurrentProduct('documents');
           else setCurrentProduct('dashboard');
           window.history.replaceState({}, document.title, window.location.pathname);
         } else {
@@ -174,6 +176,7 @@ function App() {
       if (path === '/capital') setCurrentProduct('capital');
       if (path === '/daily-logs') setCurrentProduct('daily-logs');
       if (path === '/invoices') setCurrentProduct('invoices');
+      if (path === '/documents') setCurrentProduct('documents');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
@@ -669,6 +672,23 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
         <AppLayout userId={userId} onLogout={handleLogout} user={user}>
           <ProjectGate userId={userId} user={user}>
             <InvoiceTrackerApp user={user} userId={userId} />
+          </ProjectGate>
+        </AppLayout>
+      </ProjectProvider>
+    );
+  }
+
+  // ── POMAR Documents ──────────────────────────────────────────────────
+  // Same wiring as Capital Tracker/Daily Logs/Invoice Tracker — documents
+  // hang off the generic projects table, so it uses the shared
+  // header/sidebar project switcher and ProjectGate, gated only by the
+  // 'documents' feature flag.
+  if (currentProduct === 'documents' || path === '/documents') {
+    return (
+      <ProjectProvider userId={userId}>
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <ProjectGate userId={userId} user={user}>
+            <DocumentsApp user={user} userId={userId} />
           </ProjectGate>
         </AppLayout>
       </ProjectProvider>

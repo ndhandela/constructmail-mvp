@@ -120,6 +120,20 @@ export const PRODUCTS = [
     // active_modules.invoice_tracker.
     licenseGated: true
   },
+  {
+    id: 'documents',
+    name: 'POMAR Documents',
+    description: 'Share contracts, drawings, and submittals with your Subs — access controlled per company.',
+    detailedDescription: "Project documents usually get emailed around one attachment at a time, with no record of who actually has the current version. POMAR Documents gives every project a shared library — contracts, drawings, submittals — where the GC sees everything and can grant or revoke a specific Sub company's access to a document, while each Sub only ever sees its own uploads plus what's been explicitly shared with it.",
+    icon: '📁',
+    path: '/documents',
+    logo: '/logos/pomar.png',
+    color: '#D97706',
+    status: 'live',
+    // No regionGated flag — available to any company, gated only by
+    // active_modules.documents.
+    licenseGated: true
+  },
 ];
 
 export const getProductById = (id) => PRODUCTS.find(p => p.id === id);
