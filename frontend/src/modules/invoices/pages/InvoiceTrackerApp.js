@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react';
 import ModuleLockedNotice, { isModuleLocked } from '../../../components/ModuleLockedNotice';
-import { ProjectContext } from '../../../contexts/ProjectContext';
+import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
 import { API_BASE_URL, formatCurrency, statusLabel } from '../invoicesUtils';
 import InvoiceUploadForm from '../components/InvoiceUploadForm';
 import '../styles/InvoiceTrackerApp.css';
@@ -11,15 +11,17 @@ const STATUS_OPTIONS = [
   { value: 'paid', label: 'Paid' },
 ];
 
-// No in-page project selector tied to the header switcher (unlike Capital
-// Tracker/Daily Logs) — the invoice list is company-wide by default, with
-// "project" as one filter among several (work item, budget item, status,
-// date range), per the module spec. `projects` still comes from the
-// shared ProjectContext so the filter/upload-form pickers share the same
-// project-membership list every other module uses.
+// Project selection comes from the shared header/sidebar switcher, same as
+// Capital Tracker/Daily Logs — no separate in-page picker. Unlike those two
+// modules, the list itself still works with no project selected (ALL_PROJECTS
+// shows invoices across every project), but uploading requires one, since an
+// invoice always belongs to exactly one project.
 export default function InvoiceTrackerApp({ user, userId }) {
   const invoiceTrackerLocked = isModuleLocked(user?.active_modules, 'invoice_tracker');
-  const { projects } = useContext(ProjectContext);
+  const { projects, currentProjectId } = useContext(ProjectContext);
+  const selectedProject = currentProjectId !== ALL_PROJECTS
+    ? projects.find((p) => String(p.id) === String(currentProjectId))
+    : null;
 
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +29,7 @@ export default function InvoiceTrackerApp({ user, userId }) {
   const [showForm, setShowForm] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState(null);
   const [canWrite, setCanWrite] = useState(true);
-  const [filters, setFilters] = useState({ project_id: '', status: '', date_from: '', date_to: '' });
+  const [filters, setFilters] = useState({ status: '', date_from: '', date_to: '' });
 
   const fetchInvoices = useCallback(async () => {
     if (!user?.company_id) { setLoading(false); return; }
@@ -35,7 +37,7 @@ export default function InvoiceTrackerApp({ user, userId }) {
     setError('');
     try {
       const params = new URLSearchParams({ userId, companyId: user.company_id });
-      if (filters.project_id) params.set('project_id', filters.project_id);
+      if (currentProjectId !== ALL_PROJECTS) params.set('project_id', currentProjectId);
       if (filters.status) params.set('status', filters.status);
       if (filters.date_from) params.set('date_from', filters.date_from);
       if (filters.date_to) params.set('date_to', filters.date_to);
@@ -53,7 +55,7 @@ export default function InvoiceTrackerApp({ user, userId }) {
     } finally {
       setLoading(false);
     }
-  }, [user, userId, filters]);
+  }, [user, userId, currentProjectId, filters]);
 
   useEffect(() => { fetchInvoices(); }, [fetchInvoices]);
 
@@ -121,15 +123,6 @@ export default function InvoiceTrackerApp({ user, userId }) {
         <div className="invoices-toolbar">
           <div className="invoices-filters">
             <select
-              value={filters.project_id}
-              onChange={(e) => setFilters((f) => ({ ...f, project_id: e.target.value }))}
-            >
-              <option value="">All projects</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-            <select
               value={filters.status}
               onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}
             >
@@ -152,7 +145,14 @@ export default function InvoiceTrackerApp({ user, userId }) {
             />
           </div>
           {canWrite && (
-            <button className="invoices-btn-primary" onClick={() => setShowForm(true)}>+ Upload invoice</button>
+            <button
+              className="invoices-btn-primary"
+              onClick={() => setShowForm(true)}
+              disabled={currentProjectId === ALL_PROJECTS}
+              title={currentProjectId === ALL_PROJECTS ? 'Select a project from the header to upload an invoice' : undefined}
+            >
+              + Upload invoice
+            </button>
           )}
         </div>
 
@@ -221,10 +221,10 @@ export default function InvoiceTrackerApp({ user, userId }) {
         )}
       </div>
 
-      {showForm && (
+      {showForm && selectedProject && (
         <InvoiceUploadForm
           userId={userId}
-          projects={projects}
+          projectId={selectedProject.id}
           onSaved={() => { setShowForm(false); fetchInvoices(); }}
           onCancel={() => setShowForm(false)}
         />
@@ -232,7 +232,7 @@ export default function InvoiceTrackerApp({ user, userId }) {
       {editingInvoice && (
         <InvoiceUploadForm
           userId={userId}
-          projects={projects}
+          projectId={editingInvoice.project_id}
           invoice={editingInvoice}
           onSaved={() => { setEditingInvoice(null); fetchInvoices(); }}
           onCancel={() => setEditingInvoice(null)}

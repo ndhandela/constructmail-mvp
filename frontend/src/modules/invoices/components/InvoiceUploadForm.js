@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL } from '../invoicesUtils';
 
-// Project -> work item -> budget item cascading picker. Both work item and
-// budget item are optional (a general project-level invoice can leave
-// either unset) — only the project is required. Fetches from
-// routers/invoices.py's own picker endpoints (not routers/capital.py's),
-// which are gated by 'invoice_tracker' alone so this works even when
-// Capital Tracker itself is off for the company.
-export default function InvoiceUploadForm({ userId, projects, invoice, onSaved, onCancel }) {
+// Work item -> budget item cascading picker, scoped to the project already
+// chosen in the header (Capital Tracker/Daily Logs pattern — see
+// InvoiceTrackerApp.js). Both are optional (a general project-level invoice
+// can leave either unset). Fetches from routers/invoices.py's own picker
+// endpoints (not routers/capital.py's), which are gated by 'invoice_tracker'
+// alone so this works even when Capital Tracker itself is off for the
+// company. `projectId` is fixed for the life of this form — it comes from
+// the header switcher for a new invoice, or the invoice's own project_id
+// when editing (never user-editable, so there's no picker for it here).
+export default function InvoiceUploadForm({ userId, projectId, invoice, onSaved, onCancel }) {
   const isEdit = !!invoice;
-  const [projectId, setProjectId] = useState(invoice?.project_id ? String(invoice.project_id) : '');
   const [workItems, setWorkItems] = useState([]);
   const [budgetItems, setBudgetItems] = useState([]);
   const [form, setForm] = useState({
@@ -68,7 +70,7 @@ export default function InvoiceUploadForm({ userId, projects, invoice, onSaved, 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!projectId) { setError('Select a project.'); return; }
+    if (!projectId) { setError('No project selected. Choose one from the header first.'); return; }
     if (!form.vendor_name.trim()) { setError('Vendor name is required.'); return; }
     if (!form.amount || Number(form.amount) <= 0) { setError('Enter an amount greater than 0.'); return; }
     if (!isEdit && !file) { setError('Attach a PDF invoice.'); return; }
@@ -127,21 +129,6 @@ export default function InvoiceUploadForm({ userId, projects, invoice, onSaved, 
     <div className="invoices-modal-overlay" onClick={onCancel}>
       <form className="invoices-modal" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
         <h3>{isEdit ? 'Edit invoice' : 'Upload invoice'}</h3>
-
-        <div className="invoices-field">
-          <label>Project</label>
-          <select
-            value={projectId}
-            onChange={(e) => { setProjectId(e.target.value); handleWorkItemChange(''); }}
-            required
-            disabled={saving || isEdit}
-          >
-            <option value="">— Select a project —</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-        </div>
 
         <div className="invoices-form-row">
           <div className="invoices-field">
