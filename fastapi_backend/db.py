@@ -1280,6 +1280,46 @@ async def init_db():
             INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active)
             VALUES (true, NULL, 'documents', 0, 'monthly', true)
             ON CONFLICT (module_name) WHERE is_global = true DO NOTHING;
+
+            -- Single-level Documents folders (migration 016): no parent_id —
+            -- folders never nest. created_by must be a GC team member at
+            -- creation time (enforced in services/document_helpers.py, not
+            -- here); there's no separate "Sub converts to GC" flag anywhere
+            -- because GC-ness was never stored in the first place — it's
+            -- already resolved per-project from projects.company_id
+            -- (require_project_document_access), so a Sub company that
+            -- later owns its own project can create folders there for free.
+            CREATE TABLE IF NOT EXISTS folders (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                name VARCHAR(255) NOT NULL,
+                created_by INT NOT NULL REFERENCES users(id),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS folders_project_id_idx ON folders (project_id);
+
+            -- Folder-level access grant. Unlike document_access_grants,
+            -- there's no revoked_at — DELETE /api/documents/folders/{id}/access/{company_id}
+            -- hard-deletes the row (a folder's grant list is meant to be
+            -- read as "who currently has access", not an audit trail).
+            CREATE TABLE IF NOT EXISTS folder_access (
+                id SERIAL PRIMARY KEY,
+                folder_id INT NOT NULL REFERENCES folders(id) ON DELETE CASCADE,
+                company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+                granted_by INT NOT NULL REFERENCES users(id),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                UNIQUE(folder_id, company_id)
+            );
+            CREATE INDEX IF NOT EXISTS folder_access_folder_id_idx ON folder_access (folder_id);
+            CREATE INDEX IF NOT EXISTS folder_access_company_id_idx ON folder_access (company_id);
+
+            -- Nullable: NULL means project root, same meaning as "no folder"
+            -- had implicitly before this column existed. When set, the
+            -- document's visibility is governed entirely by folder_access
+            -- instead of document_access_grants (services/document_helpers.py) —
+            -- there's no per-document override for documents inside a folder.
+            ALTER TABLE documents ADD COLUMN IF NOT EXISTS folder_id INT REFERENCES folders(id) ON DELETE SET NULL;
+            CREATE INDEX IF NOT EXISTS documents_folder_id_idx ON documents (folder_id);
         """)
 
         await _backfill_clash_project_ids(conn)

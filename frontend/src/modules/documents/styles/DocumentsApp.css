@@ -67,6 +67,84 @@
   gap: 12px;
 }
 
+.documents-current-folder {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--inkwell);
+  font-size: 14px;
+}
+
+/* ── Folder sidebar ───────────────────────────────────────────────────── */
+
+.documents-layout {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+.documents-folder-sidebar {
+  flex: 0 0 220px;
+  background: var(--white);
+  border: 1px solid #E7E0D3;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+}
+
+.documents-folder-sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+}
+
+.documents-folder-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.documents-folder-item {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--inkwell);
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.documents-folder-item:hover {
+  background: var(--parchment);
+}
+
+.documents-folder-item.active {
+  background: var(--saffron-soft);
+  color: var(--saffron);
+  font-weight: 600;
+}
+
+.documents-folder-empty {
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.documents-main {
+  flex: 1;
+  min-width: 0;
+}
+
 /* ── Table ────────────────────────────────────────────────────────────── */
 
 .documents-table-wrapper {

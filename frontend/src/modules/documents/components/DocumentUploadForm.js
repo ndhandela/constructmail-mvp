@@ -3,8 +3,11 @@ import { API_BASE_URL } from '../documentsUtils';
 
 // projectId is fixed for the life of this form — sourced from the header's
 // ProjectContext.currentProjectId by DocumentsApp.js, never picked here.
-// Same pattern as modules/invoices/components/InvoiceUploadForm.js.
-export default function DocumentUploadForm({ userId, projectId, onSaved, onCancel }) {
+// Same pattern as modules/invoices/components/InvoiceUploadForm.js. folderId
+// is likewise sourced from whichever folder is currently open in the
+// sidebar (null means project root) — there's no folder picker here either,
+// it's attached automatically.
+export default function DocumentUploadForm({ userId, projectId, folderId, folderName, onSaved, onCancel }) {
   const [category, setCategory] = useState('');
   const [file, setFile] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -21,6 +24,7 @@ export default function DocumentUploadForm({ userId, projectId, onSaved, onCance
       const body = new FormData();
       body.append('userId', userId);
       body.append('project_id', projectId);
+      if (folderId != null) body.append('folder_id', folderId);
       if (category.trim()) body.append('category', category.trim());
       body.append('file', file);
 
@@ -42,7 +46,7 @@ export default function DocumentUploadForm({ userId, projectId, onSaved, onCance
   return (
     <div className="documents-modal-overlay" onClick={onCancel}>
       <form className="documents-modal" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
-        <h3>Upload document</h3>
+        <h3>Upload document{folderName ? ` to "${folderName}"` : ''}</h3>
 
         <div className="documents-field">
           <label>File</label>

@@ -32,6 +32,7 @@ per read" shape as Invoice Tracker.
 
 import asyncio
 import os
+from typing import Optional
 
 import boto3
 
@@ -232,17 +233,26 @@ def _documents_bucket() -> str:
     return os.environ["R2_DOCUMENTS_BUCKET_NAME"]
 
 
-def _documents_storage_key(company_id: int, project_id: int, document_id: int, filename: str) -> str:
+def _documents_storage_key(project_id: int, filename: str, folder_id: Optional[int] = None) -> str:
+    """{project_id}/{folder_id}/{filename} inside a folder, {project_id}/
+    {filename} at root — deliberately predictable (no company_id or
+    document_id component) so routers/documents.py never needs a DB lookup
+    beyond the document row itself to resolve where a file lives.
+
+    Trade-off: two uploads with the same filename to the same project/folder
+    collide on the same R2 key (the second PUT silently overwrites the
+    first's object), since nothing document-specific is in the key. Accepted
+    per the module's key-naming spec rather than worked around, since
+    solving it would mean reintroducing a DB lookup (or a document/token
+    component) this structure is explicitly meant to avoid."""
     safe_name = os.path.basename(filename)
-    return f"documents/{company_id}/{project_id}/{document_id}/{safe_name}"
+    if folder_id is not None:
+        return f"{project_id}/{folder_id}/{safe_name}"
+    return f"{project_id}/{safe_name}"
 
 
-async def upload_document(company_id: int, project_id: int, document_id: int, filename: str, content: bytes) -> str:
-    """Unlike upload_invoice_pdf, document_id here is a real documents.id —
-    routers/documents.py inserts the row first (inside a transaction, r2_key
-    set once this call returns) so the key can use the actual id rather than
-    a caller-generated token, per the module's key-naming spec."""
-    key = _documents_storage_key(company_id, project_id, document_id, filename)
+async def upload_document(project_id: int, filename: str, content: bytes, folder_id: Optional[int] = None) -> str:
+    key = _documents_storage_key(project_id, filename, folder_id)
 
     def _put():
         _get_documents_client().put_object(Bucket=_documents_bucket(), Key=key, Body=content)

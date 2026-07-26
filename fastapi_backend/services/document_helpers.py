@@ -26,6 +26,14 @@ queries per the module spec: a GC sees every document on the project; a
 Sub sees only uploader_company_id = its own company_id, plus documents with
 an active (revoked_at IS NULL) document_access_grants row for its
 company_id.
+
+Folders (single-level, no nesting) reuse this exact same `is_gc` resolution
+for "who can create/manage a folder" — there is no separate "Sub converts
+to GC" flag or table anywhere: GC-ness was never stored to begin with, so a
+Sub company that later owns its own project is automatically the GC there
+per the same per-request check, with zero extra code. A document with a
+non-null folder_id has NO per-document access override — its visibility
+comes entirely from folder_access instead of document_access_grants.
 """
 from typing import Optional
 
@@ -44,6 +52,14 @@ class DocumentAccess:
     @property
     def is_gc(self) -> bool:
         return self.kind == "gc"
+
+
+def require_gc(access: "DocumentAccess", action: str = "do this") -> None:
+    """Small shared gate for the handful of GC-only actions (grant/revoke on
+    a document, create/manage a folder) — access.kind is already resolved
+    per-request by require_project_document_access, this just asserts it."""
+    if not access.is_gc:
+        raise HTTPException(403, f"Only the project's GC can {action}")
 
 
 async def require_project_document_access(conn, user_id: int, project_id: int) -> DocumentAccess:
@@ -100,6 +116,36 @@ async def list_sub_companies_for_project(conn, project_id: int, owner_company_id
         project_id, owner_company_id,
     )
     return [dict(r) for r in rows]
+
+
+async def require_folder_in_project(conn, folder_id: int, project_id: int):
+    """Fetches a folder and 404s unless it exists and belongs to this exact
+    project — same guard shape as invoices.py's work-item/budget-item
+    pickers use to stop a caller from referencing another project's row."""
+    folder = await conn.fetchrow(
+        "SELECT * FROM folders WHERE id = $1 AND project_id = $2", folder_id, project_id,
+    )
+    if not folder:
+        raise HTTPException(404, "Folder not found")
+    return folder
+
+
+async def company_has_folder_access(conn, folder_id: int, company_id: int) -> bool:
+    row = await conn.fetchrow(
+        "SELECT 1 FROM folder_access WHERE folder_id = $1 AND company_id = $2", folder_id, company_id,
+    )
+    return bool(row)
+
+
+async def require_can_upload_to_folder(conn, access: DocumentAccess, folder_id: int) -> None:
+    """A GC can upload into any of its project's folders; a Sub can only
+    upload into a folder its company already has folder_access to — mirrors
+    the read-side rule (folder_access is the only visibility source for
+    folder contents), so a Sub can never write into a folder it can't see."""
+    if access.is_gc:
+        return
+    if not await company_has_folder_access(conn, folder_id, access.company_id):
+        raise HTTPException(403, "You do not have access to this folder")
 
 
 async def require_can_delete_document(conn, user_id: int, access: DocumentAccess, document) -> None:

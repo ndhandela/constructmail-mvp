@@ -1,0 +1,37 @@
+-- Migration: 016_document_folders.sql
+-- Documents the single-level folder structure added to the Documents
+-- module by fastapi_backend/db.py's init_db() on every startup (idempotent
+-- CREATE TABLE IF NOT EXISTS / ALTER TABLE ... ADD COLUMN IF NOT EXISTS —
+-- no raw SQL to run here, this is a record of what that block does):
+--
+--   * New table: folders (id, project_id FK, name, created_by FK -> users,
+--     created_at). Single-level only — no parent_id, folders never nest.
+--   * New table: folder_access (id, folder_id FK, company_id FK ->
+--     companies, granted_by FK -> users, created_at). Unlike
+--     document_access_grants there is no revoked_at — revoking access
+--     (DELETE /api/documents/folders/{id}/access/{company_id}) hard-deletes
+--     the row.
+--   * documents.folder_id (nullable FK -> folders, ON DELETE SET NULL) —
+--     NULL means project root, the same meaning "no folder" implicitly had
+--     before this column existed. Root documents keep the existing
+--     document_access_grants behavior unchanged; a document with a
+--     folder_id has NO per-document access override — visibility is
+--     resolved entirely from folder_access instead (see
+--     services/document_helpers.py).
+--
+--   * Access model: folder creation is GC-only. There is no new "Sub
+--     converts to GC" flag or table — GC-ness was never stored anywhere in
+--     the first place (see migration 015's document_helpers.py docstring);
+--     it's resolved fresh per request by comparing the caller's company_id
+--     against projects.company_id. A Sub company that later owns its own
+--     project is automatically the GC there and can create folders,
+--     because the exact same per-project resolution already used for every
+--     other Documents permission applies unchanged.
+--
+--   * Storage: R2 keys for documents move to a predictable, DB-lookup-free
+--     shape: `{project_id}/{folder_id}/{filename}` inside a folder,
+--     `{project_id}/{filename}` at root (services/r2_storage.py). This
+--     replaces the old `documents/{company_id}/{project_id}/{document_id}/{filename}`
+--     shape from migration 015 — safe since no R2 credentials were ever
+--     provisioned in production, so no real objects exist under the old
+--     keys yet.
