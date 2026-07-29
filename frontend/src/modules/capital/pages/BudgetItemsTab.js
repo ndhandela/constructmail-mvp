@@ -14,11 +14,23 @@ function BudgetItemForm({ userId, project, item, workItems, onSaved, onCancel })
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  // CategoryPicker's own "Creating…" state is local to it, but the async
+  // create-category request (and the onChange(category.id) it fires once
+  // it resolves) can still be in flight when this form's submit fires —
+  // nothing else blocks a fast submit from landing in that window with a
+  // still-empty category_id, even though the category ends up created a
+  // moment later. Surfaced here so the submit button can be held disabled
+  // until the newly created category has actually been selected.
+  const [categoryCreating, setCategoryCreating] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.work_item_id) {
       setError('Select a work item.');
+      return;
+    }
+    if (categoryCreating) {
+      setError('Still creating the category — try again in a moment.');
       return;
     }
     if (!form.category_id) {
@@ -94,6 +106,7 @@ function BudgetItemForm({ userId, project, item, workItems, onSaved, onCancel })
             project={project}
             value={form.category_id}
             onChange={(categoryId) => setForm((f) => ({ ...f, category_id: categoryId }))}
+            onCreatingChange={setCategoryCreating}
             disabled={saving}
           />
         </div>
@@ -151,7 +164,7 @@ function BudgetItemForm({ userId, project, item, workItems, onSaved, onCancel })
         {error && <div className="capital-error">{error}</div>}
         <div className="capital-form-actions">
           <button type="button" className="capital-btn-secondary" onClick={onCancel} disabled={saving}>Cancel</button>
-          <button type="submit" className="capital-btn-primary" disabled={saving}>
+          <button type="submit" className="capital-btn-primary" disabled={saving || categoryCreating}>
             {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Add budget item'}
           </button>
         </div>

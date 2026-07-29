@@ -54,7 +54,7 @@ export default function Auth({ onLoginSuccess, defaultMode = 'login' }) {
         setError(res.data.error || 'Login failed.');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Invalid email or password.');
+      setError(err.response?.data?.detail || 'Invalid email or password.');
     } finally {
       setLoading(false);
     }

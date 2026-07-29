@@ -5,7 +5,7 @@ import { API_BASE_URL } from '../capitalUtils';
 // milestone form and the budget item form so a category only ever needs to
 // be created once per project, then reused across every work item instead
 // of each form growing its own ad hoc "add category" flow.
-export default function CategoryPicker({ userId, project, value, onChange, disabled }) {
+export default function CategoryPicker({ userId, project, value, onChange, disabled, onCreatingChange }) {
   const [categories, setCategories] = useState([]);
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -62,6 +62,7 @@ export default function CategoryPicker({ userId, project, value, onChange, disab
   const handleCreate = async () => {
     if (!trimmedQuery) return;
     setCreating(true);
+    onCreatingChange?.(true);
     setError('');
     try {
       const res = await fetch(`${API_BASE_URL}/api/projects/${project.id}/categories`, {
@@ -80,6 +81,7 @@ export default function CategoryPicker({ userId, project, value, onChange, disab
       setError('Network error. Try again.');
     } finally {
       setCreating(false);
+      onCreatingChange?.(false);
     }
   };
 

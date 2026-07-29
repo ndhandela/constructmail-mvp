@@ -28,7 +28,7 @@ export default function Contact() {
       setSuccess(true);
       setFormData({ name: '', email: '', company: '', message: '' });
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to send message. Please try again.');
+      setError(err.response?.data?.detail || 'Failed to send message. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -192,12 +192,17 @@ async def login(req: LoginRequest):
         user = await conn.fetchrow(
             "SELECT id, password_hash, company_id FROM users WHERE email = $1", req.email.lower().strip()
         )
+        # "No account" and "wrong password" deliberately return the exact
+        # same message — anything more specific tells an attacker whether a
+        # given email is registered at all. The account-status checks below
+        # this point are fine to be specific: by then the caller has already
+        # proven they own the correct password for a real account.
         if not user:
-            raise HTTPException(401, "No account found with this email.")
+            raise HTTPException(401, "Invalid email or password.")
         if not user["password_hash"]:
             raise HTTPException(401, "This account uses magic link login. Please use the sign in link option.")
         if not bcrypt.checkpw(req.password.encode(), user["password_hash"].encode()):
-            raise HTTPException(401, "Incorrect password.")
+            raise HTTPException(401, "Invalid email or password.")
         # Company status is checked only after the password succeeds, so a
         # wrong-password guess still gets "Incorrect password" and never
         # learns whether the account's company has been deactivated.

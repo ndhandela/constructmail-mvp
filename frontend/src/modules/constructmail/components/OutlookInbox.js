@@ -24,7 +24,7 @@ useEffect(() => {
       });
       setEmails(response.data);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to fetch emails');
+      setError(err.response?.data?.detail || 'Failed to fetch emails');
     } finally {
       setLoading(false);
     }

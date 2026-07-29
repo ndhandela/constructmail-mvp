@@ -21,7 +21,7 @@ export default function Demo() {
       setSuccess(true);
       setFormData({ name: '', email: '', company: '', message: '' });
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to send request. Please try again.');
+      setError(err.response?.data?.detail || 'Failed to send request. Please try again.');
     } finally {
       setLoading(false);
     }

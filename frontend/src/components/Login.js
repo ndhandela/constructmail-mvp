@@ -32,7 +32,7 @@ export default function Login({ onLoginSuccess }) {
       setMagicLink(response.data.magicLink);
       setEmail('');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to send magic link');
+      setError(err.response?.data?.detail || 'Failed to send magic link');
     } finally {
       setLoading(false);
     }

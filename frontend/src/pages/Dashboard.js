@@ -174,7 +174,7 @@ export default function ProductDashboard({ user, userId, onProductSelect }) {
     if (!userId) return;
     fetch(`${API_BASE_URL}/api/marketplace/license?userId=${userId}`)
       .then((res) => res.json())
-      .then((data) => setMarketplaceLicensed(!!data.licensed))
+      .then((data) => setMarketplaceLicensed(!!data.hasLicense))
       .catch(() => setMarketplaceLicensed(false));
   }, [userId]);
 

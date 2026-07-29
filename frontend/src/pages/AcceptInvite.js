@@ -21,7 +21,7 @@ export default function AcceptInvite() {
       await axios.post(`${API_BASE_URL}/api/auth/accept-invite`, { token, password });
       setSuccess(true);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to accept invite.');
+      setError(err.response?.data?.detail || 'Failed to accept invite.');
     } finally {
       setLoading(false);
     }
