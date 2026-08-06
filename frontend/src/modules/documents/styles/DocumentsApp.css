@@ -334,3 +334,91 @@
   background: var(--white);
   color: var(--inkwell);
 }
+
+/* ── Mobile (375-430px phones) ───────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .documents-hero {
+    padding: 28px 16px 0;
+    margin-bottom: 20px;
+  }
+
+  .documents-hero h1 {
+    font-size: 22px;
+  }
+
+  .documents-container {
+    padding: 16px;
+  }
+
+  /* The 220px fixed-width sidebar (desktop, above) left almost no room
+     for the document list itself at 375-430px — stacking it above the
+     list as a horizontal scrolling chip row instead reclaims that width. */
+  .documents-layout {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .documents-folder-sidebar {
+    flex: none;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+  }
+
+  .documents-folder-list {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 8px;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .documents-folder-item {
+    flex-shrink: 0;
+    white-space: nowrap;
+    min-height: 40px;
+    padding: 9px 14px;
+    border-radius: var(--radius-pill);
+    background: var(--parchment);
+  }
+
+  .documents-folder-item.active {
+    background: var(--saffron-soft);
+  }
+
+  .documents-folder-empty {
+    white-space: nowrap;
+  }
+
+  .documents-row-actions {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  /* Row-action links (Download / Manage access / Delete) had zero padding
+     around 13px text — under the ~44px tap target minimum, and three of
+     them sit side by side in a table cell. */
+  .documents-link-btn {
+    min-height: 44px;
+    padding: 0 2px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Upload/New Folder/Manage Access modals go full-screen instead of a
+     centered ~480px card, which is cramped on a 375-430px phone. */
+  .documents-modal-overlay {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .documents-modal {
+    max-width: 100%;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+}

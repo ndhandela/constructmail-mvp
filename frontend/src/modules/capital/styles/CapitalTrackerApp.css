@@ -447,3 +447,57 @@
   color: var(--slate);
   text-align: right;
 }
+
+/* ── Mobile (375-430px phones) ───────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .capital-container {
+    padding: 16px;
+  }
+
+  /* Four tab labels in one non-wrapping flex row had no overflow handling
+     at all — at 375-430px they simply didn't fit, forcing the whole page
+     into horizontal scroll instead of just this row. */
+  .capital-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .capital-tab {
+    flex-shrink: 0;
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+
+  /* The fixed 160px label / 90px value columns left the actual bar (the
+     point of this chart) about 45px wide on a 375px screen — dropping to
+     a 2-row layout (label+value on top, full-width bar below) instead. */
+  .capital-bar-row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "name value"
+      "track track";
+    row-gap: 6px;
+  }
+
+  .capital-bar-name { grid-area: name; }
+  .capital-bar-value { grid-area: value; }
+  .capital-bar-track { grid-area: track; }
+
+  /* Add/Edit modals (work items, milestones, budget lines) go full-screen
+     instead of a centered ~480px card, which is cramped on a 375-430px
+     phone, especially with .capital-form-row's side-by-side inputs. */
+  .capital-modal-overlay {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .capital-modal {
+    max-width: 100%;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+}

@@ -71,6 +71,17 @@
   transition: background 0.2s ease;
 }
 
+/* Invisible 44x44 hit area around the 40x22 switch — keeps the compact
+   visual design while meeting the ~44px minimum tap target on touch. */
+.mtr-switch::after {
+  content: '';
+  position: absolute;
+  top: -11px;
+  bottom: -11px;
+  left: -2px;
+  right: -2px;
+}
+
 .mtr-switch-thumb {
   display: block;
   width: 18px;

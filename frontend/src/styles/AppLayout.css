@@ -22,3 +22,11 @@
   flex: 1;
   min-width: 0;
 }
+
+@media (max-width: 768px) {
+  /* Clears the fixed BottomNav (components/BottomNav.js) so it doesn't
+     cover the bottom of scrollable content. */
+  .content-shell {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
+  }
+}

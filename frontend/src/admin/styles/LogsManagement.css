@@ -125,7 +125,7 @@
 .logs-table-wrapper {
   background-color: white;
   border-radius: var(--radius-md);
-  overflow: hidden;
+  overflow-x: auto;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-light);
   margin-bottom: 24px;

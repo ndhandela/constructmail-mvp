@@ -59,7 +59,7 @@
 .clients-table-wrapper {
   background-color: white;
   border-radius: var(--radius-md);
-  overflow: hidden;
+  overflow-x: auto;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-light);
   margin-bottom: 24px;
@@ -198,6 +198,15 @@
   font-size: 12px;
   transition: all 0.2s;
   color: var(--slate);
+  position: relative;
+}
+
+/* Invisible 44x44 hit area around the 32px button — keeps the visual size
+   while meeting the ~44px minimum tap target on touch. */
+.expand-btn::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
 }
 
 .expand-btn:hover {

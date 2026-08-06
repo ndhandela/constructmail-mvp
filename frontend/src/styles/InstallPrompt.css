@@ -1,0 +1,80 @@
+.install-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--sandstone);
+  color: var(--inkwell);
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(14, 27, 44, 0.12);
+}
+
+.install-banner-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.install-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.install-banner-text strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--inkwell);
+}
+
+.install-banner-text span {
+  font-size: 12.5px;
+  color: var(--slate);
+}
+
+.install-banner-cta {
+  flex-shrink: 0;
+  background: var(--inkwell);
+  color: var(--parchment);
+  border: none;
+  border-radius: 6px;
+  padding: 0 16px;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.install-banner-cta:active {
+  background: var(--inkwell-light);
+}
+
+.install-banner-dismiss {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--slate);
+  font-size: 22px;
+  line-height: 1;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+}
+
+.install-banner-dismiss:active {
+  color: var(--inkwell);
+}
+
+@media (min-width: 768px) {
+  .install-banner {
+    padding: 10px 24px;
+  }
+
+  .install-banner-text span {
+    display: inline;
+  }
+}

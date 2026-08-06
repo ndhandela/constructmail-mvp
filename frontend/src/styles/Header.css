@@ -122,7 +122,16 @@
   opacity: 0.7;
   cursor: pointer;
   flex-shrink: 0;
+  position: relative;
   transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease, border-color 0.2s ease;
+}
+
+/* Invisible 44x44 hit area around the 22px circle — keeps the compact
+   visual design while meeting the ~44px minimum tap target on touch. */
+.header-info-btn::after {
+  content: '';
+  position: absolute;
+  inset: -11px;
 }
 
 .header-info-btn:hover {
@@ -301,6 +310,23 @@
 
   .header-user-info {
     display: none;
+  }
+
+  .header-project-name-btn {
+    min-height: 44px;
+    padding: 8px 8px;
+  }
+
+  /* Header center block would otherwise squeeze the project-name pill and
+     its own padding into whatever's left of a 375-430px viewport next to
+     the logo — dropping the container's side padding here (16px, matching
+     .main-header's own mobile padding a few lines up) reclaims that room. */
+  .header-project-block {
+    max-width: calc(100vw - 32px - 44px);
+  }
+
+  .header-project-name-btn {
+    max-width: 100%;
   }
 }
 

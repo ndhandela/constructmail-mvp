@@ -1,6 +1,8 @@
 import React from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
+import InstallPrompt from './InstallPrompt';
+import BottomNav from './BottomNav';
 import '../styles/AppLayout.css';
 
 // Shared shell for every authenticated product view: full-width sticky
@@ -13,12 +15,14 @@ export default function AppLayout({ userId, onLogout, user, children }) {
   return (
     <div className="app-layout">
       <Header userId={userId} onLogout={onLogout} user={user} />
+      <InstallPrompt />
       <div className="app-layout-body">
         <Sidebar user={user} />
         <main className="content-shell">
           {children}
         </main>
       </div>
+      <BottomNav user={user} onLogout={onLogout} />
     </div>
   );
 }

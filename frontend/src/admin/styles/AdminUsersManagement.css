@@ -81,6 +81,15 @@
   font-size: 18px;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
+}
+
+/* Invisible 44x44 hit area around the 36px button — keeps the visual size
+   while meeting the ~44px minimum tap target on touch. */
+.close-form-btn::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
 }
 
 .close-form-btn:hover {
@@ -159,7 +168,7 @@
 .admin-users-table-wrapper {
   background-color: white;
   border-radius: var(--radius-md);
-  overflow: hidden;
+  overflow-x: auto;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-light);
 }

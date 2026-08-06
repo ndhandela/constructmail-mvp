@@ -1,4 +1,4 @@
-import React, { useState, useRef, useContext } from 'react';
+import React, { useState, useRef, useContext, useEffect } from 'react';
 import PomarLogo from './PomarLogo';
 import NewProjectModal from './NewProjectModal';
 import ProjectInfoSlideOver from './ProjectInfoSlideOver';
@@ -43,6 +43,22 @@ export default function Header({ userId, onLogout, user }) {
   const platformTimer = useRef(null);
   const profileTimer  = useRef(null);
   const projectTimer  = useRef(null);
+  const projectDropdownRef = useRef(null);
+
+  // Touch devices don't fire mouseenter/mouseleave, so onProjectEnter/Leave
+  // below never open this dropdown on mobile — tapping the trigger toggles
+  // it directly instead (see header-project-name-btn's onClick), and this
+  // closes it on an outside tap since there's no hover-leave to rely on.
+  useEffect(() => {
+    if (!projectOpen) return undefined;
+    const handleOutside = (e) => {
+      if (projectDropdownRef.current && !projectDropdownRef.current.contains(e.target)) {
+        setProjectOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', handleOutside);
+    return () => document.removeEventListener('pointerdown', handleOutside);
+  }, [projectOpen]);
 
   const { projects, currentProjectId, setCurrentProjectId, refreshProjects } = useContext(ProjectContext);
   const canCreateProject = PROJECT_CREATOR_ROLES.includes(user?.role);
@@ -123,10 +139,15 @@ export default function Header({ userId, onLogout, user }) {
             <div className="header-project-block">
               <div
                 className="header-dropdown header-project-dropdown"
+                ref={projectDropdownRef}
                 onMouseEnter={onProjectEnter}
                 onMouseLeave={onProjectLeave}
               >
-                <button className="header-project-name-btn">
+                <button
+                  className="header-project-name-btn"
+                  onClick={() => setProjectOpen((open) => !open)}
+                  aria-expanded={projectOpen}
+                >
                   {currentProjectName} <span className="caret">▾</span>
                 </button>
                 {projectOpen && (

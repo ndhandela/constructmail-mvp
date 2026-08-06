@@ -5,6 +5,39 @@ import '../styles/Sidebar.css';
 
 // 2px stroke, round caps/joins — matches the icon spec across the app.
 const ICONS = {
+  home: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  ),
+  more: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none" />
+    </svg>
+  ),
+  profile: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  ),
+  company_settings: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 21h18" />
+      <path d="M5 21V7l7-4 7 4v14" />
+      <path d="M9 21v-6h6v6" />
+    </svg>
+  ),
+  logout: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  ),
   mail: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="2" y="4" width="20" height="16" rx="2" />
@@ -77,14 +110,14 @@ const ICONS = {
   ),
 };
 
-const PROJECT_SCOPED_ITEMS = [
+export const PROJECT_SCOPED_ITEMS = [
   { key: 'mail', path: '/mail', label: 'Mail' },
   { key: 'clash', path: '/clash', label: 'Clash' },
   { key: 'vendors', path: '/vendors', label: 'Vendors' },
   { key: 'connect', path: '/connect', label: 'Connect' },
 ];
 
-const ACCOUNT_LEVEL_ITEMS = [
+export const ACCOUNT_LEVEL_ITEMS = [
   { key: 'marketplace', path: '/marketplace', label: 'Marketplace' },
   { key: 'trust', path: '/trust', label: 'Trust' },
   { key: 'capital', path: '/capital', label: 'Capital Tracker' },
@@ -92,6 +125,8 @@ const ACCOUNT_LEVEL_ITEMS = [
   { key: 'invoice_tracker', path: '/invoices', label: 'Invoice Tracker' },
   { key: 'documents', path: '/documents', label: 'Documents' },
 ];
+
+export { ICONS };
 
 function SidebarItem({ item, active, disabled }) {
   const { guardNavigation } = useUnsavedChanges();

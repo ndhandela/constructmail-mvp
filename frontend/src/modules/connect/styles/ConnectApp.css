@@ -206,7 +206,7 @@
   background: #fff;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-light, #f0eae0);
-  overflow: hidden;
+  overflow-x: auto;
 }
 .queue-table {
   width: 100%;
@@ -446,6 +446,21 @@
   .connect-body { padding: 16px; }
   .connect-header { padding: 14px 16px; }
   .queue-detail-text { display: none; }
+
+  /* Push/dismiss sat at ~30-38px tall with two buttons crammed into one
+     table cell — stacking them and padding out to 44px fixes both the tap
+     target and the crowding at once. */
+  .queue-table td:last-child {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .push-btn, .dismiss-btn {
+    min-height: 44px;
+    margin-left: 0;
+  }
 }
 
 /* PMIS setup card */

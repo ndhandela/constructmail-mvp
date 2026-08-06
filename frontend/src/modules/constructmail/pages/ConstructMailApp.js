@@ -80,7 +80,7 @@ export default function ConstructMailApp({ user, userId, onLogout }) {
 
           {pendingDraftsCount > 0 && (
             <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap',
               background: '#FEF3C7', border: '1px solid #D97706', borderRadius: '10px',
               margin: '0 20px 12px', padding: '10px 16px', fontSize: '0.88rem', color: '#0E1B2C',
             }}>
@@ -90,7 +90,7 @@ export default function ConstructMailApp({ user, userId, onLogout }) {
               <a href="/connect" style={{ textDecoration: 'none' }}>
                 <button style={{
                   background: '#D97706', color: '#fff', border: 'none', padding: '6px 14px',
-                  borderRadius: '8px', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer',
+                  minHeight: '44px', borderRadius: '8px', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer',
                 }}>
                   Go to Action Queue →
                 </button>

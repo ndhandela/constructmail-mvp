@@ -91,6 +91,13 @@ export default function DocumentUploadForm({ userId, projectId, folderId, folder
               <label>File</label>
               <input
                 type="file"
+                // capture="environment" only changes anything on mobile
+                // browsers that support it — it adds a "Take Photo" option
+                // alongside the normal file picker (no accept restriction,
+                // so PDFs/drawings from Files are still pickable there too).
+                // Desktop browsers ignore the attribute entirely and show
+                // their ordinary file picker, unchanged.
+                capture="environment"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
                 required
                 disabled={saving}

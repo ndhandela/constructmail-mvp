@@ -4,8 +4,19 @@
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0E1B2C" />
+
+    <!-- PWA / "installable mobile app" support — iOS Safari doesn't read
+         manifest.json for install behavior, so these Apple-specific tags
+         are required in addition to the manifest (see
+         src/serviceWorkerRegistration.js and src/components/InstallPrompt.js
+         for the rest of the PWA wiring). -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="POMAR" />
 
     <!-- Poppins: brand typeface (the POMAR wordmark's letterforms are baked
          from Poppins Bold, see components/PomarLogo.js) — used for the

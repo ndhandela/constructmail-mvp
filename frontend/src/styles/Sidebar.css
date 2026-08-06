@@ -84,13 +84,10 @@
 }
 
 @media (max-width: 768px) {
+  /* BottomNav (see components/BottomNav.js) replaces this icon rail on
+     phones — keeping both would eat the width Documents/Capital/etc. need
+     for their own content at 375-430px. */
   .app-sidebar {
-    width: 56px;
-  }
-  .sidebar-item {
-    width: 48px;
-  }
-  .sidebar-item-label {
     display: none;
   }
 }
