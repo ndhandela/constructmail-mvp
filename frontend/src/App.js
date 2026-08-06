@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { UnsavedChangesProvider } from './contexts/UnsavedChangesContext';
+import { InstallPromptProvider } from './contexts/InstallPromptContext';
 import Auth from './modules/shared/auth/Auth';
 import SelectRole from './modules/shared/auth/SelectRole';
 import LandingPage from './pages/LandingPage';
@@ -700,8 +701,10 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
 
 export default function AppWithProviders() {
   return (
-    <UnsavedChangesProvider>
-      <App />
-    </UnsavedChangesProvider>
+    <InstallPromptProvider>
+      <UnsavedChangesProvider>
+        <App />
+      </UnsavedChangesProvider>
+    </InstallPromptProvider>
   );
 }

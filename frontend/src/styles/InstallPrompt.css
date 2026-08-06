@@ -17,6 +17,16 @@
   height: 32px;
 }
 
+/* iOS instructional icon — a copy of Safari's own Share icon shown purely
+   as a visual label, not a control (see InstallPrompt.js). Explicit
+   cursor/pointer-events here so it can never read as tappable, even if a
+   future style change adds hover/active states to .install-banner-icon
+   generally. */
+.install-banner-icon-static {
+  cursor: default;
+  pointer-events: none;
+}
+
 .install-banner-text {
   display: flex;
   flex-direction: column;

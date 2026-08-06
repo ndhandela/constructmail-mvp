@@ -11,6 +11,11 @@ import '../styles/AppLayout.css';
 // duplicating <Header>/<Footer> — app-to-app navigation is still a full page
 // load (this codebase has no client router), so AppLayout simply remounts
 // on each product switch, same as Header did before.
+//
+// InstallPromptContext (shared by Header's "How to Install the App" menu
+// item and the InstallPrompt banner below) is provided at the App.js root,
+// not here — Header also renders on public/marketing routes outside
+// AppLayout (see App.js), so the provider has to cover those too.
 export default function AppLayout({ userId, onLogout, user, children }) {
   return (
     <div className="app-layout">

@@ -2,6 +2,7 @@ import React, { useState, useRef, useContext, useEffect } from 'react';
 import PomarLogo from './PomarLogo';
 import NewProjectModal from './NewProjectModal';
 import ProjectInfoSlideOver from './ProjectInfoSlideOver';
+import InstallHelpModal from './InstallHelpModal';
 import { ProjectContext, ALL_PROJECTS } from '../contexts/ProjectContext';
 import { getProductById } from '../config/products';
 import '../styles/Header.css';
@@ -39,6 +40,7 @@ export default function Header({ userId, onLogout, user }) {
   const [projectOpen, setProjectOpen] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [showInstallHelp, setShowInstallHelp] = useState(false);
 
   const platformTimer = useRef(null);
   const profileTimer  = useRef(null);
@@ -313,6 +315,23 @@ export default function Header({ userId, onLogout, user }) {
 
                 <div className="profile-dropdown-divider" />
 
+                <button
+                  type="button"
+                  className="dropdown-item profile-dropdown-item"
+                  onClick={() => { setProfileOpen(false); setShowInstallHelp(true); }}
+                >
+                  <span className="profile-dropdown-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 3v12" />
+                      <path d="m8 7 4-4 4 4" />
+                      <path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" />
+                    </svg>
+                  </span>
+                  How to Install the App
+                </button>
+
+                <div className="profile-dropdown-divider" />
+
                 <a
                   href="/about"
                   className="dropdown-item profile-dropdown-item"
@@ -359,6 +378,10 @@ export default function Header({ userId, onLogout, user }) {
           userId={userId}
           onClose={() => setInfoOpen(false)}
         />
+      )}
+
+      {showInstallHelp && (
+        <InstallHelpModal onClose={() => setShowInstallHelp(false)} />
       )}
     </header>
   );

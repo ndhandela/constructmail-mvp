@@ -1,64 +1,50 @@
 import React, { useEffect, useState } from 'react';
+import { useInstallPrompt } from '../contexts/InstallPromptContext';
+import { IOSInstallIcon, IOS_INSTALL_HEADING, IOS_INSTALL_COPY } from './IOSInstallSteps';
 import '../styles/InstallPrompt.css';
 
 const IOS_DISMISSED_KEY = 'pomar_install_banner_ios_dismissed';
 const ANDROID_DISMISSED_KEY = 'pomar_install_banner_android_dismissed';
 
-function isStandalone() {
-  return (
-    window.matchMedia?.('(display-mode: standalone)').matches ||
-    window.navigator.standalone === true
-  );
-}
-
-function isIOSSafari() {
-  const ua = window.navigator.userAgent;
-  // iPadOS 13+ reports as "Macintosh" with touch support, not "iPad" —
-  // maxTouchPoints is the standard way to still catch it.
-  const isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  // Exclude other iOS browsers (Chrome/Firefox/Edge on iOS all use
-  // WebKit and include "Safari" in the UA too) — none of them expose
-  // beforeinstallprompt or a native install flow, and "Tap Share, then Add
-  // to Home Screen" is Safari-chrome-specific instructions that don't
-  // apply to those browsers' UI.
-  const isSafari = /safari/i.test(ua) && !/crios|fxios|edgios|opios/i.test(ua);
-  return isIOS && isSafari;
-}
-
 // Custom "Install POMAR" banner (Android/Chrome via beforeinstallprompt) and
-// the iOS Safari instructional banner ("Tap Share, then Add to Home
-// Screen") — iOS never fires beforeinstallprompt, there's no programmatic
-// install flow there. Mounted once in AppLayout so it's consistent across
+// the iOS Safari instructional banner (Safari toolbar Share icon → "Add to
+// Home Screen") — iOS never fires beforeinstallprompt, there's no
+// programmatic install flow there, so the iOS banner never renders a
+// tappable install control, only instructional text + an inert icon.
+// Mounted once in AppLayout so it's consistent across
 // every authenticated product module. Both dismiss permanently via
-// localStorage so this never nags on every visit.
+// localStorage so this never nags on every visit; the permanent "How to
+// Install the App" entry in the profile menu (InstallHelpModal.js) is the
+// way to retrieve these instructions again after dismissing. Platform
+// detection and the deferred install-prompt event both come from
+// InstallPromptContext, shared with that modal rather than duplicated here.
 export default function InstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const { isStandalone, isIOSSafari, canPromptInstall, promptInstall } = useInstallPrompt();
   const [showAndroidBanner, setShowAndroidBanner] = useState(false);
   const [showIOSBanner, setShowIOSBanner] = useState(false);
 
   useEffect(() => {
-    if (isStandalone()) return undefined;
+    if (isStandalone) return;
 
-    if (!localStorage.getItem(IOS_DISMISSED_KEY) && isIOSSafari()) {
-      setShowIOSBanner(true);
+    // iOS is authoritative: there is no programmatic install trigger there
+    // (beforeinstallprompt never fires on iOS Safari), so if isIOSSafari is
+    // true this must always be the instructional banner and never the
+    // Android CTA-button banner below — regardless of what canPromptInstall
+    // happens to be. A stray/misdetected beforeinstallprompt firing on iOS
+    // (e.g. a spoofed UA, an in-app browser) must not surface a dead
+    // "Install" button.
+    if (isIOSSafari) {
+      if (!localStorage.getItem(IOS_DISMISSED_KEY)) setShowIOSBanner(true);
+      return;
     }
 
-    if (localStorage.getItem(ANDROID_DISMISSED_KEY)) return undefined;
-
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
+    if (!localStorage.getItem(ANDROID_DISMISSED_KEY) && canPromptInstall) {
       setShowAndroidBanner(true);
-    };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  }, []);
+    }
+  }, [isStandalone, isIOSSafari, canPromptInstall]);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    setDeferredPrompt(null);
+    await promptInstall();
     setShowAndroidBanner(false);
   };
 
@@ -71,6 +57,29 @@ export default function InstallPrompt() {
     localStorage.setItem(IOS_DISMISSED_KEY, '1');
     setShowIOSBanner(false);
   };
+
+  // iOS checked first — on iOS this must always win over the Android
+  // CTA-button banner (see the effect above), never the other way around.
+  if (showIOSBanner) {
+    return (
+      <div className="install-banner" role="region" aria-label="Add POMAR to Home Screen">
+        {/* Visual label only — a copy of Safari's own toolbar icon, not a
+            control for it. No onClick, no button wrapper, no pointer
+            cursor (see IOSInstallSteps.js): iOS has no programmatic
+            install trigger, so nothing here can act as one. */}
+        <div className="install-banner-icon install-banner-icon-static">
+          <IOSInstallIcon />
+        </div>
+        <div className="install-banner-text">
+          <strong>{IOS_INSTALL_HEADING}</strong>
+          <span>{IOS_INSTALL_COPY}</span>
+        </div>
+        <button type="button" className="install-banner-dismiss" onClick={dismissIOS} aria-label="Dismiss">
+          ×
+        </button>
+      </div>
+    );
+  }
 
   if (showAndroidBanner) {
     return (
@@ -92,27 +101,6 @@ export default function InstallPrompt() {
           Install
         </button>
         <button type="button" className="install-banner-dismiss" onClick={dismissAndroid} aria-label="Dismiss">
-          ×
-        </button>
-      </div>
-    );
-  }
-
-  if (showIOSBanner) {
-    return (
-      <div className="install-banner" role="region" aria-label="Add POMAR to Home Screen">
-        <div className="install-banner-icon" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0E1B2C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 3v12" />
-            <path d="m8 7 4-4 4 4" />
-            <path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" />
-          </svg>
-        </div>
-        <div className="install-banner-text">
-          <strong>Add POMAR to your Home Screen</strong>
-          <span>Tap Share, then "Add to Home Screen".</span>
-        </div>
-        <button type="button" className="install-banner-dismiss" onClick={dismissIOS} aria-label="Dismiss">
           ×
         </button>
       </div>
