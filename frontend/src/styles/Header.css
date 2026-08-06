@@ -2,8 +2,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
-  height: 64px;
+  /* env(safe-area-inset-top) is 0 in a normal browser tab (the address bar
+     already reserves that space) but non-zero once installed to the home
+     screen on iOS — apple-mobile-web-app-status-bar-style=black-translucent
+     (index.html) makes the status bar overlay the page instead of pushing
+     it down, so without this the sticky header (and the Login button in
+     it) renders flush under the clock/status bar. min-height instead of a
+     fixed height so the box can grow by exactly the inset amount instead
+     of squishing its content into the same 64px. */
+  padding: env(safe-area-inset-top, 0) 24px 0;
+  min-height: 64px;
   background: #fff;
   border-bottom: 1px solid var(--sandstone);
   position: sticky;
@@ -296,8 +304,12 @@
 /* Mobile */
 @media (max-width: 768px) {
   .main-header {
-    padding: 0 16px;
-    height: 60px;
+    /* Same safe-area reasoning as the base .main-header rule above — this
+       block overrides padding/height wholesale on exactly the viewport
+       widths real phones use, so it has to redo the safe-area-inset-top
+       treatment too or it silently cancels the fix there. */
+    padding: env(safe-area-inset-top, 0) 16px 0;
+    min-height: 60px;
   }
 
   .header-nav {
