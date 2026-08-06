@@ -136,6 +136,7 @@ async def upload_document(
     project_id: int = Form(...),
     category: Optional[str] = Form(None),
     folder_id: Optional[int] = Form(None),
+    confirm_overwrite: bool = Form(False),
     file: UploadFile = File(...),
 ):
     if not file or not file.filename:
@@ -150,6 +151,28 @@ async def upload_document(
             await require_folder_in_project(conn, folder_id, project_id)
             await require_can_upload_to_folder(conn, access, folder_id)
 
+        # Same filename in the same project+folder collides on the R2 key
+        # (services/r2_storage._documents_storage_key has no document-id
+        # component), so this doubles as "would this upload silently
+        # overwrite an existing object" — checked before any R2/DB write so
+        # an unconfirmed collision leaves no trace to undo.
+        existing = await conn.fetchrow(
+            f"""SELECT {DOCUMENT_COLUMNS} {DOCUMENT_JOINS}
+                WHERE d.project_id = $1 AND d.filename = $2 AND d.deleted_at IS NULL
+                  AND d.folder_id IS NOT DISTINCT FROM $3""",
+            project_id, file.filename, folder_id,
+        )
+        if existing and not confirm_overwrite:
+            location = "this folder" if folder_id is not None else "the project root"
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "collision": True,
+                    "message": f'A file named "{file.filename}" already exists in {location}. Replace it?',
+                    "existing_document": document_response(dict(existing)),
+                },
+            )
+
         content = await file.read()
         if len(content) > MAX_FILE_SIZE:
             raise HTTPException(400, "File must be smaller than 50MB")
@@ -160,6 +183,14 @@ async def upload_document(
         # need to insert a placeholder row before uploading: the key is
         # already fully known up front.
         r2_key = await r2_storage.upload_document(project_id, file.filename, content, folder_id=folder_id)
+
+        if existing:
+            # The R2 object was just overwritten in place, so the old row
+            # would otherwise keep stale metadata (size/content-type) while
+            # pointing at the new object's bytes. Soft-delete it same as the
+            # normal delete endpoint, rather than leaving a phantom duplicate
+            # in list views.
+            await conn.execute("UPDATE documents SET deleted_at = NOW() WHERE id = $1", existing["id"])
 
         row = await conn.fetchrow(
             """INSERT INTO documents (company_id, project_id, folder_id, filename, r2_key, content_type, size_bytes,
