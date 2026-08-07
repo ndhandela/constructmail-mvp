@@ -1,5 +1,6 @@
 import React, { useContext, useState } from 'react';
 import ModuleLockedNotice, { isModuleLocked } from '../../../components/ModuleLockedNotice';
+import BackToProjectLink from '../../../components/BackToProjectLink';
 import DailyLogsList from './DailyLogsList';
 import DailyLogForm from './DailyLogForm';
 import ProjectSubsPanel from '../../project-subs/components/ProjectSubsPanel';
@@ -152,6 +153,7 @@ export default function DailyLogsApp({ user, userId }) {
 
   return (
     <div className="dailylogs-app">
+      <BackToProjectLink user={user} />
       <div className="dailylogs-hero">
         <div className="dailylogs-badge">POMAR DAILY LOGS</div>
         <h1>Replace the paper logbook</h1>

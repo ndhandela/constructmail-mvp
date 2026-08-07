@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import ModuleLockedNotice, { isModuleLocked } from '../../../components/ModuleLockedNotice';
+import BackToProjectLink from '../../../components/BackToProjectLink';
 import CapitalTrackerDashboard from './CapitalTrackerDashboard';
 import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
 import '../styles/CapitalTrackerApp.css';
@@ -33,6 +34,7 @@ export default function CapitalTrackerApp({ user, userId }) {
 
   return (
     <div className="capital-app">
+      <BackToProjectLink user={user} />
       <div className="capital-hero">
         <div className="capital-badge">POMAR CAPITAL TRACKER</div>
         <h1>Budget vs. actual, without the spreadsheet</h1>

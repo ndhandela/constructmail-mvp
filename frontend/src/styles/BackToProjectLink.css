@@ -1,0 +1,12 @@
+.back-to-project-link {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate);
+  text-decoration: none;
+  margin-bottom: 12px;
+}
+
+.back-to-project-link:hover {
+  color: var(--saffron);
+}

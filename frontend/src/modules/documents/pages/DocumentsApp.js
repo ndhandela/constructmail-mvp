@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react';
 import ModuleLockedNotice, { isModuleLocked } from '../../../components/ModuleLockedNotice';
+import BackToProjectLink from '../../../components/BackToProjectLink';
 import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
 import { API_BASE_URL, formatFileSize, formatDate } from '../documentsUtils';
 import DocumentUploadForm from '../components/DocumentUploadForm';
@@ -161,6 +162,7 @@ export default function DocumentsApp({ user, userId }) {
 
   return (
     <div className="documents-app">
+      <BackToProjectLink user={user} />
       <div className="documents-hero">
         <div className="documents-badge">POMAR DOCUMENTS</div>
         <h1>Project documents, shared safely</h1>

@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react';
 import ModuleLockedNotice, { isModuleLocked } from '../../../components/ModuleLockedNotice';
+import BackToProjectLink from '../../../components/BackToProjectLink';
 import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
 import { API_BASE_URL, formatCurrency, statusLabel } from '../invoicesUtils';
 import InvoiceUploadForm from '../components/InvoiceUploadForm';
@@ -113,6 +114,7 @@ export default function InvoiceTrackerApp({ user, userId }) {
 
   return (
     <div className="invoices-app">
+      <BackToProjectLink user={user} />
       <div className="invoices-hero">
         <div className="invoices-badge">POMAR INVOICE TRACKER</div>
         <h1>Vendor invoices, tracked in one place</h1>
