@@ -137,6 +137,8 @@ function App() {
           else if (path === '/daily-logs') setCurrentProduct('daily-logs');
           else if (path === '/invoices') setCurrentProduct('invoices');
           else if (path === '/documents') setCurrentProduct('documents');
+          else if (path === '/projects-overview') setCurrentProduct('projects-overview');
+          else if (path === '/project') setCurrentProduct('project');
           else setCurrentProduct('dashboard');
           window.history.replaceState({}, document.title, window.location.pathname);
         } else {
@@ -180,6 +182,8 @@ function App() {
       if (path === '/daily-logs') setCurrentProduct('daily-logs');
       if (path === '/invoices') setCurrentProduct('invoices');
       if (path === '/documents') setCurrentProduct('documents');
+      if (path === '/projects-overview') setCurrentProduct('projects-overview');
+      if (path === '/project') setCurrentProduct('project');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
