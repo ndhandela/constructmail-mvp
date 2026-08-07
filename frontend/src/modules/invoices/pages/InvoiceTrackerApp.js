@@ -114,8 +114,8 @@ export default function InvoiceTrackerApp({ user, userId }) {
 
   return (
     <div className="invoices-app">
-      <BackToProjectLink user={user} projectName={selectedProject?.name} />
       <div className="invoices-hero">
+        <BackToProjectLink user={user} projectName={selectedProject?.name} />
         <div className="invoices-badge">POMAR INVOICE TRACKER</div>
         <h1>Vendor invoices, tracked in one place</h1>
         <p>Upload invoice PDFs, tag them to a project or budget line, and track paid vs. pending — no more digging through email.</p>

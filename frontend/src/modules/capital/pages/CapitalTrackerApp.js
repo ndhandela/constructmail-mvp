@@ -34,8 +34,8 @@ export default function CapitalTrackerApp({ user, userId }) {
 
   return (
     <div className="capital-app">
-      <BackToProjectLink user={user} projectName={selectedProject?.name} />
       <div className="capital-hero">
+        <BackToProjectLink user={user} projectName={selectedProject?.name} />
         <div className="capital-badge">POMAR CAPITAL TRACKER</div>
         <h1>Budget vs. actual, without the spreadsheet</h1>
         <p>Track budgeted, committed, and actual spend by category for every project — one live view instead of a shared spreadsheet.</p>

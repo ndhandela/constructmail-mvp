@@ -162,8 +162,8 @@ export default function DocumentsApp({ user, userId }) {
 
   return (
     <div className="documents-app">
-      <BackToProjectLink user={user} projectName={selectedProject?.name} />
       <div className="documents-hero">
+        <BackToProjectLink user={user} projectName={selectedProject?.name} />
         <div className="documents-badge">POMAR DOCUMENTS</div>
         <h1>Project documents, shared safely</h1>
         <p>Upload contracts, drawings, and submittals against a project, and control exactly which Sub companies can see them.</p>

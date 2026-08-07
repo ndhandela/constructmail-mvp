@@ -153,8 +153,8 @@ export default function DailyLogsApp({ user, userId }) {
 
   return (
     <div className="dailylogs-app">
-      <BackToProjectLink user={user} projectName={selectedProject?.name} />
       <div className="dailylogs-hero">
+        <BackToProjectLink user={user} projectName={selectedProject?.name} />
         <div className="dailylogs-badge">POMAR DAILY LOGS</div>
         <h1>Replace the paper logbook</h1>
         <p>Log crew, weather, delays, and site photos from your phone in under two minutes — one live record per project instead of a notebook in the site trailer.</p>
