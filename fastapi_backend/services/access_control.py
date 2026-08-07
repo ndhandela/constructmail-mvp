@@ -54,6 +54,29 @@ async def require_feature_flag(conn, user_id: int, feature_key: str):
         raise HTTPException(403, f"The {feature_key} feature isn't enabled for your account.")
 
 
+async def is_feature_enabled(conn, company_id, feature_key: str) -> bool:
+    """Non-raising, standalone flag check for UI-behavior toggles that
+    aren't a licensable product module — e.g. the new 3-tier left nav
+    (feature_key 'new_nav'). Deliberately NOT added to MODULE_KEYS: that
+    tuple drives get_active_modules' restricted_module narrowing, where a
+    team member scoped to one module (e.g. 'mail') would have every other
+    key forced false — which would make a UI toggle like this impossible to
+    ever enable for a restricted account. Same company-then-global
+    precedence as require_feature_flag, just without the 403."""
+    if company_id is None:
+        return False
+    row = await conn.fetchrow(
+        "SELECT is_enabled FROM feature_flags WHERE company_id = $1 AND feature_key = $2",
+        company_id, feature_key,
+    )
+    if row is None:
+        row = await conn.fetchrow(
+            "SELECT is_enabled FROM feature_flags WHERE is_global = true AND feature_key = $1",
+            feature_key,
+        )
+    return bool(row["is_enabled"]) if row else False
+
+
 async def get_active_modules(conn, company_id, user_id=None) -> dict:
     """Non-raising counterpart to require_feature_flag for the module keys,
     used to render UI lock/unlock state (e.g. ModuleLockedNotice, Sidebar).

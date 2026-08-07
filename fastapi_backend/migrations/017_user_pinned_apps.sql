@@ -1,0 +1,20 @@
+-- Migration: 017_user_pinned_apps.sql
+-- Documents the pinned-nav-favorites schema added by fastapi_backend/db.py's
+-- init_db() on every startup (idempotent CREATE TABLE IF NOT EXISTS /
+-- ALTER TABLE ... ADD COLUMN IF NOT EXISTS — no raw SQL to run here, this is
+-- a record of what that block does):
+--
+--   * New table: user_pinned_apps (id, user_id FK -> users, app_key,
+--     pinned_at, UNIQUE(user_id, app_key)). Per-user, not per-project — a
+--     GC's pinned favorites in the new left nav follow them across whichever
+--     project is currently selected in ProjectContext. app_key is a free
+--     string (not FK'd to anything) matching one of Project Detail's
+--     category-card keys: budget, schedule, invoices, daily_logs,
+--     project_subs, documents.
+--
+--   * users.pinned_apps_seeded (boolean, default false) — lets
+--     GET /api/user-preferences/pinned-apps lazy-seed the Budget+Schedule
+--     defaults exactly once per user on their first request, then flip the
+--     flag. Without this, a user who unpins both defaults would see them
+--     silently reappear on next load instead of a genuinely empty nav
+--     section.

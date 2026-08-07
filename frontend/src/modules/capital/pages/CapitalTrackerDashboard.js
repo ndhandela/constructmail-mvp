@@ -14,6 +14,12 @@ const TABS = [
   { key: 'spendbycategory', label: 'Spend by Category' },
 ];
 
+// Deprecated (not removed — kept live behind the 'new_nav' flag as a
+// rollback point) now that Project Detail's Budget/Schedule category cards
+// reach BudgetItemsTab/SpendByCategoryTab/MilestonesTab directly (see
+// modules/capital/pages/BudgetOverview.js and modules/project-hub). This
+// full 4-tab dashboard, and the /capital route it lives on, keep working
+// unchanged for anyone not yet on the new nav.
 export default function CapitalTrackerDashboard({ userId, user, project }) {
   const [activeTab, setActiveTab] = useState('workitems');
 
@@ -21,6 +27,11 @@ export default function CapitalTrackerDashboard({ userId, user, project }) {
 
   return (
     <div className="capital-dashboard">
+      {user?.new_nav_enabled && (
+        <p className="capital-muted" style={{ marginBottom: 12 }}>
+          Budget and Schedule are also available from Project Detail now.
+        </p>
+      )}
       <div className="capital-tabs">
         {TABS.map((tab) => (
           <button

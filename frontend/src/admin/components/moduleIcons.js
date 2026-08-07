@@ -73,6 +73,14 @@ export const MODULE_ICONS = {
       <polyline points="13 2 13 8 19 8" />
     </svg>
   ),
+  new_nav: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="18" rx="1" />
+      <line x1="14" y1="7" x2="21" y2="7" />
+      <line x1="14" y1="12" x2="21" y2="12" />
+      <line x1="14" y1="17" x2="21" y2="17" />
+    </svg>
+  ),
 };
 
 // Canonical module list for the admin flags UI. `gated: false` marks
@@ -91,6 +99,7 @@ export const MODULE_DEFS = [
   { key: 'daily_logs', label: 'Daily Logs', gated: true },
   { key: 'invoice_tracker', label: 'Invoice Tracker', gated: true },
   { key: 'documents', label: 'Documents', gated: true },
+  { key: 'new_nav', label: 'New Left Nav', gated: true, note: 'Project-tracking redesign rollout' },
 ];
 
 export const GATED_MODULE_KEYS = MODULE_DEFS.filter((m) => m.gated).map((m) => m.key);

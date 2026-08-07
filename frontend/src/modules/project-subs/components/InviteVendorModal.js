@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { API_BASE_URL } from '../dailyLogsUtils';
+import { API_BASE_URL } from '../projectSubsUtils';
 
 export default function InviteVendorModal({ userId, project, onInvited, onCancel }) {
   const [mode, setMode] = useState('search'); // 'search' | 'manual'

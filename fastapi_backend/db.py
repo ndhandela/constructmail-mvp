@@ -1320,6 +1320,26 @@ async def init_db():
             -- there's no per-document override for documents inside a folder.
             ALTER TABLE documents ADD COLUMN IF NOT EXISTS folder_id INT REFERENCES folders(id) ON DELETE SET NULL;
             CREATE INDEX IF NOT EXISTS documents_folder_id_idx ON documents (folder_id);
+
+            -- Left-nav pinned favorites (migration 017): per-user, not
+            -- per-project — a GC's pin choices follow them across whichever
+            -- project is currently selected. app_key is one of the Project
+            -- Detail category-card keys (budget/schedule/invoices/daily_logs/
+            -- project_subs/documents), not enforced by a DB check so new
+            -- cards can be added without a migration. pinned_apps_seeded on
+            -- users lets GET /api/user-preferences/pinned-apps lazy-seed the
+            -- Budget+Schedule defaults exactly once per user, so a user who
+            -- later unpins everything gets a genuinely empty list instead of
+            -- the defaults reappearing.
+            CREATE TABLE IF NOT EXISTS user_pinned_apps (
+                id SERIAL PRIMARY KEY,
+                user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                app_key VARCHAR(50) NOT NULL,
+                pinned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                UNIQUE(user_id, app_key)
+            );
+            CREATE INDEX IF NOT EXISTS user_pinned_apps_user_id_idx ON user_pinned_apps (user_id);
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS pinned_apps_seeded BOOLEAN NOT NULL DEFAULT false;
         """)
 
         await _backfill_clash_project_ids(conn)

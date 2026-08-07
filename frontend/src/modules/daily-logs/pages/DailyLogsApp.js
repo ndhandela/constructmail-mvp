@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import ModuleLockedNotice, { isModuleLocked } from '../../../components/ModuleLockedNotice';
 import DailyLogsList from './DailyLogsList';
 import DailyLogForm from './DailyLogForm';
-import VendorsTab from './VendorsTab';
+import ProjectSubsPanel from '../../project-subs/components/ProjectSubsPanel';
 import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
 import { isProjectOwner } from '../../capital/capitalUtils';
 import { API_BASE_URL } from '../dailyLogsUtils';
@@ -177,7 +177,12 @@ export default function DailyLogsApp({ user, userId }) {
           <p className="dailylogs-muted">Select a project from the header to view its logs.</p>
         ) : (
           <>
-            {owner && (
+            {/* Phase 3 cutover: this Vendors tab is redundant on the new nav
+                — Project Detail's "Project - Subs" card reaches the same
+                ProjectSubsPanel directly (see modules/project-subs). Only
+                hidden behind 'new_nav' so unflagged accounts keep this
+                exactly as it was, for rollback. */}
+            {owner && !user?.new_nav_enabled && (
               <div className="dailylogs-tabs">
                 {TABS.map((tab) => (
                   <button
@@ -191,8 +196,8 @@ export default function DailyLogsApp({ user, userId }) {
               </div>
             )}
 
-            {owner && activeTab === 'vendors' ? (
-              <VendorsTab userId={userId} user={user} project={selectedProject} />
+            {owner && !user?.new_nav_enabled && activeTab === 'vendors' ? (
+              <ProjectSubsPanel userId={userId} user={user} project={selectedProject} />
             ) : (
               <>
                 <div className="dailylogs-dashboard-header">

@@ -1,10 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { API_BASE_URL } from '../dailyLogsUtils';
+import { API_BASE_URL } from '../projectSubsUtils';
 import VendorAccessTable from './VendorAccessTable';
 import InviteVendorModal from './InviteVendorModal';
 import VendorLogsModal from './VendorLogsModal';
+import '../../daily-logs/styles/DailyLogsApp.css';
 
-export default function VendorsTab({ userId, user, project }) {
+// Tracks which subs are invited to log site work on THIS specific project
+// (project_vendor_access) — distinct from the separate POMAR Vendors
+// directory module, which is a company-wide rolodex for browsing/hiring
+// subs across all projects. Shared by DailyLogsApp.js's "Vendors" tab and
+// the Project Detail page's "Project - Subs" card so both stay in sync.
+export default function ProjectSubsPanel({ userId, user, project }) {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -59,7 +65,7 @@ export default function VendorsTab({ userId, user, project }) {
   return (
     <div className="dailylogs-tab-panel">
       <div className="dailylogs-dashboard-header">
-        <h2>Vendors</h2>
+        <h2>Project - Subs</h2>
         <button className="dailylogs-btn-primary" onClick={() => setShowInviteModal(true)}>+ Invite vendor</button>
       </div>
 

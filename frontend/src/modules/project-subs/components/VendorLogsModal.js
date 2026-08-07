@@ -1,5 +1,5 @@
 import React from 'react';
-import DailyLogsList from './DailyLogsList';
+import DailyLogsList from '../../daily-logs/pages/DailyLogsList';
 
 export default function VendorLogsModal({ userId, user, project, vendor, onClose }) {
   return (

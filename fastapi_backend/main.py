@@ -10,6 +10,7 @@ from routers import connect as connect_router
 from routers import trust, trust_uploads, trust_qpr, trust_alerts, capital, daily_logs, project_vendor_access
 from routers import invoices, invoice_accountant_access
 from routers import documents
+from routers import user_preferences
 from services import trust_reminders, marketplace_verification
 
 
@@ -64,6 +65,7 @@ app.include_router(project_vendor_access.router)
 app.include_router(invoices.router)
 app.include_router(invoice_accountant_access.router)
 app.include_router(documents.router)
+app.include_router(user_preferences.router)
 
 
 @app.exception_handler(Exception)

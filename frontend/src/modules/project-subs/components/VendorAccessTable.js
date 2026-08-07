@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatDate } from '../dailyLogsUtils';
+import { formatDate } from '../projectSubsUtils';
 
 function statusBadge(vendor) {
   if (vendor.status === 'invited') return { label: 'Invited', className: 'dailylogs-status-invited' };

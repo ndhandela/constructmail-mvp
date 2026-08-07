@@ -38,6 +38,8 @@ import DailyLogsApp from './modules/daily-logs/pages/DailyLogsApp';
 import InvoiceTrackerApp from './modules/invoices/pages/InvoiceTrackerApp';
 import AccountantInvoiceView from './modules/invoices/pages/AccountantInvoiceView';
 import DocumentsApp from './modules/documents/pages/DocumentsApp';
+import ProjectsOverviewPage from './modules/project-hub/pages/ProjectsOverviewPage';
+import ProjectDetailPage from './modules/project-hub/pages/ProjectDetailPage';
 
 // Modules
 import ConstructMailApp from './modules/constructmail/pages/ConstructMailApp';
@@ -50,7 +52,7 @@ import './styles/components.css';
 import './App.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/company-settings', '/trust', '/capital', '/daily-logs', '/invoices', '/documents'];
+const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/company-settings', '/trust', '/capital', '/daily-logs', '/invoices', '/documents', '/projects-overview', '/project'];
 
 // The "Your Tools" landing grid and the Projects edit page share the
 // /dashboard route — the edit page is reached only via the project info
@@ -465,6 +467,16 @@ function App() {
 
   // ── Detect /dashboard path for logged-in users ──────────────────────────
 if (userId && path === '/dashboard') {
+  // Phase 3 cutover: for accounts on the new nav, the project-tracking
+  // Dashboard (/projects-overview) replaces this "Your Tools" product grid
+  // as the post-login landing page. Gated the same way as everything else
+  // in this rollout — an unflagged account's /dashboard (including the
+  // ?view=projects-edit sub-view, deliberately excluded here) is completely
+  // untouched, so this is a safe rollback point, not a deletion.
+  if (user?.new_nav_enabled && new URLSearchParams(window.location.search).get('view') !== 'projects-edit') {
+    window.location.href = '/projects-overview';
+    return null;
+  }
   return (
     <ProjectProvider userId={userId}>
       <AppLayout userId={userId} onLogout={handleLogout} user={user}>
@@ -690,6 +702,35 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
         <AppLayout userId={userId} onLogout={handleLogout} user={user}>
           <ProjectGate userId={userId} user={user}>
             <DocumentsApp user={user} userId={userId} />
+          </ProjectGate>
+        </AppLayout>
+      </ProjectProvider>
+    );
+  }
+
+  // ── Project Hub: Dashboard + Project Detail ──────────────────────────
+  // Phase 1 of the nav/project-tracking redesign — reachable by direct URL
+  // only, not yet linked from Sidebar/BottomNav. Same wiring as the other
+  // generic-projects-table modules (shared header/sidebar project switcher,
+  // gated by ProjectGate). No feature flag yet since these aren't in nav.
+  if (currentProduct === 'projects-overview' || path === '/projects-overview') {
+    return (
+      <ProjectProvider userId={userId}>
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <ProjectGate userId={userId} user={user}>
+            <ProjectsOverviewPage user={user} userId={userId} />
+          </ProjectGate>
+        </AppLayout>
+      </ProjectProvider>
+    );
+  }
+
+  if (currentProduct === 'project' || path === '/project') {
+    return (
+      <ProjectProvider userId={userId}>
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <ProjectGate userId={userId} user={user}>
+            <ProjectDetailPage user={user} userId={userId} />
           </ProjectGate>
         </AppLayout>
       </ProjectProvider>

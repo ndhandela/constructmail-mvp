@@ -7,7 +7,7 @@ from typing import Optional
 from db import get_pool
 from services.email_service import send_email
 from services.project_helpers import accept_pending_invites
-from services.access_control import get_active_modules
+from services.access_control import get_active_modules, is_feature_enabled
 from services.magic_link import issue_magic_link
 from services.marketplace_sessions import issue_session_token
 import os
@@ -114,6 +114,11 @@ async def get_me(userId: int):
             raise HTTPException(401, "User not found")
         user = dict(row)
         user["active_modules"] = await get_active_modules(conn, user["company_id"], userId)
+        # Gates the new 3-tier left nav (Sidebar.js) — rolled out per test
+        # account/company before flipping it for everyone, same mechanism as
+        # every other feature flag, just not a licensable module (see
+        # is_feature_enabled's docstring for why it's not in active_modules).
+        user["new_nav_enabled"] = await is_feature_enabled(conn, user["company_id"], "new_nav")
         user["company_region"] = await conn.fetchval(
             "SELECT region FROM companies WHERE id = $1", user["company_id"]
         ) if user["company_id"] else None

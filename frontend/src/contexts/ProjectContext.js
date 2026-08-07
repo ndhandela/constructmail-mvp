@@ -8,6 +8,7 @@ export const ProjectContext = createContext({
   projects: [],
   currentProjectId: ALL_PROJECTS,
   setCurrentProjectId: () => {},
+  lastProjectId: null,
   loading: true,
   refreshProjects: () => {},
 });
@@ -16,15 +17,28 @@ function storageKey(userId) {
   return `pomar_project_${userId}`;
 }
 
+// Separate from storageKey: currentProjectId can legitimately be the
+// ALL_PROJECTS sentinel, but the new left nav's "Project" item (Sidebar.js)
+// needs a specific project to land on even from that state, so it never
+// dead-ends into Project Detail's "select a project" fallback.
+function lastProjectStorageKey(userId) {
+  return `pomar_last_project_${userId}`;
+}
+
 export function ProjectProvider({ userId, children }) {
   const [projects, setProjects] = useState([]);
   const [currentProjectId, setCurrentProjectIdState] = useState(ALL_PROJECTS);
+  const [lastProjectId, setLastProjectId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const setCurrentProjectId = useCallback((projectId) => {
     setCurrentProjectIdState(projectId);
     if (userId) {
       localStorage.setItem(storageKey(userId), projectId);
+      if (projectId !== ALL_PROJECTS) {
+        localStorage.setItem(lastProjectStorageKey(userId), projectId);
+        setLastProjectId(projectId);
+      }
     }
   }, [userId]);
 
@@ -51,12 +65,11 @@ export function ProjectProvider({ userId, children }) {
 
         const saved = localStorage.getItem(storageKey(userId));
         const savedIsValid = saved === ALL_PROJECTS || list.some((p) => String(p.id) === saved);
-        if (savedIsValid) {
-          setCurrentProjectIdState(saved);
-        } else if (list.length > 0) {
-          setCurrentProjectIdState(String(list[0].id));
-        } else {
-          setCurrentProjectIdState(ALL_PROJECTS);
+        const resolved = savedIsValid ? saved : list.length > 0 ? String(list[0].id) : ALL_PROJECTS;
+        setCurrentProjectIdState(resolved);
+        if (resolved !== ALL_PROJECTS) {
+          localStorage.setItem(lastProjectStorageKey(userId), resolved);
+          setLastProjectId(resolved);
         }
       })
       .catch((err) => {
@@ -66,6 +79,14 @@ export function ProjectProvider({ userId, children }) {
         setLoading(false);
       });
   }, [userId, setCurrentProjectId]);
+
+  useEffect(() => {
+    if (userId) {
+      setLastProjectId(localStorage.getItem(lastProjectStorageKey(userId)));
+    } else {
+      setLastProjectId(null);
+    }
+  }, [userId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,7 +100,7 @@ export function ProjectProvider({ userId, children }) {
   const refreshProjects = useCallback((selectProjectId) => fetchProjects(selectProjectId), [fetchProjects]);
 
   return (
-    <ProjectContext.Provider value={{ projects, currentProjectId, setCurrentProjectId, loading, refreshProjects }}>
+    <ProjectContext.Provider value={{ projects, currentProjectId, setCurrentProjectId, lastProjectId, loading, refreshProjects }}>
       {children}
     </ProjectContext.Provider>
   );

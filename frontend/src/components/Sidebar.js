@@ -1,7 +1,9 @@
-import React, { useContext } from 'react';
-import { ProjectContext } from '../contexts/ProjectContext';
+import React, { useContext, useEffect, useState } from 'react';
+import { ProjectContext, ALL_PROJECTS } from '../contexts/ProjectContext';
 import { useUnsavedChanges } from '../contexts/UnsavedChangesContext';
 import '../styles/Sidebar.css';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 // 2px stroke, round caps/joins — matches the icon spec across the app.
 const ICONS = {
@@ -108,6 +110,28 @@ const ICONS = {
       <polyline points="13 2 13 8 19 8" />
     </svg>
   ),
+  dashboard: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="9" rx="1" />
+      <rect x="14" y="3" width="7" height="5" rx="1" />
+      <rect x="14" y="12" width="7" height="9" rx="1" />
+      <rect x="3" y="16" width="7" height="5" rx="1" />
+    </svg>
+  ),
+  project: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  ),
+  schedule: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  ),
 };
 
 export const PROJECT_SCOPED_ITEMS = [
@@ -126,13 +150,60 @@ export const ACCOUNT_LEVEL_ITEMS = [
   { key: 'documents', path: '/documents', label: 'Documents' },
 ];
 
+// ── New 3-tier nav (behind the 'new_nav' feature flag) ─────────────────────
+// Tier 1: fixed core (always present, not user-configurable).
+const CORE_ITEMS = [
+  { key: 'dashboard', path: '/projects-overview', label: 'Dashboard' },
+  { key: 'project', path: '/project', label: 'Project' },
+];
+
+// Tier 2: fixed global cross-project tools — same modules regardless of
+// which project is selected. Explicitly not POMAR Vendors' project-scoped
+// cousin (Project - Subs), see modules/project-subs.
+const GLOBAL_TOOL_ITEMS = [
+  { key: 'vendors', path: '/vendors', label: 'Vendors' },
+  { key: 'mail', path: '/mail', label: 'Mail' },
+  { key: 'clash', path: '/clash', label: 'Clash' },
+];
+
+// Tier 3: user-pinned favorites (frontend/src/modules/project-hub — pinned
+// via ProjectDetailPage.js's pin icon, persisted in user_pinned_apps).
+// Budget/Schedule/Project-Subs have no standalone route, so they deep-link
+// into Project Detail's inline views via ?view=; Invoices/Daily
+// logs/Documents already have full pages that read the selected project
+// from the same shared ProjectContext.
+export const PINNED_APP_CONFIG = {
+  budget: { icon: 'capital', label: 'Budget', path: '/project?view=budget' },
+  schedule: { icon: 'schedule', label: 'Schedule', path: '/project?view=schedule' },
+  invoices: { icon: 'invoice_tracker', label: 'Invoices', path: '/invoices' },
+  daily_logs: { icon: 'daily_logs', label: 'Daily Logs', path: '/daily-logs' },
+  project_subs: { icon: 'vendors', label: 'Project - Subs', path: '/project?view=project-subs' },
+  documents: { icon: 'documents', label: 'Documents', path: '/documents' },
+};
+
 export { ICONS };
 
-function SidebarItem({ item, active, disabled }) {
+// item.path may carry a `?view=` query (pinned Budget/Schedule/Project-Subs
+// deep-link into Project Detail's inline views) — matches on pathname plus
+// that one param, ignoring any other query noise. Items without a query
+// behave exactly like a plain pathname compare (same as before this
+// supported query-aware matching at all).
+function isItemActive(itemPath, currentPath, currentSearch) {
+  const qIndex = itemPath.indexOf('?');
+  const itemPathname = qIndex === -1 ? itemPath : itemPath.slice(0, qIndex);
+  if (itemPathname !== currentPath) return false;
+  if (qIndex === -1) return true;
+  const itemView = new URLSearchParams(itemPath.slice(qIndex)).get('view');
+  const currentView = new URLSearchParams(currentSearch).get('view');
+  return itemView === currentView;
+}
+
+function SidebarItem({ item, active, disabled, icon, onClick }) {
   const { guardNavigation } = useUnsavedChanges();
 
   const handleClick = () => {
     if (disabled) return;
+    if (onClick) { onClick(); return; }
     guardNavigation(() => { window.location.href = item.path; });
   };
 
@@ -144,13 +215,13 @@ function SidebarItem({ item, active, disabled }) {
       aria-current={active ? 'page' : undefined}
       title={disabled ? `${item.label} — select a project first` : item.label}
     >
-      <span className="sidebar-item-icon">{ICONS[item.key]}</span>
+      <span className="sidebar-item-icon">{ICONS[icon || item.key]}</span>
       <span className="sidebar-item-label">{item.label}</span>
     </button>
   );
 }
 
-export default function Sidebar({ user }) {
+function LegacySidebar({ user }) {
   const { projects } = useContext(ProjectContext);
   const currentPath = window.location.pathname;
   const hasActiveProject = projects.length > 0;
@@ -197,4 +268,95 @@ export default function Sidebar({ user }) {
       </nav>
     </aside>
   );
+}
+
+function NewSidebar({ user }) {
+  const { projects, currentProjectId, lastProjectId, setCurrentProjectId } = useContext(ProjectContext);
+  const { guardNavigation } = useUnsavedChanges();
+  const currentPath = window.location.pathname;
+  const currentSearch = window.location.search;
+  const hasActiveProject = projects.length > 0;
+  const restrictedModule = user?.restricted_module || null;
+
+  const [pinnedApps, setPinnedApps] = useState([]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    fetch(`${API_BASE_URL}/api/user-preferences/pinned-apps?userId=${user.id}`)
+      .then((res) => res.json())
+      .then((data) => { if (!cancelled && data.success) setPinnedApps(data.pinnedApps || []); })
+      .catch((err) => console.error('Fetch pinned apps error:', err));
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  // "Project" never dead-ends into Project Detail's "select a project"
+  // fallback: if the header switcher is on the ALL_PROJECTS sentinel, fall
+  // back to whichever specific project was last viewed (or the first
+  // project, if this is the very first visit and nothing's been viewed
+  // yet) before navigating.
+  const goToProject = () => {
+    let target = currentProjectId !== ALL_PROJECTS ? currentProjectId : lastProjectId;
+    if (!target && projects.length > 0) target = String(projects[0].id);
+    if (target && target !== currentProjectId) setCurrentProjectId(target);
+    guardNavigation(() => { window.location.href = '/project'; });
+  };
+
+  return (
+    <aside className="app-sidebar">
+      <nav className="sidebar-group">
+        {CORE_ITEMS.map((item) => (
+          <SidebarItem
+            key={item.key}
+            item={item}
+            active={isItemActive(item.path, currentPath, currentSearch)}
+            disabled={false}
+            onClick={item.key === 'project' ? goToProject : undefined}
+          />
+        ))}
+      </nav>
+
+      <div className="sidebar-divider" />
+
+      <nav className="sidebar-group">
+        {GLOBAL_TOOL_ITEMS
+          .filter((item) => !restrictedModule)
+          .map((item) => (
+            <SidebarItem
+              key={item.key}
+              item={item}
+              active={isItemActive(item.path, currentPath, currentSearch)}
+              disabled={!hasActiveProject}
+            />
+          ))}
+      </nav>
+
+      {pinnedApps.length > 0 && !restrictedModule && (
+        <>
+          <div className="sidebar-divider" />
+          <nav className="sidebar-group">
+            {pinnedApps
+              .filter((appKey) => PINNED_APP_CONFIG[appKey])
+              .map((appKey) => {
+                const config = PINNED_APP_CONFIG[appKey];
+                const item = { key: appKey, path: config.path, label: config.label };
+                return (
+                  <SidebarItem
+                    key={appKey}
+                    item={item}
+                    icon={config.icon}
+                    active={isItemActive(item.path, currentPath, currentSearch)}
+                    disabled={!hasActiveProject}
+                  />
+                );
+              })}
+          </nav>
+        </>
+      )}
+    </aside>
+  );
+}
+
+export default function Sidebar({ user }) {
+  return user?.new_nav_enabled ? <NewSidebar user={user} /> : <LegacySidebar user={user} />;
 }
