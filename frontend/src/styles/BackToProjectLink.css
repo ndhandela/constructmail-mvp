@@ -2,7 +2,11 @@
    the top of every standalone app page Project Detail's cards route to, so
    it should read as the same control everywhere. */
 .back-to-project-link {
-  display: inline-block;
+  /* block, not inline-block: the hero sections it sits in front of (Capital
+     Tracker, Daily Logs, Invoices, Documents) put an inline-block badge
+     pill right after it — without a forced line break the two sit side by
+     side on the same line instead of stacking. */
+  display: block;
   font-size: 13px;
   color: var(--slate);
   text-decoration: none;
