@@ -153,7 +153,7 @@ export default function DailyLogsApp({ user, userId }) {
 
   return (
     <div className="dailylogs-app">
-      <BackToProjectLink user={user} />
+      <BackToProjectLink user={user} projectName={selectedProject?.name} />
       <div className="dailylogs-hero">
         <div className="dailylogs-badge">POMAR DAILY LOGS</div>
         <h1>Replace the paper logbook</h1>

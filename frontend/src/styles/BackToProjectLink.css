@@ -1,12 +1,14 @@
+/* Matches modules/project-hub's .ph-back-btn exactly — same link, shown at
+   the top of every standalone app page Project Detail's cards route to, so
+   it should read as the same control everywhere. */
 .back-to-project-link {
   display: inline-block;
   font-size: 13px;
-  font-weight: 600;
   color: var(--slate);
   text-decoration: none;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .back-to-project-link:hover {
-  color: var(--saffron);
+  color: var(--inkwell);
 }

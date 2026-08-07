@@ -114,7 +114,7 @@ export default function InvoiceTrackerApp({ user, userId }) {
 
   return (
     <div className="invoices-app">
-      <BackToProjectLink user={user} />
+      <BackToProjectLink user={user} projectName={selectedProject?.name} />
       <div className="invoices-hero">
         <div className="invoices-badge">POMAR INVOICE TRACKER</div>
         <h1>Vendor invoices, tracked in one place</h1>

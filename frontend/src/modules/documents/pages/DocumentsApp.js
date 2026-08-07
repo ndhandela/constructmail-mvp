@@ -162,7 +162,7 @@ export default function DocumentsApp({ user, userId }) {
 
   return (
     <div className="documents-app">
-      <BackToProjectLink user={user} />
+      <BackToProjectLink user={user} projectName={selectedProject?.name} />
       <div className="documents-hero">
         <div className="documents-badge">POMAR DOCUMENTS</div>
         <h1>Project documents, shared safely</h1>

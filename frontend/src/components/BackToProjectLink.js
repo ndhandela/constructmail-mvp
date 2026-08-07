@@ -7,9 +7,11 @@ import '../styles/BackToProjectLink.css';
 // automatic way back. Only shown once an account is on the new nav — for
 // unflagged accounts Project Detail isn't the way anyone got here, so the
 // link would just be confusing chrome pointing at a page they don't use.
-export default function BackToProjectLink({ user }) {
+export default function BackToProjectLink({ user, projectName }) {
   if (!user?.new_nav_enabled) return null;
   return (
-    <a href="/project" className="back-to-project-link">&larr; Back to Project</a>
+    <a href="/project" className="back-to-project-link">
+      &larr; Back to {projectName || 'Project'}
+    </a>
   );
 }
