@@ -107,13 +107,26 @@ export default function ProjectDetailPage({ user, userId }) {
     );
   }
 
+  if (activeView === 'budget') {
+    return (
+      <div className="ph-container">
+        <BudgetOverview
+          userId={userId}
+          user={user}
+          project={project}
+          backLabel={`Back to ${project.name}`}
+          onBack={() => setActiveView(null)}
+        />
+      </div>
+    );
+  }
+
   if (activeView) {
-    const viewTitles = { budget: 'Budget', schedule: 'Schedule', 'project-subs': 'Project - Subs' };
+    const viewTitles = { schedule: 'Schedule', 'project-subs': 'Project - Subs' };
     return (
       <div className="ph-container">
         <button className="ph-back-btn" onClick={() => setActiveView(null)}>&larr; Back to {project.name}</button>
         <h1 className="ph-view-title">{viewTitles[activeView]}</h1>
-        {activeView === 'budget' && <BudgetOverview userId={userId} user={user} project={project} />}
         {activeView === 'schedule' && <MilestonesTab userId={userId} user={user} project={project} />}
         {activeView === 'project-subs' && <ProjectSubsPanel userId={userId} user={user} project={project} />}
       </div>

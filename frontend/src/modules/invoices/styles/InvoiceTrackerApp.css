@@ -4,42 +4,6 @@
   padding: 0 0 60px;
 }
 
-.invoices-hero {
-  text-align: center;
-  margin-bottom: 36px;
-  padding: 48px 24px 0;
-}
-
-.invoices-badge {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--saffron);
-  background: var(--saffron-soft);
-  border: 1px solid rgba(217, 119, 6, 0.2);
-  border-radius: var(--radius-pill);
-  padding: 4px 14px;
-  margin-bottom: 16px;
-}
-
-.invoices-hero h1 {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--inkwell);
-  margin: 0 0 12px;
-  line-height: 1.2;
-}
-
-.invoices-hero p {
-  font-size: 15px;
-  color: var(--slate);
-  line-height: 1.65;
-  margin: 0 auto;
-  max-width: 640px;
-}
-
 .invoices-container {
   padding: 40px;
   max-width: 1400px;

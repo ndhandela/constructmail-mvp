@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import BudgetItemsTab from './BudgetItemsTab';
 import SpendByCategoryTab from './SpendByCategoryTab';
+import PageHeader from '../../../components/PageHeader';
 import '../styles/CapitalTrackerApp.css';
 
 // Project Detail's "Budget" card reuses these same two Capital Tracker tabs
@@ -12,24 +13,24 @@ const TABS = [
   { key: 'spendbycategory', label: 'Spend by Category' },
 ];
 
-export default function BudgetOverview({ userId, user, project }) {
+export default function BudgetOverview({ userId, user, project, backLabel, onBack }) {
   const [activeTab, setActiveTab] = useState('budget');
 
   if (!project) return null;
 
   return (
     <div className="capital-dashboard">
-      <div className="capital-tabs">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            className={`capital-tab${activeTab === tab.key ? ' capital-tab-active' : ''}`}
-            onClick={() => setActiveTab(tab.key)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <PageHeader
+        backLabel={backLabel}
+        onBack={onBack}
+        title="Budget"
+        tabs={TABS.map((tab) => ({
+          key: tab.key,
+          label: tab.label,
+          active: activeTab === tab.key,
+          onClick: () => setActiveTab(tab.key),
+        }))}
+      />
 
       {activeTab === 'budget' && <BudgetItemsTab userId={userId} user={user} project={project} />}
       {activeTab === 'spendbycategory' && <SpendByCategoryTab userId={userId} project={project} />}

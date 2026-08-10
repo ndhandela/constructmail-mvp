@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react';
 import ModuleLockedNotice, { isModuleLocked } from '../../../components/ModuleLockedNotice';
-import BackToProjectLink from '../../../components/BackToProjectLink';
+import PageHeader from '../../../components/PageHeader';
 import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
 import { API_BASE_URL, formatCurrency, statusLabel } from '../invoicesUtils';
 import InvoiceUploadForm from '../components/InvoiceUploadForm';
@@ -114,14 +114,17 @@ export default function InvoiceTrackerApp({ user, userId }) {
 
   return (
     <div className="invoices-app">
-      <div className="invoices-hero">
-        <BackToProjectLink user={user} projectName={selectedProject?.name} />
-        <div className="invoices-badge">POMAR INVOICE TRACKER</div>
-        <h1>Vendor invoices, tracked in one place</h1>
-        <p>Upload invoice PDFs, tag them to a project or budget line, and track paid vs. pending — no more digging through email.</p>
-      </div>
-
       <div className="invoices-container">
+        <PageHeader
+          backLabel={`Back to ${selectedProject?.name || 'Project'}`}
+          backHref={user?.new_nav_enabled ? '/project' : undefined}
+          title="Invoices"
+          actionLabel={canWrite ? '+ Upload invoice' : undefined}
+          onAction={() => setShowForm(true)}
+          actionDisabled={currentProjectId === ALL_PROJECTS}
+          actionTitle={currentProjectId === ALL_PROJECTS ? 'Select a project from the header to upload an invoice' : undefined}
+        />
+
         <div className="invoices-toolbar">
           <div className="invoices-filters">
             <select
@@ -146,16 +149,6 @@ export default function InvoiceTrackerApp({ user, userId }) {
               aria-label="To date"
             />
           </div>
-          {canWrite && (
-            <button
-              className="invoices-btn-primary"
-              onClick={() => setShowForm(true)}
-              disabled={currentProjectId === ALL_PROJECTS}
-              title={currentProjectId === ALL_PROJECTS ? 'Select a project from the header to upload an invoice' : undefined}
-            >
-              + Upload invoice
-            </button>
-          )}
         </div>
 
         {error && <div className="invoices-error">{error}</div>}
