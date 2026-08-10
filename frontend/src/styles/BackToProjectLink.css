@@ -1,6 +1,7 @@
-/* Matches modules/project-hub's .ph-back-btn exactly — same link, shown at
+/* Matches PageHeader.css's .page-header-back exactly — same link, shown at
    the top of every standalone app page Project Detail's cards route to, so
-   it should read as the same control everywhere. */
+   it should read as the same control everywhere. Still used directly (not
+   via PageHeader) by the old /capital route, CapitalTrackerApp.js. */
 .back-to-project-link {
   /* block, not inline-block: the hero sections it sits in front of (Capital
      Tracker, Daily Logs, Invoices, Documents) put an inline-block badge

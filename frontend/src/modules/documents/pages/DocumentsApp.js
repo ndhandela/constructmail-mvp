@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react';
 import ModuleLockedNotice, { isModuleLocked } from '../../../components/ModuleLockedNotice';
-import BackToProjectLink from '../../../components/BackToProjectLink';
+import PageHeader from '../../../components/PageHeader';
 import { ProjectContext, ALL_PROJECTS } from '../../../contexts/ProjectContext';
 import { API_BASE_URL, formatFileSize, formatDate } from '../documentsUtils';
 import DocumentUploadForm from '../components/DocumentUploadForm';
@@ -162,14 +162,17 @@ export default function DocumentsApp({ user, userId }) {
 
   return (
     <div className="documents-app">
-      <div className="documents-hero">
-        <BackToProjectLink user={user} projectName={selectedProject?.name} />
-        <div className="documents-badge">POMAR DOCUMENTS</div>
-        <h1>Project documents, shared safely</h1>
-        <p>Upload contracts, drawings, and submittals against a project, and control exactly which Sub companies can see them.</p>
-      </div>
-
       <div className="documents-container">
+        <PageHeader
+          backLabel={`Back to ${selectedProject?.name || 'Project'}`}
+          backHref={user?.new_nav_enabled ? '/project' : undefined}
+          title="Documents"
+          actionLabel="+ Upload document"
+          onAction={() => setShowForm(true)}
+          actionDisabled={currentProjectId === ALL_PROJECTS}
+          actionTitle={currentProjectId === ALL_PROJECTS ? 'Select a project from the header to upload a document' : undefined}
+        />
+
         {currentProjectId === ALL_PROJECTS ? (
           <p className="documents-muted">Select a project from the header to view its documents.</p>
         ) : (
@@ -222,12 +225,6 @@ export default function DocumentsApp({ user, userId }) {
                     <strong>Root</strong>
                   )}
                 </div>
-                <button
-                  className="documents-btn-primary"
-                  onClick={() => setShowForm(true)}
-                >
-                  + Upload document
-                </button>
               </div>
 
               {error && <div className="documents-error">{error}</div>}

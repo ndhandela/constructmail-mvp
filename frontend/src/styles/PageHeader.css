@@ -1,9 +1,10 @@
-/* Canonical page header (breadcrumb + title + optional tabs/action).
-   Values copied 1:1 from modules/project-hub/styles/ProjectHub.css
-   (.ph-back-btn / .ph-view-title) and modules/capital/styles/CapitalTrackerApp.css
-   (.capital-tabs / .capital-tab / .capital-btn-primary) — this is the
-   source of truth going forward, those are kept in sync by using this
-   component instead of copying the rules again. */
+/* Canonical page header (breadcrumb + title + optional tabs/action) — the
+   single source of truth for this look, used by every page rendered
+   through Project Detail (Budget, Schedule, Project - Subs) and by the
+   standalone Invoice Tracker/Daily Logs/Documents pages. Originally copied
+   1:1 from project-hub's old .ph-back-btn/.ph-view-title and capital's
+   .capital-tabs/.capital-tab/.capital-btn-primary rules, since superseded
+   by this component everywhere they were used. */
 
 .page-header {
   margin-bottom: 24px;

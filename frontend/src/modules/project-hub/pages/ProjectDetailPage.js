@@ -4,6 +4,7 @@ import { isProjectOwner } from '../../capital/capitalUtils';
 import BudgetOverview from '../../capital/pages/BudgetOverview';
 import MilestonesTab from '../../capital/pages/MilestonesTab';
 import ProjectSubsPanel from '../../project-subs/components/ProjectSubsPanel';
+import PageHeader from '../../../components/PageHeader';
 import '../styles/ProjectHub.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
@@ -121,14 +122,20 @@ export default function ProjectDetailPage({ user, userId }) {
     );
   }
 
-  if (activeView) {
-    const viewTitles = { schedule: 'Schedule', 'project-subs': 'Project - Subs' };
+  if (activeView === 'schedule') {
     return (
       <div className="ph-container">
-        <button className="ph-back-btn" onClick={() => setActiveView(null)}>&larr; Back to {project.name}</button>
-        <h1 className="ph-view-title">{viewTitles[activeView]}</h1>
-        {activeView === 'schedule' && <MilestonesTab userId={userId} user={user} project={project} />}
-        {activeView === 'project-subs' && <ProjectSubsPanel userId={userId} user={user} project={project} />}
+        <PageHeader backLabel={`Back to ${project.name}`} onBack={() => setActiveView(null)} title="Schedule" />
+        <MilestonesTab userId={userId} user={user} project={project} />
+      </div>
+    );
+  }
+
+  if (activeView === 'project-subs') {
+    return (
+      <div className="ph-container">
+        <PageHeader backLabel={`Back to ${project.name}`} onBack={() => setActiveView(null)} title="Project - Subs" />
+        <ProjectSubsPanel userId={userId} user={user} project={project} hideHeading />
       </div>
     );
   }

@@ -134,28 +134,6 @@
   opacity: 1;
 }
 
-.ph-back-btn {
-  background: none;
-  border: none;
-  color: var(--slate);
-  font-size: 13px;
-  cursor: pointer;
-  padding: 0;
-  margin-bottom: 16px;
-}
-
-.ph-back-btn:hover {
-  color: var(--inkwell);
-}
-
-.ph-view-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--inkwell);
-  margin: 0 0 20px;
-}
-
 /* ── Projects Overview (Dashboard) ─────────────────────────────────────── */
 
 .ph-overview-grid {

@@ -4,42 +4,6 @@
   padding: 0 0 60px;
 }
 
-.dailylogs-hero {
-  text-align: center;
-  margin-bottom: 36px;
-  padding: 48px 24px 0;
-}
-
-.dailylogs-badge {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--saffron);
-  background: var(--saffron-soft);
-  border: 1px solid rgba(217, 119, 6, 0.2);
-  border-radius: var(--radius-pill);
-  padding: 4px 14px;
-  margin-bottom: 16px;
-}
-
-.dailylogs-hero h1 {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--inkwell);
-  margin: 0 0 12px;
-  line-height: 1.2;
-}
-
-.dailylogs-hero p {
-  font-size: 15px;
-  color: var(--slate);
-  line-height: 1.65;
-  margin: 0 auto;
-  max-width: 640px;
-}
-
 .dailylogs-container {
   padding: 40px;
   max-width: 1100px;
@@ -65,6 +29,15 @@
   font-weight: 700;
   color: var(--inkwell);
   margin: 0;
+}
+
+/* Same action-button row as .dailylogs-dashboard-header, minus the heading
+   — used where a PageHeader title above already covers it (see
+   ProjectSubsPanel.js's hideHeading prop). */
+.dailylogs-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
 }
 
 /* ── Filter row ───────────────────────────────────────────────────────── */

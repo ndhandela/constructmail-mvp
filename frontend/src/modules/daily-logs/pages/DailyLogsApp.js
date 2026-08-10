@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import ModuleLockedNotice, { isModuleLocked } from '../../../components/ModuleLockedNotice';
-import BackToProjectLink from '../../../components/BackToProjectLink';
+import PageHeader from '../../../components/PageHeader';
 import DailyLogsList from './DailyLogsList';
 import DailyLogForm from './DailyLogForm';
 import ProjectSubsPanel from '../../project-subs/components/ProjectSubsPanel';
@@ -151,16 +151,24 @@ export default function DailyLogsApp({ user, userId }) {
     setRefreshKey((k) => k + 1);
   };
 
+  // The Vendors tab (old-nav rollback path, see comment below) has its own
+  // "+ Invite vendor" action inside ProjectSubsPanel — "+ New log" in the
+  // header would be misleading while that tab is showing.
+  const showingVendorsTab = owner && !user?.new_nav_enabled && activeTab === 'vendors';
+
   return (
     <div className="dailylogs-app">
-      <div className="dailylogs-hero">
-        <BackToProjectLink user={user} projectName={selectedProject?.name} />
-        <div className="dailylogs-badge">POMAR DAILY LOGS</div>
-        <h1>Replace the paper logbook</h1>
-        <p>Log crew, weather, delays, and site photos from your phone in under two minutes — one live record per project instead of a notebook in the site trailer.</p>
-      </div>
-
       <div className="dailylogs-container">
+        <PageHeader
+          backLabel={`Back to ${selectedProject?.name || 'Project'}`}
+          backHref={user?.new_nav_enabled ? '/project' : undefined}
+          title="Daily Logs"
+          actionLabel={showingVendorsTab ? undefined : '+ New log'}
+          onAction={() => setShowForm(true)}
+          actionDisabled={!selectedProject}
+          actionTitle={!selectedProject ? 'Select a project from the header to add a log' : undefined}
+        />
+
         {pendingInvites.length > 0 && (
           <VendorInviteBanner
             invites={pendingInvites}
@@ -198,15 +206,10 @@ export default function DailyLogsApp({ user, userId }) {
               </div>
             )}
 
-            {owner && !user?.new_nav_enabled && activeTab === 'vendors' ? (
+            {showingVendorsTab ? (
               <ProjectSubsPanel userId={userId} user={user} project={selectedProject} />
             ) : (
               <>
-                <div className="dailylogs-dashboard-header">
-                  <h2>Daily Logs</h2>
-                  <button className="dailylogs-btn-primary" onClick={() => setShowForm(true)}>+ New log</button>
-                </div>
-
                 <DailyLogsList userId={userId} user={user} project={selectedProject} refreshKey={refreshKey} />
 
                 {showForm && (

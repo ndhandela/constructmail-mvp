@@ -10,7 +10,12 @@ import '../../daily-logs/styles/DailyLogsApp.css';
 // directory module, which is a company-wide rolodex for browsing/hiring
 // subs across all projects. Shared by DailyLogsApp.js's "Vendors" tab and
 // the Project Detail page's "Project - Subs" card so both stay in sync.
-export default function ProjectSubsPanel({ userId, user, project }) {
+// hideHeading: the standalone Project - Subs page (see ProjectDetailPage.js)
+// already shows "Project - Subs" as its PageHeader title immediately above
+// this panel — repeating it here would be a redundant heading. The Daily
+// Logs "Vendors" tab embeds this panel with no other heading above it, so
+// it keeps the default (heading shown).
+export default function ProjectSubsPanel({ userId, user, project, hideHeading }) {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -64,8 +69,8 @@ export default function ProjectSubsPanel({ userId, user, project }) {
 
   return (
     <div className="dailylogs-tab-panel">
-      <div className="dailylogs-dashboard-header">
-        <h2>Project - Subs</h2>
+      <div className={hideHeading ? 'dailylogs-actions-row' : 'dailylogs-dashboard-header'}>
+        {!hideHeading && <h2>Project - Subs</h2>}
         <button className="dailylogs-btn-primary" onClick={() => setShowInviteModal(true)}>+ Invite vendor</button>
       </div>
 
