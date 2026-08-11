@@ -112,7 +112,12 @@ function WorkItemForm({ userId, project, workItem, onSaved, onCancel }) {
   );
 }
 
-export default function WorkItemsTab({ userId, user, project }) {
+// hideHeading: the standalone Work Items page (see WorkItemsApp.js) already
+// shows "Work Items" as its PageHeader title immediately above this panel —
+// repeating it here would be a redundant heading (same trick as
+// ProjectSubsPanel's hideHeading). The Capital Tracker dashboard embeds this
+// tab with no other heading above it, so it keeps the default (heading shown).
+export default function WorkItemsTab({ userId, user, project, hideHeading }) {
   const [workItems, setWorkItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -142,10 +147,23 @@ export default function WorkItemsTab({ userId, user, project }) {
     fetchWorkItems();
   };
 
+  const handleDelete = async (workItem) => {
+    if (!window.confirm(`Delete "${workItem.name}"? This also deletes its milestones and budget items.`)) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/capital/work-items/${workItem.id}?userId=${userId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) fetchWorkItems();
+    } catch (err) {
+      console.error('Delete work item error:', err);
+    }
+  };
+
   return (
     <div className="capital-tab-panel">
-      <div className="capital-dashboard-header">
-        <h2>Work Items</h2>
+      <div className={hideHeading ? 'capital-actions-row' : 'capital-dashboard-header'}>
+        {!hideHeading && <h2>Work Items</h2>}
         {canEdit && (
           <button className="capital-btn-primary" onClick={() => setShowForm(true)}>+ Add work item</button>
         )}
@@ -185,6 +203,7 @@ export default function WorkItemsTab({ userId, user, project }) {
                   {canEdit && (
                     <td>
                       <button className="capital-link-btn" onClick={() => setEditingItem(wi)}>Edit</button>
+                      <button className="capital-link-btn capital-link-btn-danger" onClick={() => handleDelete(wi)}>Delete</button>
                     </td>
                   )}
                 </tr>

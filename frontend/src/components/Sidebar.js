@@ -139,6 +139,12 @@ const ICONS = {
       <line x1="3" y1="10" x2="21" y2="10" />
     </svg>
   ),
+  work_items: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m9 11 3 3L22 4" />
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    </svg>
+  ),
 };
 
 export const PROJECT_SCOPED_ITEMS = [
@@ -181,6 +187,7 @@ const GLOBAL_TOOL_ITEMS = [
 // logs/Documents already have full pages that read the selected project
 // from the same shared ProjectContext.
 export const PINNED_APP_CONFIG = {
+  work_items: { icon: 'work_items', label: 'Work Items', path: '/work-items' },
   budget: { icon: 'capital', label: 'Budget', path: '/project?view=budget' },
   schedule: { icon: 'schedule', label: 'Schedule', path: '/project?view=schedule' },
   invoices: { icon: 'invoice_tracker', label: 'Invoices', path: '/invoices' },

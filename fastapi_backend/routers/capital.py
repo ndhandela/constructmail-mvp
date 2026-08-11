@@ -490,3 +490,23 @@ async def update_work_item(work_item_id: int, req: UpdateWorkItemRequest):
         row = await conn.fetchrow(query, *values)
 
     return {"success": True, "work_item": dict(row)}
+
+
+@router.delete("/work-items/{work_item_id}")
+async def delete_work_item(work_item_id: int, userId: int):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await require_feature_flag(conn, userId, "capital")
+
+        work_item = await conn.fetchrow("SELECT project_id FROM work_items WHERE id = $1", work_item_id)
+        if not work_item:
+            raise HTTPException(404, "Work item not found")
+
+        await _require_project_owner(conn, work_item["project_id"], userId)
+
+        # Cascades to this work item's milestones/budget_items (ON DELETE
+        # CASCADE FKs — see db.py) and nulls the optional work_item_id tag on
+        # any daily_logs/invoices rows that reference it (ON DELETE SET NULL).
+        await conn.execute("DELETE FROM work_items WHERE id = $1", work_item_id)
+
+    return {"success": True}

@@ -243,6 +243,20 @@
   text-decoration: underline;
 }
 
+.capital-link-btn + .capital-link-btn {
+  margin-left: 12px;
+}
+
+.capital-link-btn-danger {
+  color: var(--brick);
+}
+
+.capital-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
 /* ── Buttons / forms (shared by the add/edit modal) ──────────────────── */
 
 .capital-btn-primary, .capital-btn-secondary {
