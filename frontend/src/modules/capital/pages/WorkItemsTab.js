@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { API_BASE_URL, isProjectOwner, statusLabel } from '../capitalUtils';
 
 const STATUS_OPTIONS = ['not_started', 'in_progress', 'complete'];
@@ -113,17 +113,23 @@ function WorkItemForm({ userId, project, workItem, onSaved, onCancel }) {
 }
 
 // hideHeading: the standalone Work Items page (see WorkItemsApp.js) already
-// shows "Work Items" as its PageHeader title immediately above this panel —
-// repeating it here would be a redundant heading (same trick as
-// ProjectSubsPanel's hideHeading). The Capital Tracker dashboard embeds this
-// tab with no other heading above it, so it keeps the default (heading shown).
-export default function WorkItemsTab({ userId, user, project, hideHeading }) {
+// shows "Work Items" as its PageHeader title, with the "+ Add work item"
+// action inline in that same title row (matching Invoices/Daily
+// Logs/Documents/Permits) — so this suppresses the tab's own header row
+// entirely and exposes openCreateForm() via ref for PageHeader's onAction to
+// call instead. The Capital Tracker dashboard embeds this tab with no
+// PageHeader above it, so it keeps the default (own header + button shown).
+const WorkItemsTab = forwardRef(function WorkItemsTab({ userId, user, project, hideHeading }, ref) {
   const [workItems, setWorkItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
 
   const canEdit = isProjectOwner(project, user);
+
+  useImperativeHandle(ref, () => ({
+    openCreateForm: () => setShowForm(true),
+  }), []);
 
   const fetchWorkItems = useCallback(async () => {
     if (!project) return;
@@ -162,12 +168,14 @@ export default function WorkItemsTab({ userId, user, project, hideHeading }) {
 
   return (
     <div className="capital-tab-panel">
-      <div className={hideHeading ? 'capital-actions-row' : 'capital-dashboard-header'}>
-        {!hideHeading && <h2>Work Items</h2>}
-        {canEdit && (
-          <button className="capital-btn-primary" onClick={() => setShowForm(true)}>+ Add work item</button>
-        )}
-      </div>
+      {!hideHeading && (
+        <div className="capital-dashboard-header">
+          <h2>Work Items</h2>
+          {canEdit && (
+            <button className="capital-btn-primary" onClick={() => setShowForm(true)}>+ Add work item</button>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <p className="capital-muted">Loading work items…</p>
@@ -221,4 +229,6 @@ export default function WorkItemsTab({ userId, user, project, hideHeading }) {
       )}
     </div>
   );
-}
+});
+
+export default WorkItemsTab;
