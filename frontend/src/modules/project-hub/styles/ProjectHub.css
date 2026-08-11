@@ -86,12 +86,41 @@
   min-width: 0;
 }
 
+.ph-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+}
+
 .ph-card-title {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 15px;
   font-weight: 700;
   color: var(--inkwell);
-  margin: 0 0 4px;
+  margin: 0;
+}
+
+/* In-app-only flag for a project with Expiring Soon/Expired permits (MVP —
+   no email). Same pill shape as the module's own status badges
+   (modules/permits/styles/PermitTrackerApp.css), scaled down for the hub
+   card. */
+.ph-card-alert {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+.ph-card-alert-expired {
+  background: #FDECEA;
+  color: var(--brick);
+}
+
+.ph-card-alert-expiring-soon {
+  background: var(--saffron-soft);
+  color: var(--saffron);
 }
 
 .ph-card-desc {

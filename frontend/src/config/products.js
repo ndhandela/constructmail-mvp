@@ -134,6 +134,20 @@ export const PRODUCTS = [
     // active_modules.documents.
     licenseGated: true
   },
+  {
+    id: 'permits',
+    name: 'POMAR Permit Tracker',
+    description: 'Track permit expirations per project, with automatic Active/Expiring Soon/Expired status.',
+    detailedDescription: "Permits usually live in a spreadsheet or a filing cabinet, with no reminder before one lapses. POMAR Permit Tracker gives every project a single list of permits — type, number, issuing authority, and expiration date — with status computed automatically against a configurable expiring-soon window, so nothing expires silently. The GC controls every permit and can grant a specific Sub read-only access to one.",
+    icon: '📋',
+    path: '/permits',
+    logo: '/logos/pomar.png',
+    color: '#D97706',
+    status: 'live',
+    // No regionGated flag — available to any company, gated only by
+    // active_modules.permits.
+    licenseGated: true
+  },
 ];
 
 export const getProductById = (id) => PRODUCTS.find(p => p.id === id);

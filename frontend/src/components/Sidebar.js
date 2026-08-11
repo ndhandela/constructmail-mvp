@@ -110,6 +110,13 @@ const ICONS = {
       <polyline points="13 2 13 8 19 8" />
     </svg>
   ),
+  permits: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="8" y="2" width="8" height="4" rx="1" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <path d="m9 14 2 2 4-4" />
+    </svg>
+  ),
   dashboard: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="3" width="7" height="9" rx="1" />
@@ -148,6 +155,7 @@ export const ACCOUNT_LEVEL_ITEMS = [
   { key: 'daily_logs', path: '/daily-logs', label: 'Daily Logs' },
   { key: 'invoice_tracker', path: '/invoices', label: 'Invoice Tracker' },
   { key: 'documents', path: '/documents', label: 'Documents' },
+  { key: 'permits', path: '/permits', label: 'Permits' },
 ];
 
 // ── New 3-tier nav (behind the 'new_nav' feature flag) ─────────────────────
@@ -179,6 +187,7 @@ export const PINNED_APP_CONFIG = {
   daily_logs: { icon: 'daily_logs', label: 'Daily Logs', path: '/daily-logs' },
   project_subs: { icon: 'vendors', label: 'Project - Subs', path: '/project?view=project-subs' },
   documents: { icon: 'documents', label: 'Documents', path: '/documents' },
+  permits: { icon: 'permits', label: 'Permits', path: '/permits' },
 };
 
 export { ICONS };

@@ -1,0 +1,356 @@
+.permits-app {
+  min-height: calc(100vh - 140px);
+  background-color: var(--parchment);
+  padding: 0 0 60px;
+}
+
+.permits-container {
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.permits-muted {
+  color: var(--slate);
+  font-size: 14px;
+}
+
+/* ── Toolbar ──────────────────────────────────────────────────────────── */
+
+.permits-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.permits-filters select {
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #E7E0D3;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--white);
+  color: var(--inkwell);
+}
+
+/* ── Table ────────────────────────────────────────────────────────────── */
+
+.permits-table-wrapper {
+  background: var(--white);
+  border: 1px solid #E7E0D3;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+}
+
+.permits-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.permits-table th {
+  text-align: left;
+  color: var(--slate);
+  font-weight: 600;
+  padding: 12px 16px;
+  border-bottom: 1px solid #E7E0D3;
+  white-space: nowrap;
+}
+
+.permits-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #F0EAE0;
+  color: var(--inkwell);
+  white-space: nowrap;
+}
+
+.permits-notes-cell {
+  white-space: normal;
+  max-width: 240px;
+}
+
+.permits-table tr:last-child td {
+  border-bottom: none;
+}
+
+.permits-row-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.permits-link-btn {
+  border: none;
+  background: transparent;
+  color: var(--saffron);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.permits-link-btn:hover {
+  text-decoration: underline;
+}
+
+.permits-link-btn-danger {
+  color: var(--brick);
+}
+
+/* ── Status pill ──────────────────────────────────────────────────────── */
+
+.permits-status-pill {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--sandstone);
+  color: var(--inkwell);
+}
+
+.permits-status-active {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.permits-status-expiring-soon {
+  background: var(--saffron-soft);
+  color: var(--saffron);
+}
+
+.permits-status-expired {
+  background: #FDECEA;
+  color: var(--brick);
+}
+
+/* ── Buttons / forms (shared by all Permit Tracker modals) ──────────────── */
+
+.permits-btn-primary, .permits-btn-secondary {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.permits-btn-primary {
+  background: var(--saffron);
+  color: var(--white);
+}
+
+.permits-btn-primary:disabled {
+  background: #E5C9A8;
+  cursor: not-allowed;
+}
+
+.permits-btn-secondary {
+  background: var(--parchment);
+  color: var(--inkwell);
+  border: 1px solid #E7E0D3;
+}
+
+.permits-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.permits-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--slate);
+}
+
+.permits-field input, .permits-field select, .permits-field textarea {
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #E7E0D3;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--white);
+  color: var(--inkwell);
+}
+
+.permits-form-row {
+  display: flex;
+  gap: 14px;
+}
+
+.permits-form-row .permits-field {
+  flex: 1;
+}
+
+.permits-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.permits-error {
+  background: #FDECEA;
+  color: var(--brick);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  margin: 10px 0;
+}
+
+.permits-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 27, 44, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.permits-modal {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: 28px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.permits-modal h3 {
+  margin: 0 0 16px;
+  color: var(--inkwell);
+}
+
+/* ── Manage-access grant list ────────────────────────────────────────── */
+
+.permits-grant-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.permits-grant-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--parchment);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--inkwell);
+}
+
+.permits-grant-row {
+  display: flex;
+  gap: 10px;
+}
+
+.permits-grant-row select, .permits-grant-row input {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #E7E0D3;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--white);
+  color: var(--inkwell);
+}
+
+/* ── Expiring-soon settings list ──────────────────────────────────────── */
+
+.permits-settings-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.permits-settings-list li {
+  padding: 10px 12px;
+  background: var(--parchment);
+  border-radius: var(--radius-sm);
+}
+
+.permits-settings-row-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--inkwell);
+  margin-bottom: 6px;
+}
+
+.permits-settings-tag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--slate);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+}
+
+.permits-settings-tag-custom {
+  color: var(--saffron);
+}
+
+.permits-settings-row-value {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--inkwell);
+}
+
+/* ── Mobile (375-430px phones) ───────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .permits-container {
+    padding: 16px;
+  }
+
+  .permits-row-actions {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  .permits-link-btn {
+    min-height: 44px;
+    padding: 0 2px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .permits-modal-overlay {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .permits-modal {
+    max-width: 100%;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+
+  .permits-form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+}

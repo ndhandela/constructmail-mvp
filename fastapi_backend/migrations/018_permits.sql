@@ -1,0 +1,46 @@
+-- Migration: 018_permits.sql
+-- Documents the Permit Tracker module added by fastapi_backend/db.py's
+-- init_db() on every startup (idempotent CREATE TABLE IF NOT EXISTS / ALTER
+-- TABLE ... ADD COLUMN IF NOT EXISTS — no raw SQL to run here, this is a
+-- record of what that block does):
+--
+--   * New table: permits (id, project_id FK -> projects, permit_type,
+--     permit_number, issuing_authority, issue_date, expiration_date NOT
+--     NULL, document_id nullable FK -> documents [ON DELETE SET NULL —
+--     reuses the existing Documents upload flow, no new bucket/uploader],
+--     notes, created_by FK -> users, created_at, updated_at). Deliberately
+--     has NO status column — Active/Expiring Soon/Expired is always
+--     computed at read time (services/permit_helpers.py's
+--     compute_permit_status), never trusted from the client.
+--   * New table: permit_access_grants (id, permit_id FK -> permits,
+--     granted_to_company_id FK -> companies, granted_by_user_id FK ->
+--     users, created_at, revoked_at nullable, UNIQUE(permit_id,
+--     granted_to_company_id)) — exact same shape as migration 015's
+--     document_access_grants, just pointed at permit_id. A GC's explicit
+--     grant of one permit to one Sub company; a revoked grant is re-issued
+--     in place via ON CONFLICT ... SET revoked_at = NULL.
+--   * New table: project_permit_type_settings (id, project_id FK ->
+--     projects, permit_type, expiring_soon_days NOT NULL, created_at,
+--     updated_at, UNIQUE(project_id, permit_type)) — per-project,
+--     per-permit-type override of the "expiring soon" window. No row for a
+--     given (project_id, permit_type) means "fall back to
+--     projects.default_expiring_soon_days".
+--   * projects.default_expiring_soon_days INT NOT NULL DEFAULT 30 —
+--     project-wide fallback threshold used when no
+--     project_permit_type_settings row exists for a permit_type.
+--   * New feature flag 'permits' (global row seeded OFF) + a placeholder
+--     module_pricing row, same pattern as every other module.
+--
+--   * Access model (services/permit_helpers.py): mirrors
+--     services/document_helpers.py exactly — "GC on this project" is
+--     resolved fresh per request by comparing the caller's company_id
+--     against projects.company_id, never stored/cached. A GC sees and can
+--     create/edit/delete every permit on its project; a Sub has NO access
+--     by default and only sees a permit once explicitly granted via
+--     permit_access_grants (view-only, mirrors the Documents grant/revoke
+--     endpoints). Gated by its own 'permits' feature flag.
+--   * Status computation: compute_permit_status(expiration_date,
+--     expiring_soon_days) is the single reusable function every endpoint
+--     calls — the threshold is always passed in as a parameter (looked up
+--     per permit_type via project_permit_type_settings, falling back to
+--     projects.default_expiring_soon_days), never hardcoded inline.

@@ -1340,6 +1340,81 @@ async def init_db():
             );
             CREATE INDEX IF NOT EXISTS user_pinned_apps_user_id_idx ON user_pinned_apps (user_id);
             ALTER TABLE users ADD COLUMN IF NOT EXISTS pinned_apps_seeded BOOLEAN NOT NULL DEFAULT false;
+
+            -- POMAR Permit Tracker (migration 018): project-scoped permit
+            -- records shared between a GC and its Subs, same GC/Sub access
+            -- shape as Documents (services/permit_helpers.py mirrors
+            -- services/document_helpers.py exactly — is_gc resolved fresh
+            -- per-request from projects.company_id, never stored/cached).
+            -- Deliberately has NO status column: Active/Expiring Soon/Expired
+            -- is always computed at read time from expiration_date plus the
+            -- per-(project,permit_type) threshold below — a client can never
+            -- supply status directly.
+            CREATE TABLE IF NOT EXISTS permits (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                permit_type VARCHAR(100) NOT NULL,
+                permit_number VARCHAR(100),
+                issuing_authority VARCHAR(255),
+                issue_date DATE,
+                expiration_date DATE NOT NULL,
+                document_id INT REFERENCES documents(id) ON DELETE SET NULL,
+                notes TEXT,
+                created_by INT NOT NULL REFERENCES users(id),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS permits_project_id_idx ON permits (project_id);
+            CREATE INDEX IF NOT EXISTS permits_document_id_idx ON permits (document_id);
+
+            -- A GC's explicit grant of one permit to one Sub company —
+            -- same shape as document_access_grants (revoked_at nullable +
+            -- the unique constraint let a grant be re-issued in place via
+            -- ON CONFLICT ... SET revoked_at = NULL rather than
+            -- accumulating duplicate rows), just pointed at permit_id
+            -- instead of document_id per the module spec.
+            CREATE TABLE IF NOT EXISTS permit_access_grants (
+                id SERIAL PRIMARY KEY,
+                permit_id INT NOT NULL REFERENCES permits(id) ON DELETE CASCADE,
+                granted_to_company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+                granted_by_user_id INT NOT NULL REFERENCES users(id),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                revoked_at TIMESTAMPTZ,
+                UNIQUE(permit_id, granted_to_company_id)
+            );
+            CREATE INDEX IF NOT EXISTS permit_access_grants_permit_id_idx ON permit_access_grants (permit_id);
+            CREATE INDEX IF NOT EXISTS permit_access_grants_company_id_idx ON permit_access_grants (granted_to_company_id);
+
+            -- Per-project, per-permit-type override of the "expiring soon"
+            -- window. No row for a given (project_id, permit_type) means
+            -- "use this project's default_expiring_soon_days" — resolved in
+            -- services/permit_helpers.py's compute_permit_status, never
+            -- hardcoded inline anywhere else.
+            CREATE TABLE IF NOT EXISTS project_permit_type_settings (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                permit_type VARCHAR(100) NOT NULL,
+                expiring_soon_days INT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                UNIQUE(project_id, permit_type)
+            );
+            CREATE INDEX IF NOT EXISTS project_permit_type_settings_project_id_idx ON project_permit_type_settings (project_id);
+
+            -- Project-wide fallback threshold used whenever no
+            -- project_permit_type_settings row exists for a given
+            -- (project_id, permit_type) pair.
+            ALTER TABLE projects ADD COLUMN IF NOT EXISTS default_expiring_soon_days INT NOT NULL DEFAULT 30;
+
+            -- Seeds a global 'permits' flag row so it exists (defaulting
+            -- OFF), same pattern as every other module.
+            INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
+            VALUES (NULL, 'permits', 'Permit Tracker', 'permits', false, true)
+            ON CONFLICT (feature_key) WHERE is_global = true DO NOTHING;
+
+            INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active)
+            VALUES (true, NULL, 'permits', 0, 'monthly', true)
+            ON CONFLICT (module_name) WHERE is_global = true DO NOTHING;
         """)
 
         await _backfill_clash_project_ids(conn)

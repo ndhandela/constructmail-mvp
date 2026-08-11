@@ -29,14 +29,24 @@ function PinButton({ pinned, onToggle }) {
   );
 }
 
-function Card({ label, description, onOpen, disabled, comingSoon, appKey, pinnedApps, onTogglePin }) {
+// alert is 'expired' | 'expiring_soon' | null — an in-app-only flag (no
+// email, MVP scope) surfaced from GET /api/permits/projects/{id}/status-summary,
+// rendered alongside the normal pin button rather than replacing it.
+function Card({ label, description, onOpen, disabled, comingSoon, appKey, pinnedApps, onTogglePin, alert }) {
   return (
     <div
       className={`ph-card${disabled ? ' ph-card-disabled' : ''}`}
       onClick={disabled ? undefined : onOpen}
     >
       <div className="ph-card-body">
-        <h3 className="ph-card-title">{label}</h3>
+        <div className="ph-card-title-row">
+          <h3 className="ph-card-title">{label}</h3>
+          {alert && (
+            <span className={`ph-card-alert ph-card-alert-${alert === 'expired' ? 'expired' : 'expiring-soon'}`}>
+              {alert === 'expired' ? 'Expired' : 'Expiring Soon'}
+            </span>
+          )}
+        </div>
         {description && <p className="ph-card-desc">{description}</p>}
       </div>
       {comingSoon ? (
@@ -61,6 +71,7 @@ export default function ProjectDetailPage({ user, userId }) {
 
   const [activeView, setActiveView] = useState(viewFromQuery); // null | 'budget' | 'schedule' | 'project-subs'
   const [pinnedApps, setPinnedApps] = useState([]);
+  const [permitAlert, setPermitAlert] = useState(null);
 
   const owner = isProjectOwner(project, user);
 
@@ -73,6 +84,20 @@ export default function ProjectDetailPage({ user, userId }) {
       .catch((err) => console.error('Fetch pinned apps error:', err));
     return () => { cancelled = true; };
   }, [userId]);
+
+  // GC-only signal (routers/permits.py's status-summary 403s a Sub) — a Sub
+  // viewing this page just gets no badge, same as it gets no Permits access
+  // at all by default. Silently swallowed on error/403 rather than shown,
+  // since this is a soft in-app nicety, not a page the user is blocked by.
+  useEffect(() => {
+    if (!project || !userId || !user?.active_modules?.permits) { setPermitAlert(null); return; }
+    let cancelled = false;
+    fetch(`${API_BASE_URL}/api/permits/projects/${project.id}/status-summary?userId=${userId}`)
+      .then((res) => res.json())
+      .then((data) => { if (!cancelled) setPermitAlert(data.success ? data : null); })
+      .catch(() => { if (!cancelled) setPermitAlert(null); });
+    return () => { cancelled = true; };
+  }, [project, userId, user]);
 
   const togglePin = async (appKey) => {
     const isPinned = pinnedApps.includes(appKey);
@@ -175,7 +200,15 @@ export default function ProjectDetailPage({ user, userId }) {
       <div className="ph-category">
         <div className="ph-category-label">Compliance</div>
         <div className="ph-grid">
-          <Card label="Permits" description="Permit tracking — coming soon" disabled comingSoon />
+          <Card
+            label="Permits"
+            description="Permit tracking with automatic expiration status"
+            appKey="permits"
+            pinnedApps={pinnedApps}
+            onTogglePin={togglePin}
+            onOpen={() => { window.location.href = '/permits'; }}
+            alert={permitAlert?.has_expired ? 'expired' : permitAlert?.has_expiring_soon ? 'expiring_soon' : null}
+          />
           <Card label="Documents" description="Project documents" appKey="documents" pinnedApps={pinnedApps} onTogglePin={togglePin} onOpen={() => { window.location.href = '/documents'; }} />
         </div>
       </div>

@@ -73,6 +73,13 @@ export const MODULE_ICONS = {
       <polyline points="13 2 13 8 19 8" />
     </svg>
   ),
+  permits: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="8" y="2" width="8" height="4" rx="1" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <path d="m9 14 2 2 4-4" />
+    </svg>
+  ),
   new_nav: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="3" width="7" height="18" rx="1" />
@@ -99,6 +106,7 @@ export const MODULE_DEFS = [
   { key: 'daily_logs', label: 'Daily Logs', gated: true },
   { key: 'invoice_tracker', label: 'Invoice Tracker', gated: true },
   { key: 'documents', label: 'Documents', gated: true },
+  { key: 'permits', label: 'Permit Tracker', gated: true },
   { key: 'new_nav', label: 'New Left Nav', gated: true, note: 'Project-tracking redesign rollout' },
 ];
 
