@@ -11,7 +11,7 @@
 import { clientsClaim } from 'workbox-core';
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
-import { NetworkFirst, StaleWhileRevalidate, CacheFirst } from 'workbox-strategies';
+import { NetworkFirst, CacheFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 
@@ -57,7 +57,7 @@ registerRoute(
   }
 );
 
-// ── API calls: cache-then-network ───────────────────────────────────────
+// ── API calls: network-first ─────────────────────────────────────────────
 // Only GET is ever registered as a route below, so POST/PUT/PATCH/DELETE
 // (anything that mutates data) are never matched here and fall straight
 // through to the network untouched — Workbox only intercepts requests a
@@ -71,7 +71,7 @@ const isApiGet = ({ request, url }) =>
 
 registerRoute(
   isApiGet,
-  new StaleWhileRevalidate({
+  new NetworkFirst({
     cacheName: 'pomar-api-v1',
     plugins: [
       new CacheableResponsePlugin({ statuses: [200] }),
@@ -79,14 +79,16 @@ registerRoute(
     ],
   })
 );
-// Note on "cache-then-network": StaleWhileRevalidate serves the cached
-// response immediately when present, and updates the cache from the
-// network in the background for next time. It does not push that fresh
-// data into an already-rendered screen — this app has no shared
-// data-fetching layer (each module calls fetch() directly), so live-
-// refreshing an open screen the instant the network responds would mean
-// wiring a listener into every module individually. Out of scope here;
-// flagged in the PR notes.
+// Was StaleWhileRevalidate (serves the cached response immediately, then
+// refreshes the cache from the network in the background). That meant every
+// module's own refetch-after-mutation (e.g. Permit Tracker calling
+// fetchPermits() right after creating/editing a permit) got back the
+// pre-mutation cached list, not the fresh one — the UI only caught up on
+// the next refetch, which is what made it look like changes "didn't show
+// until I refreshed". NetworkFirst tries the network first (so a
+// refetch-after-write always reflects the write) and only falls back to
+// the cache when there's no network at all, which still keeps offline
+// support working.
 
 // ── Static public assets (images/fonts) ─────────────────────────────────
 // Not covered by the webpack-built precache manifest above (same reason
