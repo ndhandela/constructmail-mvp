@@ -131,7 +131,7 @@ export default function AccountantInvoiceView({ user, userId, onLogout }) {
     return (
       <div className="invoices-accountant-shell">
         <header className="invoices-accountant-header">
-          <span className="invoices-accountant-header-brand">POMAR Invoice Tracker</span>
+          <span className="invoices-accountant-header-brand">POMAR Invoices</span>
           {onLogout && (
             <button className="invoices-link-btn" onClick={onLogout}>Sign out</button>
           )}
@@ -181,7 +181,7 @@ export default function AccountantInvoiceView({ user, userId, onLogout }) {
   return (
     <div className="invoices-accountant-shell">
       <header className="invoices-accountant-header">
-        <span className="invoices-accountant-header-brand">POMAR Invoice Tracker</span>
+        <span className="invoices-accountant-header-brand">POMAR Invoices</span>
         <span className="invoices-accountant-header-company">{user?.email}</span>
         {onLogout && (
           <button className="invoices-link-btn" onClick={onLogout}>Sign out</button>

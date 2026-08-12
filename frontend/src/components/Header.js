@@ -30,7 +30,15 @@ function getInitials(name) {
 
 // Platform dropdown shown to logged-out visitors — links to public marketing
 // pages (product.marketingPath), never to the authenticated app routes.
-const PLATFORM_DROPDOWN_IDS = ['constructmail', 'clash', 'vendors', 'marketplace', 'daily_logs', 'capital'];
+const PLATFORM_DROPDOWN_IDS = ['constructmail', 'clash', 'vendors', 'marketplace', 'capital', 'invoice_tracker', 'daily_logs'];
+
+// The in-app product name for 'capital' (used by the Dashboard and Pricing
+// pages) stays "Capital Tracker" — only the public marketing surfaces show
+// it as Budget. 'invoice_tracker' needs no override: products.js already
+// names it "POMAR Invoices" everywhere, in-app and on marketing.
+const PLATFORM_DROPDOWN_TITLE_OVERRIDES = {
+  capital: 'POMAR Budget',
+};
 
 export default function Header({ userId, onLogout, user }) {
   const isLoggedIn = !!userId;
@@ -226,7 +234,7 @@ export default function Header({ userId, onLogout, user }) {
                     <a key={id} href={product.marketingPath} className="dropdown-item">
                       <span className="dropdown-item-tag">Live</span>
                       <div>
-                        <div className="dropdown-item-title">{product.name}</div>
+                        <div className="dropdown-item-title">{PLATFORM_DROPDOWN_TITLE_OVERRIDES[id] || product.name}</div>
                         <div className="dropdown-item-sub">{product.description}</div>
                       </div>
                     </a>

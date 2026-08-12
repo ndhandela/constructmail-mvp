@@ -14,7 +14,8 @@ import ClashMarketing from './pages/marketing/ClashMarketing';
 import VendorsMarketing from './pages/marketing/VendorsMarketing';
 import MarketplaceMarketing from './pages/marketing/MarketplaceMarketing';
 import DailyLogsMarketing from './pages/marketing/DailyLogsMarketing';
-import CapitalMarketing from './pages/marketing/CapitalMarketing';
+import BudgetMarketing from './pages/marketing/BudgetMarketing';
+import InvoicesMarketing from './pages/marketing/InvoicesMarketing';
 import MarketplacePublicBrowse from './pages/marketing/MarketplacePublicBrowse';
 import MarketplaceListingDetail from './pages/marketing/MarketplaceListingDetail';
 import MarketplaceTerms from './pages/marketing/MarketplaceTerms';
@@ -334,11 +335,21 @@ function App() {
     );
   }
 
-  if (path === '/capital-info') {
+  if (path === '/budget-info') {
     return (
       <>
         <Header userId={userId} onLogout={handleLogout} user={user} />
-        <CapitalMarketing />
+        <BudgetMarketing />
+        <Footer />
+      </>
+    );
+  }
+
+  if (path === '/invoices-info') {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <InvoicesMarketing />
         <Footer />
       </>
     );

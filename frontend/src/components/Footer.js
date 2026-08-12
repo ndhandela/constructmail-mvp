@@ -19,9 +19,11 @@ export default function Footer() {
             <a href="/vendors-info">POMAR Vendors</a>
             <a href="/marketplace-info">POMAR Marketplace</a>
             <a href="/demo">POMAR Connect</a>
-            <a href="/demo">POMAR Capital Tracker</a>
-            <a href="/demo">POMAR Trust</a>
+            <a href="/budget-info">POMAR Budget</a>
+            <a href="/invoices-info">POMAR Invoices</a>
             <a href="/daily-logs-info">POMAR Daily Logs</a>
+            <a href="/demo">POMAR Permit Tracker</a>
+            <a href="/demo">POMAR Trust</a>
             <a href="/demo">Book a Demo</a>
           </div>
           <div className="footer-col">

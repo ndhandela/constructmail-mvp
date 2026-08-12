@@ -102,11 +102,11 @@ export default function InvoiceTrackerApp({ user, userId }) {
     return (
       <div className="invoices-app">
         <ModuleLockedNotice
-          moduleName="POMAR Invoice Tracker"
+          moduleName="POMAR Invoices"
           companyName={user?.company}
           variant="upgrade"
           icon="🧾"
-          description="Upload and track vendor invoices against your projects and budget. Upgrade your plan to unlock Invoice Tracker."
+          description="Upload and track vendor invoices against your projects and budget. Upgrade your plan to unlock Invoices."
         />
       </div>
     );

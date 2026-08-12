@@ -287,7 +287,7 @@ function CompanyAccountantInvite({ token, company }) {
 
   return (
     <div style={{ marginTop: 16, borderTop: '1px solid #E7E0D3', paddingTop: 16 }}>
-      <p className="detail-label">Invite an Invoice Tracker accountant</p>
+      <p className="detail-label">Invite an Invoices accountant</p>
       <p style={{ fontSize: 13, color: '#6B6155', marginBottom: 12 }}>
         Read-only access to view and download this company's invoices — no sidebar, no other modules.
       </p>

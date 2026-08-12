@@ -163,9 +163,17 @@ export default function LandingPage({ onProductSelect }) {
 
             <div className="product-card live" onClick={() => goToMarketing('capital')}>
               <span className="product-badge badge-live">Live Now</span>
-              <h3>POMAR Capital Tracker</h3>
+              <h3>POMAR Budget</h3>
               <div className="product-tagline">Budget Intelligence</div>
               <p>Budget-vs-actual per project, live instead of a shared spreadsheet — budgeted, committed, and actual by category, with milestones and work-item progress alongside the dollars.</p>
+              <span className="product-link">Learn more →</span>
+            </div>
+
+            <div className="product-card live" onClick={() => goToMarketing('invoice_tracker')}>
+              <span className="product-badge badge-live">Live Now</span>
+              <h3>POMAR Invoices</h3>
+              <div className="product-tagline">Invoice Intelligence</div>
+              <p>Upload and track vendor invoices against your projects and budget — tag each one to a work item, track paid vs. pending, and extend read-only access to an outside accountant.</p>
               <span className="product-link">Learn more →</span>
             </div>
 
@@ -175,6 +183,16 @@ export default function LandingPage({ onProductSelect }) {
               <div className="product-tagline">Field Intelligence</div>
               <p>Replace the paper logbook. Log crew, weather, delays, and site photos from your phone in under two minutes — one live per-project record instead of a notebook in the site trailer.</p>
               <span className="product-link">Learn more →</span>
+            </div>
+
+            {/* Permit Tracker has no marketing page yet, so its card routes to the
+                demo page instead of goToMarketing. */}
+            <div className="product-card live" onClick={() => { window.location.href = '/demo'; }}>
+              <span className="product-badge badge-live">Live Now</span>
+              <h3>POMAR Permit Tracker</h3>
+              <div className="product-tagline">Compliance Intelligence</div>
+              <p>Track permit status, expiration dates, and issuing authority per project — get flagged automatically before a permit expires instead of finding out in the field.</p>
+              <span className="product-link">Book a demo →</span>
             </div>
           </div>
         </div>

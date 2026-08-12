@@ -324,11 +324,11 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
                     disabled={restrictedModuleState[m.id]?.saving}
                   >
                     <option value="">Full access (all enabled modules)</option>
-                    <option value="invoice_tracker">Invoice Tracker only</option>
+                    <option value="invoice_tracker">Invoices only</option>
                   </select>
                 ) : (
                   <span className="team-role-pill">
-                    {m.restricted_module === 'invoice_tracker' ? 'Invoice Tracker only' : 'Full access'}
+                    {m.restricted_module === 'invoice_tracker' ? 'Invoices only' : 'Full access'}
                   </span>
                 )}
                 {restrictedModuleState[m.id]?.error && (
@@ -434,7 +434,7 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
                     checked={inviteRestricted}
                     onChange={(e) => setInviteRestricted(e.target.checked)}
                   />
-                  Restrict this teammate to Invoice Tracker only (no other module access)
+                  Restrict this teammate to Invoices only (no other module access)
                 </label>
               </div>
             )}
@@ -455,7 +455,7 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
 
       {invoiceTrackerEnabled && isOwner && (
         <>
-          <p className="profile-section-title" style={{ marginTop: 32 }}>Invoice Tracker accountants</p>
+          <p className="profile-section-title" style={{ marginTop: 32 }}>Invoices accountants</p>
           <p className="profile-readonly-note" style={{ marginBottom: 12 }}>
             A separate, read-only invite — an accountant can view and download invoices for this
             company only. No sidebar, no other modules, and no upload/edit/delete access.

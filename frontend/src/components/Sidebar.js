@@ -159,7 +159,7 @@ export const ACCOUNT_LEVEL_ITEMS = [
   { key: 'trust', path: '/trust', label: 'Trust' },
   { key: 'capital', path: '/capital', label: 'Capital Tracker' },
   { key: 'daily_logs', path: '/daily-logs', label: 'Daily Logs' },
-  { key: 'invoice_tracker', path: '/invoices', label: 'Invoice Tracker' },
+  { key: 'invoice_tracker', path: '/invoices', label: 'Invoices' },
   { key: 'documents', path: '/documents', label: 'Documents' },
   { key: 'permits', path: '/permits', label: 'Permits' },
 ];

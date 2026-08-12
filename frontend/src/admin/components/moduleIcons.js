@@ -104,7 +104,7 @@ export const MODULE_DEFS = [
   { key: 'trust', label: 'Trust', gated: true, note: 'India-only' },
   { key: 'capital', label: 'Capital Tracker', gated: true },
   { key: 'daily_logs', label: 'Daily Logs', gated: true },
-  { key: 'invoice_tracker', label: 'Invoice Tracker', gated: true },
+  { key: 'invoice_tracker', label: 'Invoices', gated: true },
   { key: 'documents', label: 'Documents', gated: true },
   { key: 'permits', label: 'Permit Tracker', gated: true },
   { key: 'new_nav', label: 'New Left Nav', gated: true, note: 'Project-tracking redesign rollout' },

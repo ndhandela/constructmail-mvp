@@ -10,7 +10,7 @@ const HOW_IT_WORKS = [
   'Track milestones and work-item progress alongside the dollars, so you know where the money went and what it bought.',
 ];
 
-export default function CapitalMarketing() {
+export default function BudgetMarketing() {
   const product = getProductById('capital');
 
   return (
@@ -22,7 +22,7 @@ export default function CapitalMarketing() {
         </video>
         <div className="page-hero-overlay"></div>
         <div className="hero-eyebrow">Budget Intelligence</div>
-        <h1 className="hero-title">{product.name}</h1>
+        <h1 className="hero-title">POMAR Budget</h1>
         <p className="hero-sub">{product.description}</p>
         <div className="hero-cta">
           <a href="/demo" className="btn-primary">Book a Demo</a>
@@ -31,7 +31,7 @@ export default function CapitalMarketing() {
 
       <section className="marketing-body">
         <div className="section-inner">
-          <div className="section-eyebrow">Why POMAR Capital Tracker</div>
+          <div className="section-eyebrow">Why POMAR Budget</div>
           <p className="section-body" style={{ maxWidth: '820px' }}>{product.detailedDescription}</p>
 
           <div className="section-eyebrow">How It Works</div>
