@@ -18,7 +18,7 @@ const STATUS_OPTIONS = [
 // shows invoices across every project), but uploading requires one, since an
 // invoice always belongs to exactly one project.
 export default function InvoiceTrackerApp({ user, userId }) {
-  const invoiceTrackerLocked = isModuleLocked(user?.active_modules, 'invoice_tracker');
+  const invoiceTrackerLocked = isModuleLocked(user?.active_modules, 'invoice_tracker', user?.account_status);
   const { projects, currentProjectId } = useContext(ProjectContext);
   const selectedProject = currentProjectId !== ALL_PROJECTS
     ? projects.find((p) => String(p.id) === String(currentProjectId))

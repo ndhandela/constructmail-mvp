@@ -116,6 +116,14 @@ export default function DailyLogsApp({ user, userId }) {
   // No region check here on purpose — like Capital Tracker, Daily Logs is
   // available to any company (US and India), gated only by the
   // 'daily_logs' feature flag.
+  //
+  // account_status is deliberately NOT passed here (unlike every other
+  // module's lock check): a project-vendor-invited lead account
+  // (services/vendor_access.py) reaches Daily Logs through a per-project
+  // grant that has nothing to do with company_id/active_modules, and never
+  // gets promoted out of account_status='lead'. Locking on account_status
+  // here would hide the VendorInviteBanner below and permanently lock out
+  // an accepted vendor's own Daily Logs access.
   const dailyLogsLocked = isModuleLocked(user?.active_modules, 'daily_logs');
 
   // Project selection comes from the shared header/sidebar switcher, same

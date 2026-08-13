@@ -18,7 +18,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export default function ConstructMailApp({ user, userId, onLogout }) {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const mailLocked = isModuleLocked(user?.active_modules, 'mail');
+  const mailLocked = isModuleLocked(user?.active_modules, 'mail', user?.account_status);
   const [gmailConnected, setGmailConnected] = useState(false);
   const [outlookConnected, setOutlookConnected] = useState(false);
   const [selectedEmailText, setSelectedEmailText] = useState('');

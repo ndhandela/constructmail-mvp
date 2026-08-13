@@ -15,7 +15,7 @@ import '../styles/CapitalTrackerApp.css';
 // capital-app/capital-container wrapper as CapitalTrackerApp.js (padding,
 // max-width, centering) rather than the unstyled capital-dashboard div.
 export default function WorkItemsApp({ user, userId }) {
-  const workItemsLocked = isModuleLocked(user?.active_modules, 'capital');
+  const workItemsLocked = isModuleLocked(user?.active_modules, 'capital', user?.account_status);
 
   // Project selection comes from the shared header/sidebar switcher, same
   // as Capital Tracker/Daily Logs/Invoice Tracker — no separate in-page picker.

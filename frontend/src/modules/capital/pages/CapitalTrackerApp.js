@@ -9,7 +9,7 @@ export default function CapitalTrackerApp({ user, userId }) {
   // No region check here on purpose — unlike Trust, Capital Tracker is
   // available to any company (US and India), gated only by the 'capital'
   // feature flag.
-  const capitalLocked = isModuleLocked(user?.active_modules, 'capital');
+  const capitalLocked = isModuleLocked(user?.active_modules, 'capital', user?.account_status);
 
   // Project selection comes from the shared header/sidebar switcher, same
   // as Mail/Clash/Vendors — no separate in-page picker.

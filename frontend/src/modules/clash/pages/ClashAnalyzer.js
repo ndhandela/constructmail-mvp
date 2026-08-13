@@ -34,7 +34,7 @@ export default function ClashAnalyzer({ user }) {
   const [parseError, setParseError] = useState('');
   const [activeTab, setActiveTab]   = useState('dashboard');
 
-  const clashLocked = isModuleLocked(user?.active_modules, 'clash');
+  const clashLocked = isModuleLocked(user?.active_modules, 'clash', user?.account_status);
   const userId = localStorage.getItem('constructmail_userId');
   // Named distinctly from ProcoreConnect.js's `projectId` (a Procore remote
   // project id used for RFI push) — this is the POMAR project from the Header switcher.

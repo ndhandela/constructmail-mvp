@@ -5,8 +5,14 @@ import '../styles/ModuleLockedNotice.css';
 // legacy accounts predating the company model get back an empty object from
 // the API and are treated as full access, not "locked" (see
 // services/access_control.py's require_feature_flag on the backend).
-export function isModuleLocked(activeModules, key) {
-  if (!activeModules || Object.keys(activeModules).length === 0) return false;
+// Lead accounts (account_status === 'lead' — marketplace signups, project-
+// vendor invites, accountant invites) also get {} back, but for the opposite
+// reason: require_feature_flag blanket-403s them regardless of company_id,
+// so they must render as locked, not fall into the legacy full-access case.
+export function isModuleLocked(activeModules, key, accountStatus) {
+  if (!activeModules || Object.keys(activeModules).length === 0) {
+    return accountStatus === 'lead';
+  }
   return !activeModules[key];
 }
 

@@ -11,7 +11,7 @@ import '../styles/VendorsApp.css';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export default function VendorsApp({ user, userId, onLogout }) {
-  const vendorsLocked = isModuleLocked(user?.active_modules, 'vendors');
+  const vendorsLocked = isModuleLocked(user?.active_modules, 'vendors', user?.account_status);
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchError, setSearchError] = useState('');

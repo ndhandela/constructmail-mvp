@@ -252,11 +252,22 @@ function LegacySidebar({ user }) {
   // ModuleLockedNotice/isModuleLocked elsewhere in this file).
   const restrictedModule = user?.restricted_module || null;
 
+  // Lead accounts (account_status === 'lead' — marketplace signups,
+  // project-vendor invites, accountant invites) have no restricted_module
+  // set, but require_feature_flag blanket-403s them out of every one of
+  // these modules just the same (see services/access_control.py). Daily
+  // Logs is deliberately NOT excluded here even though a project-vendor
+  // lead's real access to it comes through a separate per-project grant
+  // (services/vendor_access.py) rather than this sidebar's module list —
+  // that grant is project-scoped and only meaningful once a project is
+  // selected, so it doesn't belong in an always-visible nav item anyway.
+  const isLeadAccount = user?.account_status === 'lead';
+
   return (
     <aside className="app-sidebar">
       <nav className="sidebar-group">
         {PROJECT_SCOPED_ITEMS
-          .filter((item) => !restrictedModule)
+          .filter((item) => !restrictedModule && !isLeadAccount)
           .map((item) => (
             <SidebarItem
               key={item.key}
@@ -273,6 +284,7 @@ function LegacySidebar({ user }) {
         {ACCOUNT_LEVEL_ITEMS
           .filter((item) => item.key !== 'trust' || showTrust)
           .filter((item) => !restrictedModule || item.key === restrictedModule)
+          .filter((item) => !isLeadAccount)
           .map((item) => (
             <SidebarItem
               key={item.key}
@@ -293,6 +305,9 @@ function NewSidebar({ user }) {
   const currentSearch = window.location.search;
   const hasActiveProject = projects.length > 0;
   const restrictedModule = user?.restricted_module || null;
+  // See LegacySidebar above for why lead accounts are hidden the same way
+  // restrictedModule is.
+  const isLeadAccount = user?.account_status === 'lead';
 
   const [pinnedApps, setPinnedApps] = useState([]);
 
@@ -336,7 +351,7 @@ function NewSidebar({ user }) {
 
       <nav className="sidebar-group">
         {GLOBAL_TOOL_ITEMS
-          .filter((item) => !restrictedModule)
+          .filter((item) => !restrictedModule && !isLeadAccount)
           .map((item) => (
             <SidebarItem
               key={item.key}
@@ -347,7 +362,7 @@ function NewSidebar({ user }) {
           ))}
       </nav>
 
-      {pinnedApps.length > 0 && !restrictedModule && (
+      {pinnedApps.length > 0 && !restrictedModule && !isLeadAccount && (
         <>
           <div className="sidebar-divider" />
           <nav className="sidebar-group">

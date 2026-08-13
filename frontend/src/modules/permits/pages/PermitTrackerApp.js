@@ -21,7 +21,7 @@ const STATUS_FILTER_OPTIONS = [
 // API returns already carries the server-computed `status`, since a client
 // is never trusted to derive it (see fastapi_backend/services/permit_helpers.py).
 export default function PermitTrackerApp({ user, userId }) {
-  const permitsLocked = isModuleLocked(user?.active_modules, 'permits');
+  const permitsLocked = isModuleLocked(user?.active_modules, 'permits', user?.account_status);
   const { projects, currentProjectId } = useContext(ProjectContext);
   const selectedProject = currentProjectId !== ALL_PROJECTS
     ? projects.find((p) => String(p.id) === String(currentProjectId))

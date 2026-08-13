@@ -20,7 +20,7 @@ import '../styles/DocumentsApp.css';
 // project shows up as "gc" there for free, so the "New Folder" button and
 // folder-access controls need no special-cased "Sub-turned-GC" logic here.
 export default function DocumentsApp({ user, userId }) {
-  const documentsLocked = isModuleLocked(user?.active_modules, 'documents');
+  const documentsLocked = isModuleLocked(user?.active_modules, 'documents', user?.account_status);
   const { projects, currentProjectId } = useContext(ProjectContext);
   const selectedProject = currentProjectId !== ALL_PROJECTS
     ? projects.find((p) => String(p.id) === String(currentProjectId))

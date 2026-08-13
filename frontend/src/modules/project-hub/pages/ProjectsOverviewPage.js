@@ -76,7 +76,7 @@ function ProjectCard({ project, userId, capitalLocked, onOpen }) {
 
 export default function ProjectsOverviewPage({ user, userId }) {
   const { projects, setCurrentProjectId } = useContext(ProjectContext);
-  const capitalLocked = isModuleLocked(user?.active_modules, 'capital');
+  const capitalLocked = isModuleLocked(user?.active_modules, 'capital', user?.account_status);
 
   const openProject = (project) => {
     // Full page nav (this app has no client router) — set the shared

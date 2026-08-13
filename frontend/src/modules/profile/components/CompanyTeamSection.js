@@ -25,6 +25,7 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
 
   const [companyProjects, setCompanyProjects] = useState([]);
   const [selectedInviteProjectIds, setSelectedInviteProjectIds] = useState(new Set());
+  const [projectsLoading, setProjectsLoading] = useState(true);
 
   const [editingMemberId, setEditingMemberId] = useState(null);
   const [memberProjects, setMemberProjects] = useState([]);
@@ -64,8 +65,10 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
   useEffect(() => {
     if (!companyId) {
       setCompanyProjects([]);
+      setProjectsLoading(false);
       return;
     }
+    setProjectsLoading(true);
     fetch(`${API_BASE_URL}/api/projects/company/${companyId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -73,7 +76,8 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
         setCompanyProjects(projects);
         setSelectedInviteProjectIds(new Set(projects.map((p) => p.id)));
       })
-      .catch((err) => console.error('Fetch company projects error:', err));
+      .catch((err) => console.error('Fetch company projects error:', err))
+      .finally(() => setProjectsLoading(false));
   }, [companyId]);
 
   const toggleInviteProjectId = (id) => {
@@ -88,6 +92,17 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
   const handleInvite = async (e) => {
     e.preventDefault();
     if (!inviteEmail.trim() || !inviteFullName.trim()) return;
+    if (projectsLoading) return;
+    // Guards against sending an invite with projectIds: [] when the
+    // company does have projects to grant — belt-and-suspenders alongside
+    // disabling the submit button while projectsLoading is true, in case
+    // that disable is bypassed (e.g. Enter-key submit racing the fetch).
+    // An empty selection is only valid when the company truly has no
+    // projects yet (companyProjects.length === 0).
+    if (companyProjects.length > 0 && selectedInviteProjectIds.size === 0) {
+      setMsg({ type: 'error', text: 'Select at least one project to give this teammate access to.' });
+      return;
+    }
     setInviting(true);
     setMsg(null);
     try {
@@ -440,8 +455,8 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
             )}
 
             <div className="profile-save-row">
-              <button type="submit" className="profile-save-btn" disabled={inviting}>
-                {inviting ? 'Sending…' : 'Send invite'}
+              <button type="submit" className="profile-save-btn" disabled={inviting || projectsLoading}>
+                {inviting ? 'Sending…' : projectsLoading ? 'Loading projects…' : 'Send invite'}
               </button>
               {msg && <span className={`profile-msg ${msg.type}`}>{msg.text}</span>}
             </div>

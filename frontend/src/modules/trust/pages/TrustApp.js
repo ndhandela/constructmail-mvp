@@ -19,7 +19,7 @@ export default function TrustApp({ user, userId }) {
   // manually flips the 'trust' feature flag on for it — region is checked
   // client-side too, not just isModuleLocked's flag check (server enforces
   // both regardless, see services/trust_access.py).
-  const trustLocked = user?.company_region !== 'IN' || isModuleLocked(user?.active_modules, 'trust');
+  const trustLocked = user?.company_region !== 'IN' || isModuleLocked(user?.active_modules, 'trust', user?.account_status);
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [projects, setProjects] = useState([]);
