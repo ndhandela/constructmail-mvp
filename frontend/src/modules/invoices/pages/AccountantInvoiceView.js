@@ -15,7 +15,7 @@ const STATUS_OPTIONS = [
 // edit/delete controls, matching the accountant's server-side permissions
 // (services/invoice_helpers.require_company_invoice_access always returns
 // can_write=false for an accountant, enforced independently of this UI).
-export default function AccountantInvoiceView({ user, userId, onLogout }) {
+export default function AccountantInvoiceView({ user, userId, onLogout, onUserRefresh }) {
   const invites = user?.pending_accountant_invites || [];
   const [companyId, setCompanyId] = useState(null);
   const [invoices, setInvoices] = useState([]);
@@ -26,10 +26,12 @@ export default function AccountantInvoiceView({ user, userId, onLogout }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptError, setAcceptError] = useState('');
-  // App.js doesn't refetch /api/auth/me after a successful accept, so
-  // `user.pending_accountant_invites` stays stale for the rest of this
-  // session — this local flag is what actually flips the view over,
-  // rather than re-deriving from the (now outdated) prop.
+  // onUserRefresh (App.js's fetchUser) re-pulls /api/auth/me right after a
+  // successful accept so `user.has_password`/`pending_accountant_invites`
+  // stop being stale for the rest of the session — but that refetch is
+  // async, so this flag still covers the brief gap between accept
+  // succeeding and the refetch landing (and acts as a fallback if
+  // onUserRefresh isn't passed for some reason).
   const [justAccepted, setJustAccepted] = useState(false);
 
   const needsPassword = !user?.has_password;
@@ -116,6 +118,7 @@ export default function AccountantInvoiceView({ user, userId, onLogout }) {
       if (data.success) {
         setJustAccepted(true);
         setCompanyId(data.access.company_id);
+        if (onUserRefresh) onUserRefresh();
       } else {
         setAcceptError(data.detail || 'Could not accept invite.');
       }

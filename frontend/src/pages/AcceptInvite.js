@@ -18,11 +18,19 @@ export default function AcceptInvite() {
     if (password !== confirm) { setError('Passwords do not match.'); return; }
     setLoading(true); setError('');
     try {
-      await axios.post(`${API_BASE_URL}/api/auth/accept-invite`, { token, password });
+      const res = await axios.post(`${API_BASE_URL}/api/auth/accept-invite`, { token, password });
       setSuccess(true);
+      // Auto-login: the accept-invite response is the same request/response
+      // that just committed the password + role, so there's no race here —
+      // storing its userId and doing a full navigation to /dashboard lets
+      // App.js's normal mount flow fetch a fresh /api/auth/me for this user
+      // (it also redirects accountant accounts on to /accountant on its
+      // own), so the very next page always reflects the just-created role
+      // with no manual "sign in again" step required.
+      localStorage.setItem('constructmail_userId', res.data.userId);
+      window.location.href = '/dashboard';
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to accept invite.');
-    } finally {
       setLoading(false);
     }
   };
@@ -53,8 +61,9 @@ export default function AcceptInvite() {
         {success ? (
           <div>
             <div className="auth-success" style={{ marginBottom: 20 }}>
-              Password set successfully!
+              Password set! Signing you in...
             </div>
+            {/* Fallback only — the submit handler already redirects on success. */}
             <a href="/login" className="auth-submit" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
               Sign in now
             </a>

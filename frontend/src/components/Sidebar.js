@@ -164,6 +164,16 @@ export const ACCOUNT_LEVEL_ITEMS = [
   { key: 'permits', path: '/permits', label: 'Permits' },
 ];
 
+// The only modules a lead account (account_status === 'lead' — a
+// project-vendor sub, or an accountant/marketplace lead) can actually reach:
+// Daily Logs via a per-project services/vendor_access.py grant, Documents
+// and Permits via their own independent GC/Sub sharing model
+// (services/document_helpers.py / services/permit_helpers.py). Every other
+// module goes through services/access_control.require_feature_flag, which
+// unconditionally 403s any account_status='lead' user before it even looks
+// at company_id — so those stay hidden for leads.
+const LEAD_ACCESSIBLE_MODULE_KEYS = ['daily_logs', 'documents', 'permits'];
+
 // ── New 3-tier nav (behind the 'new_nav' feature flag) ─────────────────────
 // Tier 1: fixed core (always present, not user-configurable).
 const CORE_ITEMS = [
@@ -178,6 +188,7 @@ const GLOBAL_TOOL_ITEMS = [
   { key: 'vendors', path: '/vendors', label: 'Vendors' },
   { key: 'mail', path: '/mail', label: 'Mail' },
   { key: 'clash', path: '/clash', label: 'Clash' },
+  { key: 'marketplace', path: '/marketplace', label: 'Marketplace' },
 ];
 
 // Tier 3: user-pinned favorites (frontend/src/modules/project-hub — pinned
@@ -284,7 +295,7 @@ function LegacySidebar({ user }) {
         {ACCOUNT_LEVEL_ITEMS
           .filter((item) => item.key !== 'trust' || showTrust)
           .filter((item) => !restrictedModule || item.key === restrictedModule)
-          .filter((item) => !isLeadAccount)
+          .filter((item) => !isLeadAccount || LEAD_ACCESSIBLE_MODULE_KEYS.includes(item.key))
           .map((item) => (
             <SidebarItem
               key={item.key}
@@ -362,12 +373,13 @@ function NewSidebar({ user }) {
           ))}
       </nav>
 
-      {pinnedApps.length > 0 && !restrictedModule && !isLeadAccount && (
+      {pinnedApps.length > 0 && !restrictedModule && (
         <>
           <div className="sidebar-divider" />
           <nav className="sidebar-group">
             {pinnedApps
               .filter((appKey) => PINNED_APP_CONFIG[appKey])
+              .filter((appKey) => !isLeadAccount || LEAD_ACCESSIBLE_MODULE_KEYS.includes(appKey))
               .map((appKey) => {
                 const config = PINNED_APP_CONFIG[appKey];
                 const item = { key: appKey, path: config.path, label: config.label };

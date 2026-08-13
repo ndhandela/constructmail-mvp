@@ -28,6 +28,7 @@ from pydantic import BaseModel
 from db import get_pool
 from services.access_control import require_feature_flag
 from services.capital_helpers import (
+    get_budget_items,
     get_project_budget_summary,
     get_spend_by_category,
     get_spend_by_work_item,
@@ -258,18 +259,10 @@ async def list_budget_items(project_id: int, userId: int):
         await require_feature_flag(conn, userId, "capital")
         await _require_project_member(conn, project_id, userId)
 
-        rows = await conn.fetch(
-            """SELECT bi.*, c.name AS category_name, wi.name AS work_item_name
-               FROM budget_items bi
-               JOIN categories c ON c.id = bi.category_id
-               JOIN work_items wi ON wi.id = bi.work_item_id
-               WHERE bi.project_id = $1
-               ORDER BY wi.sequence NULLS LAST, wi.id, c.name""",
-            project_id,
-        )
+        items = await get_budget_items(conn, project_id)
         summary = await get_project_budget_summary(conn, project_id)
 
-    return {"success": True, "items": [dict(r) for r in rows], "budget_summary": summary}
+    return {"success": True, "items": items, "budget_summary": summary}
 
 
 @router.post("/projects/{project_id}/items")

@@ -104,6 +104,20 @@ function App() {
       return;
     }
 
+    if (path === '/accept-invite') {
+      // AcceptInvite.js owns its own `?token=` entirely (a one-time invite
+      // token validated via POST /api/auth/accept-invite) and handles its
+      // own login after password-set. Without this early return, the
+      // verify-token logic below saw the same `token` param, mistook it for
+      // a magic-link session token, and fired POST /api/auth/verify-token
+      // in the background — which always 400s against an invite token, and
+      // surfaced as a stray "Login failed: undefined" alert plus the whole
+      // page stuck behind `loading` (see the `if (loading)` gate below)
+      // until that failing request resolved.
+      setLoading(false);
+      return;
+    }
+
     const verifyTokenFn = async (token) => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/auth/verify-token`, {
@@ -147,7 +161,9 @@ function App() {
           else setCurrentProduct('dashboard');
           window.history.replaceState({}, document.title, window.location.pathname);
         } else {
-          alert('Login failed: ' + data.error);
+          // FastAPI error bodies are {"detail": ...}, not {"error": ...} —
+          // reading .error here always produced a literal "undefined".
+          alert('Login failed: ' + (data.detail || data.error || 'Please try signing in again.'));
           setLoading(false);
         }
       } catch (err) {
@@ -196,14 +212,36 @@ function App() {
   }, [userId]);
 
   const fetchUser = async (uid) => {
+    // A fresh page load (hard refresh, or any full navigation on a
+    // PRODUCT_PATH) hits this before anything else renders, and the
+    // `if (loading)` gate below blocks every route — including /login —
+    // until it settles. Without a timeout, a hung request left the whole
+    // app stuck on "Loading..." forever with no way out. And an
+    // unsuccessful response (e.g. a stale/deleted userId still sitting in
+    // localStorage — {"detail": "User not found"}) used to get stored as
+    // `user` as-is: a malformed object with no `role`/`account_status`,
+    // which downstream checks (like the SelectRole gate) treated as a
+    // real, if incomplete, logged-in user instead of "not logged in."
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/me?userId=${uid}`);
+      const response = await fetch(`${API_BASE_URL}/api/auth/me?userId=${uid}`, { signal: controller.signal });
+      if (!response.ok) throw new Error(`GET /api/auth/me failed: ${response.status}`);
       const data = await response.json();
       setUser(data);
       setLoading(false);
     } catch (err) {
       console.error('Fetch user error:', err);
+      // Can't verify this session — fail safe rather than leaving a
+      // half-restored userId-but-no-user state or an infinite spinner.
+      // The normal logged-out routing (below) sends the user to /login.
+      localStorage.removeItem('constructmail_userId');
+      localStorage.removeItem('marketplace_sessionToken');
+      setUserId(null);
+      setUser(null);
       setLoading(false);
+    } finally {
+      clearTimeout(timeoutId);
     }
   };
 
@@ -446,7 +484,7 @@ function App() {
       window.location.href = '/login';
       return null;
     }
-    return <AccountantInvoiceView user={user} userId={userId} onLogout={handleLogout} />;
+    return <AccountantInvoiceView user={user} userId={userId} onLogout={handleLogout} onUserRefresh={() => fetchUser(userId)} />;
   }
 
   // ── Accountant accounts never reach anywhere but /accountant ────────────

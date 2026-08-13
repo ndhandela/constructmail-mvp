@@ -69,8 +69,16 @@
 }
 
 .permits-notes-cell {
-  white-space: normal;
+  /* Auto table layout sizes columns off each cell's unconstrained content
+     width, so a long Notes value grew this column wide enough to crowd
+     out (and visually overlap) the actions column next to it — max-width
+     alone doesn't cap a table cell's rendered box without overflow
+     clipping to back it up. Single-line ellipsis truncation gives Notes a
+     hard ceiling regardless of content length. */
   max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .permits-table tr:last-child td {
@@ -80,6 +88,12 @@
 .permits-row-actions {
   display: flex;
   gap: 12px;
+  /* Shrink-to-fit: reserves exactly the space Edit/Manage access/Delete
+     need and no more, so the flexible Notes column above absorbs the
+     leftover width instead of squeezing this column below its content's
+     natural size. */
+  width: 1%;
+  white-space: nowrap;
 }
 
 .permits-link-btn {
