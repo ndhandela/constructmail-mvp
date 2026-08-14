@@ -1,3 +1,27 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /login$
+Disallow: /accept-invite$
+Disallow: /reset-password$
+Disallow: /accountant$
+Disallow: /mail$
+Disallow: /clash$
+Disallow: /vendors$
+Disallow: /connect$
+Disallow: /profile$
+Disallow: /company-settings$
+Disallow: /marketplace$
+Disallow: /trust$
+Disallow: /capital$
+Disallow: /daily-logs$
+Disallow: /invoices$
+Disallow: /documents$
+Disallow: /permits$
+Disallow: /work-items$
+Disallow: /projects-overview$
+Disallow: /project$
+
+Sitemap: https://pomar.ai/sitemap.xml
