@@ -15,6 +15,9 @@ export default function MailMarketing() {
 
   return (
     <div className="marketing-page">
+      <title>POMAR Mail — Email Intelligence for General Contractors</title>
+      <meta name="description" content="AI-powered email intelligence for GCs. POMAR Mail summarizes threads, extracts action items, and flags RFI and change-order signals hidden in your inbox." />
+      <link rel="canonical" href="https://pomar.ai/mail-info" />
       <section className="hero marketing-hero">
         <video className="page-hero-video" autoPlay muted loop playsInline
           poster="/videos/hero-mail-poster.jpg">

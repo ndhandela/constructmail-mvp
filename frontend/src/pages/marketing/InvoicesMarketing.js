@@ -15,6 +15,9 @@ export default function InvoicesMarketing() {
 
   return (
     <div className="marketing-page">
+      <title>POMAR Invoices — Vendor Invoice Tracking for GCs</title>
+      <meta name="description" content="Upload and track vendor invoices against your projects and budget. Tag each one to a work item and extend read-only access to an outside accountant." />
+      <link rel="canonical" href="https://pomar.ai/invoices-info" />
       <section className="hero marketing-hero">
         <video className="page-hero-video" autoPlay muted loop playsInline
           poster="/videos/hero-construction-poster.jpg">

@@ -16,6 +16,9 @@ export default function MarketplaceMarketing() {
 
   return (
     <div className="marketing-page">
+      <title>POMAR Marketplace — Shared Vendor Network for GCs</title>
+      <meta name="description" content="Browse vendor listings shared by other General Contractors, backed by real reviews — and opt in to share vendors from your own directory in return." />
+      <link rel="canonical" href="https://pomar.ai/marketplace-info" />
       <section className="hero marketing-hero">
         <video className="page-hero-video" autoPlay muted loop playsInline
           poster="/videos/hero-marketplace-poster.jpg">

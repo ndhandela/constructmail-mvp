@@ -10,6 +10,9 @@ const goToMarketing = (id) => {
 export default function LandingPage({ onProductSelect }) {
   return (
     <div className="landing">
+      <title>POMAR — Intelligence Infrastructure for General Contractors</title>
+      <meta name="description" content="POMAR turns scattered project data into decisions general contractors can act on. Start with POMAR Mail, free — then add Clash, Vendors, and more when you're ready." />
+      <link rel="canonical" href="https://pomar.ai/" />
 
       {/* === HERO ===
           Solid inkwell panel over a faint 48px blueprint grid. One design

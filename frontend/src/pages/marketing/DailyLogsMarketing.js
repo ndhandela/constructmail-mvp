@@ -15,6 +15,9 @@ export default function DailyLogsMarketing() {
 
   return (
     <div className="marketing-page">
+      <title>POMAR Daily Logs — Field Intelligence for General Contractors</title>
+      <meta name="description" content="Replace the paper logbook. Log crew, weather, delays, and site photos from your phone in under two minutes — one live per-project record." />
+      <link rel="canonical" href="https://pomar.ai/daily-logs-info" />
       <section className="hero marketing-hero">
         <video className="page-hero-video" autoPlay muted loop playsInline
           poster="/videos/hero-daily-logs-poster.jpg">

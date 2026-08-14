@@ -15,6 +15,9 @@ export default function BudgetMarketing() {
 
   return (
     <div className="marketing-page">
+      <title>POMAR Budget — Budget-vs-Actual Tracking for GCs</title>
+      <meta name="description" content="Live budget-vs-actual tracking per project — budgeted, committed, and actual by category, computed automatically instead of a shared spreadsheet." />
+      <link rel="canonical" href="https://pomar.ai/budget-info" />
       <section className="hero marketing-hero">
         <video className="page-hero-video" autoPlay muted loop playsInline
           poster="/videos/hero-capital-poster.jpg">

@@ -7,6 +7,9 @@ import '../../styles/PrivacyPolicy.css';
 export default function MarketplaceDisputePolicy() {
   return (
     <div className="privacy-container">
+      <title>Marketplace Dispute Policy | POMAR</title>
+      <meta name="description" content="How disputed reviews on the POMAR Marketplace are handled, including response timelines and each party's rights." />
+      <link rel="canonical" href="https://pomar.ai/marketplace/dispute-policy" />
       <section className="privacy-hero">
         <div className="privacy-eyebrow">Legal</div>
         <h1>POMAR Marketplace Dispute Policy</h1>

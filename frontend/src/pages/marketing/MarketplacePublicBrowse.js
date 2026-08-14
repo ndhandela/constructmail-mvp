@@ -29,6 +29,9 @@ export default function MarketplacePublicBrowse() {
 
   return (
     <div className="marketplace-app">
+      <title>Browse Vendors | POMAR Marketplace</title>
+      <meta name="description" content="Browse vendors trusted by general contractors across the POMAR network — verified listings with real reviews from GCs who've worked with them." />
+      <link rel="canonical" href="https://pomar.ai/marketplace/listings" />
       <div className="marketplace-hero">
         <div className="marketplace-badge">Marketplace</div>
         <h1>POMAR Marketplace</h1>

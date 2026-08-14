@@ -4,6 +4,9 @@ import '../styles/PrivacyPolicy.css';
 export default function PrivacyPolicy() {
   return (
     <div className="privacy-container">
+      <title>Privacy Policy | POMAR</title>
+      <meta name="description" content="How TechDen Solutions collects, uses, and protects your information when you use POMAR." />
+      <link rel="canonical" href="https://pomar.ai/privacy" />
       <section className="privacy-hero">
         <div className="privacy-eyebrow">Legal</div>
         <h1>Privacy Policy</h1>

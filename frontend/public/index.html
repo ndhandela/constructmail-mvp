@@ -24,8 +24,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <meta name="description" content="POMAR is the intelligence layer for General Contractors. Turn scattered project data into decisions you can act on — without changing how your team works." />
-    
+
     <!-- Open Graph (LinkedIn, Slack, FB) -->
     <meta property="og:title" content="POMAR — Intelligence Infrastructure for General Contractors" />
     <meta property="og:description" content="Turn scattered project data into decisions you can act on. Start with ConstructMail — free." />
@@ -39,7 +38,14 @@
     <meta name="twitter:description" content="Turn scattered project data into decisions you can act on. Start with ConstructMail — free." />
     <meta name="twitter:image" content="/og-image.png" />
     
-    <title>POMAR — Intelligence Infrastructure for General Contractors</title>
+    <!-- No static <title> or <meta name="description"> here on purpose —
+         each public page renders its own (React 19 hoists <title>/<meta>/
+         <link> tags from anywhere in the tree to <head> automatically),
+         and App.js renders a site-wide default for every other route. Two
+         of them rendered at once don't get deduped against each other, so
+         a static tag here would sit alongside the real one as a permanent
+         duplicate instead of being overridden by it — see PUBLIC_SEO_PATHS
+         in src/App.js. -->
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

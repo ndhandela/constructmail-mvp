@@ -11,6 +11,9 @@ const PRODUCTS = [
 export default function Pricing() {
   return (
     <div className="pricing-container">
+      <title>Pricing | POMAR</title>
+      <meta name="description" content="POMAR pricing scales with the modules and project volume you need. Book a 20-minute walkthrough and we'll put together a number that fits your stack." />
+      <link rel="canonical" href="https://pomar.ai/pricing" />
       <section className="pricing-hero">
         <video className="page-hero-video" autoPlay muted loop playsInline
           poster="/videos/hero-pricing-poster.jpg">

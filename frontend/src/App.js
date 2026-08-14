@@ -57,6 +57,15 @@ import './App.css';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/company-settings', '/trust', '/capital', '/daily-logs', '/invoices', '/documents', '/permits', '/work-items', '/projects-overview', '/project'];
 
+// Every public route that renders its own <title>/<meta description>/
+// <link rel="canonical"> (see each page component). React 19 hoists
+// title/meta/link tags rendered anywhere in the tree straight to <head>,
+// but it does NOT dedupe two of them rendered at the same time from
+// different parts of the tree — so the site-wide default title below is
+// only rendered when the current path *isn't* one of these, to guarantee
+// exactly one <title>/<meta description> is ever active at once.
+const PUBLIC_SEO_PATHS = ['/', '/pricing', '/about', '/contact', '/demo', '/mail-info', '/clash-info', '/vendors-info', '/marketplace-info', '/daily-logs-info', '/budget-info', '/invoices-info', '/marketplace/listings', '/marketplace/terms', '/marketplace/dispute-policy', '/privacy'];
+
 // The "Your Tools" landing grid and the Projects edit page share the
 // /dashboard route — the edit page is reached only via the project info
 // slide-over's "Edit Project Info"/"Edit Team Members" buttons (see
@@ -836,9 +845,23 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
 }
 
 export default function AppWithProviders() {
+  const path = window.location.pathname;
+  // Site-wide fallback title/description for every route that doesn't
+  // render its own (see PUBLIC_SEO_PATHS above) — e.g. /login, /dashboard,
+  // /mail. Skipped on public SEO routes so exactly one <title>/<meta
+  // description> is ever rendered per page; React 19 hoists title/meta/link
+  // tags from anywhere in the tree to <head>, but doesn't dedupe two of them
+  // rendered at once.
+  const showDefaultSEO = !PUBLIC_SEO_PATHS.includes(path);
   return (
     <InstallPromptProvider>
       <UnsavedChangesProvider>
+        {showDefaultSEO && (
+          <>
+            <title>POMAR — Intelligence Infrastructure for General Contractors</title>
+            <meta name="description" content="POMAR — intelligence infrastructure for General Contractors, covering email, BIM clash, vendors, budget, daily logs, and more." />
+          </>
+        )}
         <App />
       </UnsavedChangesProvider>
     </InstallPromptProvider>

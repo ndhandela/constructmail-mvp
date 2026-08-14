@@ -16,6 +16,9 @@ export default function ClashMarketing() {
 
   return (
     <div className="marketing-page">
+      <title>POMAR Clash — BIM Clash Report Analyzer</title>
+      <meta name="description" content="Turn a Navisworks clash report into severity-scored, AI-drafted RFIs ready to push into Procore or Kahua — in seconds instead of hours." />
+      <link rel="canonical" href="https://pomar.ai/clash-info" />
       <section className="hero marketing-hero">
         <video className="page-hero-video" autoPlay muted loop playsInline
           poster="/videos/hero-clash-poster.jpg">

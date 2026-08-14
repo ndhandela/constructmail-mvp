@@ -36,6 +36,9 @@ export default function Contact() {
 
   return (
     <div className="contact-container">
+      <title>Contact Us | POMAR</title>
+      <meta name="description" content="Get in touch with the POMAR team. Tell us about your project and we'll get back to you within 24 hours." />
+      <link rel="canonical" href="https://pomar.ai/contact" />
       <section className="contact-hero">
         <video className="page-hero-video" autoPlay muted loop playsInline
           poster="/videos/hero-construction-poster.jpg">

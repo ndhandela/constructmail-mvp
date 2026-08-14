@@ -4,6 +4,9 @@ import '../styles/AboutUs.css';
 export default function AboutUs() {
   return (
     <div className="about-container">
+      <title>About Us | POMAR</title>
+      <meta name="description" content="POMAR is built by TechDen Solutions, a construction technology consulting firm in Prosper, TX, helping General Contractors turn scattered project data into decisions they can act on." />
+      <link rel="canonical" href="https://pomar.ai/about" />
 
       {/* Hero */}
       <section className="about-hero" style={{ backgroundImage: "url(/images/hero-about.jpg)" }}>

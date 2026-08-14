@@ -7,6 +7,9 @@ import '../../styles/PrivacyPolicy.css';
 export default function MarketplaceTerms() {
   return (
     <div className="privacy-container">
+      <title>Marketplace Terms | POMAR</title>
+      <meta name="description" content="Terms governing reviews, listings, and disputes on the POMAR Marketplace vendor network." />
+      <link rel="canonical" href="https://pomar.ai/marketplace/terms" />
       <section className="privacy-hero">
         <div className="privacy-eyebrow">Legal</div>
         <h1>POMAR Marketplace Terms</h1>

@@ -29,6 +29,9 @@ export default function Demo() {
 
   return (
     <div className="demo-container">
+      <title>Book a Demo | POMAR</title>
+      <meta name="description" content="See POMAR Mail and POMAR Clash in action on real project data. Book a free 20-minute demo — no obligation." />
+      <link rel="canonical" href="https://pomar.ai/demo" />
       <section className="demo-hero">
         <video className="page-hero-video" autoPlay muted loop playsInline
           poster="/videos/hero-construction-poster.jpg">

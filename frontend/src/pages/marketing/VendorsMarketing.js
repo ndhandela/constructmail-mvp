@@ -16,6 +16,9 @@ export default function VendorsMarketing() {
 
   return (
     <div className="marketing-page">
+      <title>POMAR Vendors — Find Trusted Subcontractors & Suppliers</title>
+      <meta name="description" content="A searchable vendor directory built for GCs. Find, vet, and track trusted subcontractors and suppliers instead of digging through old emails." />
+      <link rel="canonical" href="https://pomar.ai/vendors-info" />
       <section className="hero marketing-hero">
         <video className="page-hero-video" autoPlay muted loop playsInline
           poster="/videos/hero-vendors-poster.jpg">
