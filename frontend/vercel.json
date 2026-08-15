@@ -34,6 +34,7 @@
     { "src": "^/invoices$", "dest": "/index.html" },
     { "src": "^/documents$", "dest": "/index.html" },
     { "src": "^/permits$", "dest": "/index.html" },
+    { "src": "^/tasks$", "dest": "/index.html" },
     { "src": "^/work-items$", "dest": "/index.html" },
     { "src": "^/projects-overview$", "dest": "/index.html" },
     { "src": "^/project$", "dest": "/index.html" },
