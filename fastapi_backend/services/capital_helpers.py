@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 # Shared building block for every committed/spent rollup below. A budget
 # item's committed amount is its own manually-entered committed_amount
 # (BudgetItemsTab.js's "Committed Amount" field) PLUS every invoice linked
@@ -73,6 +75,35 @@ async def get_project_budget_summary(conn, project_id: int) -> dict:
         "total_actual": total_actual,
         "variance": total_budgeted - total_actual,
     }
+
+
+async def get_project_milestone_summary(conn, project_id: int) -> dict:
+    """Lightweight rollup for the Projects Overview dashboard card. Milestone
+    status is a manually-set dropdown (not_started/in_progress/at_risk/
+    complete — see MilestonesTab.js's STATUS_OPTIONS) with no existing
+    due-date-based at-risk computation, so this derives one: a non-complete
+    milestone counts as overdue if it's manually flagged (risk_flag or
+    status='at_risk') OR its target_date has passed, and as due_soon if
+    target_date falls within the next 7 days. complete milestones never
+    count either way."""
+    rows = await conn.fetch(
+        "SELECT target_date, status, risk_flag FROM milestones WHERE project_id = $1 AND status != 'complete'",
+        project_id,
+    )
+    today = date.today()
+    overdue = 0
+    due_soon = 0
+    for row in rows:
+        if row["risk_flag"] or row["status"] == "at_risk" or (row["target_date"] and row["target_date"] < today):
+            overdue += 1
+        elif row["target_date"] and row["target_date"] <= today + timedelta(days=7):
+            due_soon += 1
+
+    if overdue:
+        return {"status": "overdue", "count": overdue, "label": f"{overdue} overdue"}
+    if due_soon:
+        return {"status": "due_soon", "count": due_soon, "label": f"{due_soon} due this week"}
+    return {"status": "on_schedule", "count": 0, "label": "On schedule"}
 
 
 async def get_spend_by_work_item(conn, project_id: int) -> dict:

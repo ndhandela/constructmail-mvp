@@ -26,13 +26,16 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from db import get_pool
-from services.access_control import require_feature_flag
+from services.access_control import is_feature_enabled, require_feature_flag
 from services.capital_helpers import (
     get_budget_items,
     get_project_budget_summary,
+    get_project_milestone_summary,
     get_spend_by_category,
     get_spend_by_work_item,
 )
+from services.invoice_helpers import get_project_invoice_summary
+from services.permit_helpers import get_project_permit_summary
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/capital", tags=["Capital Tracker"])
@@ -152,9 +155,23 @@ async def _require_category_in_project(conn, category_id: int, project_id: int):
 
 @router.get("/projects")
 async def list_capital_projects(userId: int):
+    """Per-project rollup consumed by the Projects Overview dashboard
+    (frontend/src/modules/project-hub/pages/ProjectsOverviewPage.js) — one
+    call instead of the per-project, per-signal fetches that page used to
+    make. permits_status/invoices_status are null when the caller's company
+    hasn't enabled that module (mirrors ModuleLockedNotice's per-module
+    gating); milestones_status is always present since 'capital' is already
+    required for the whole endpoint. overall_status is 'needs_attention' if
+    any permit is expiring/expired, any milestone is overdue, or any invoice
+    is overdue — a milestone merely due_soon is a lighter, row-level-only
+    signal and does not by itself flip the card's pill."""
     pool = await get_pool()
     async with pool.acquire() as conn:
         await require_feature_flag(conn, userId, "capital")
+
+        company_id = await conn.fetchval("SELECT company_id FROM users WHERE id = $1", userId)
+        permits_enabled = await is_feature_enabled(conn, company_id, "permits")
+        invoices_enabled = await is_feature_enabled(conn, company_id, "invoice_tracker")
 
         rows = await conn.fetch(
             """SELECT p.id, p.name, p.project_number, p.client_name, p.status, pm.role AS member_role
@@ -168,7 +185,30 @@ async def list_capital_projects(userId: int):
         projects = []
         for row in rows:
             project = dict(row)
-            project["budget_summary"] = await get_project_budget_summary(conn, project["id"])
+            project_id = project["id"]
+
+            budget_summary = await get_project_budget_summary(conn, project_id)
+            budgeted = budget_summary["total_budgeted"]
+            actual = budget_summary["total_actual"]
+            project["budget_summary"] = budget_summary
+            project["budget_spent_pct"] = round((actual / budgeted) * 100) if budgeted else None
+
+            milestones_status = await get_project_milestone_summary(conn, project_id)
+            permits_status = await get_project_permit_summary(conn, project_id) if permits_enabled else None
+            invoices_status = await get_project_invoice_summary(conn, project_id) if invoices_enabled else None
+
+            project["milestones_status"] = milestones_status
+            project["permits_status"] = permits_status
+            project["invoices_status"] = invoices_status
+            project["overall_status"] = (
+                "needs_attention"
+                if (
+                    milestones_status["status"] == "overdue"
+                    or (permits_status and permits_status["status"] in ("expired", "expiring_soon"))
+                    or (invoices_status and invoices_status["status"] == "overdue")
+                )
+                else "on_track"
+            )
             projects.append(project)
 
     return {"success": True, "projects": projects}

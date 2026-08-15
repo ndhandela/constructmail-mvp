@@ -130,6 +130,38 @@ def compute_permit_status(expiration_date: date, expiring_soon_days: int, today:
     return "active"
 
 
+async def get_project_permit_summary(conn, project_id: int) -> dict:
+    """Lightweight rollup for the Projects Overview dashboard card — counts,
+    not just the booleans permit_status_summary above returns, since the
+    card shows a one-line label like '2 expired'. No access gate here: the
+    only caller (routers/capital.py's list_capital_projects) already scoped
+    the project list to the caller's own project_members rows, which is
+    always the GC's own company (see services/permit_helpers module docstring
+    — a Sub never gets a project_members row, only project_vendor_access)."""
+    rows = await conn.fetch(
+        "SELECT permit_type, expiration_date FROM permits WHERE project_id = $1", project_id,
+    )
+    if not rows:
+        return {"status": "all_current", "count": 0, "label": "No permits on file"}
+
+    today = date.today()
+    expired = 0
+    expiring_soon = 0
+    for row in rows:
+        threshold = await get_expiring_soon_days(conn, project_id, row["permit_type"])
+        status = compute_permit_status(row["expiration_date"], threshold, today)
+        if status == "expired":
+            expired += 1
+        elif status == "expiring_soon":
+            expiring_soon += 1
+
+    if expired:
+        return {"status": "expired", "count": expired, "label": f"{expired} expired"}
+    if expiring_soon:
+        return {"status": "expiring_soon", "count": expiring_soon, "label": f"{expiring_soon} expiring soon"}
+    return {"status": "all_current", "count": 0, "label": "All current"}
+
+
 async def require_permit_access_grant(conn, permit_id: int, company_id: int) -> None:
     granted = await conn.fetchrow(
         """SELECT 1 FROM permit_access_grants

@@ -184,12 +184,98 @@
   background: var(--parchment);
 }
 
+.ph-overview-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
 .ph-overview-card-title {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 16px;
   font-weight: 700;
   color: var(--inkwell);
-  margin: 0 0 14px;
+  margin: 0;
+}
+
+/* Overall card-level pill — mirrors modules/permits' own
+   .permits-status-pill shape (radius-pill, 12px/600), scaled to the hub
+   card's smaller footprint. */
+.ph-status-pill {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+.ph-status-pill-ok {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.ph-status-pill-warn {
+  background: var(--saffron-soft);
+  color: var(--saffron);
+}
+
+/* ── Per-card signal rows (Permits / Milestones / Invoices) ─────────────── */
+
+.ph-overview-signals {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ph-signal-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+}
+
+.ph-signal-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 13px;
+}
+
+.ph-signal-ok .ph-signal-icon {
+  color: var(--green);
+}
+
+.ph-signal-warn .ph-signal-icon {
+  color: var(--saffron);
+}
+
+.ph-signal-neutral .ph-signal-icon {
+  color: var(--slate);
+  opacity: 0.5;
+}
+
+.ph-signal-label {
+  color: var(--slate);
+  flex-shrink: 0;
+  width: 68px;
+}
+
+.ph-signal-text {
+  color: var(--inkwell);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ph-signal-neutral .ph-signal-text {
+  color: var(--slate);
+  font-weight: 400;
 }
 
 .ph-overview-stat-row {
@@ -226,17 +312,3 @@
   background: var(--brick);
 }
 
-.ph-overview-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--brick);
-  border: 1px solid currentColor;
-  padding: 3px 8px;
-  margin-top: 10px;
-}
