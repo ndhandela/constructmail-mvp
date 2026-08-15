@@ -149,6 +149,20 @@ export const PRODUCTS = [
     // active_modules.permits.
     licenseGated: true
   },
+  {
+    id: 'tasks',
+    name: 'POMAR Task Tracker',
+    description: 'A simple, assignable task list per project — not a scheduling or dependency system.',
+    detailedDescription: "Small tasks usually live scattered across texts and memory. POMAR Task Tracker gives every project a single flat list — title, description, assignee, due date, open/done — that a GC or an invited Sub can add to and check off. It's deliberately lightweight: no subtasks, no dependencies, no ordering, just a shared checklist for the project.",
+    icon: '✅',
+    path: '/tasks',
+    logo: '/logos/pomar.png',
+    color: '#D97706',
+    status: 'live',
+    // No regionGated flag — available to any company, gated only by
+    // active_modules.tasks.
+    licenseGated: true
+  },
 ];
 
 export const getProductById = (id) => PRODUCTS.find(p => p.id === id);

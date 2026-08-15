@@ -11,6 +11,7 @@ from routers import trust, trust_uploads, trust_qpr, trust_alerts, capital, dail
 from routers import invoices, invoice_accountant_access
 from routers import documents
 from routers import permits
+from routers import tasks
 from routers import user_preferences
 from services import trust_reminders, marketplace_verification
 
@@ -67,6 +68,7 @@ app.include_router(invoices.router)
 app.include_router(invoice_accountant_access.router)
 app.include_router(documents.router)
 app.include_router(permits.router)
+app.include_router(tasks.router)
 app.include_router(user_preferences.router)
 
 

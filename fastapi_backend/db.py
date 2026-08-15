@@ -1444,6 +1444,38 @@ async def init_db():
             INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active)
             VALUES (true, NULL, 'permits', 0, 'monthly', true)
             ON CONFLICT (module_name) WHERE is_global = true DO NOTHING;
+
+            -- POMAR Task Tracker: a simple, flat, assignable per-project
+            -- task list — a lightweight companion to Capital/Invoice/Permit
+            -- Tracker, not a scheduling or dependency system (see
+            -- services/task_helpers.py). assigned_to references users(id)
+            -- directly rather than a separate assignment table, since a
+            -- task ever has at most one assignee; ON DELETE SET NULL so a
+            -- removed team member's old tasks survive, just unassigned.
+            CREATE TABLE IF NOT EXISTS tasks (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                title VARCHAR(255) NOT NULL,
+                description TEXT,
+                assigned_to INT REFERENCES users(id) ON DELETE SET NULL,
+                due_date DATE,
+                status VARCHAR(20) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'done')),
+                created_by INT NOT NULL REFERENCES users(id),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS tasks_project_id_idx ON tasks (project_id);
+            CREATE INDEX IF NOT EXISTS tasks_assigned_to_idx ON tasks (assigned_to);
+
+            -- Seeds a global 'tasks' flag row so it exists (defaulting
+            -- OFF), same pattern as every other module.
+            INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
+            VALUES (NULL, 'tasks', 'Task Tracker', 'tasks', false, true)
+            ON CONFLICT (feature_key) WHERE is_global = true DO NOTHING;
+
+            INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active)
+            VALUES (true, NULL, 'tasks', 0, 'monthly', true)
+            ON CONFLICT (module_name) WHERE is_global = true DO NOTHING;
         """)
 
         await _backfill_clash_project_ids(conn)

@@ -1,0 +1,294 @@
+.tasks-app {
+  min-height: calc(100vh - 140px);
+  background-color: var(--parchment);
+  padding: 0 0 60px;
+}
+
+.tasks-container {
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.tasks-muted {
+  color: var(--slate);
+  font-size: 14px;
+}
+
+/* ── Toolbar ──────────────────────────────────────────────────────────── */
+
+.tasks-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.tasks-filters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.tasks-filters select {
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #E7E0D3;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--white);
+  color: var(--inkwell);
+}
+
+.tasks-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--inkwell);
+  cursor: pointer;
+}
+
+/* ── Table ────────────────────────────────────────────────────────────── */
+
+.tasks-table-wrapper {
+  background: var(--white);
+  border: 1px solid #E7E0D3;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+}
+
+.tasks-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tasks-table th {
+  text-align: left;
+  color: var(--slate);
+  font-weight: 600;
+  padding: 12px 16px;
+  border-bottom: 1px solid #E7E0D3;
+  white-space: nowrap;
+}
+
+.tasks-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #F0EAE0;
+  color: var(--inkwell);
+  white-space: nowrap;
+}
+
+.tasks-table tr:last-child td {
+  border-bottom: none;
+}
+
+.tasks-row-done .tasks-title-cell {
+  text-decoration: line-through;
+  color: var(--slate);
+}
+
+.tasks-title-cell {
+  font-weight: 600;
+  white-space: normal;
+}
+
+.tasks-desc-cell {
+  font-size: 12px;
+  color: var(--slate);
+  white-space: normal;
+  max-width: 320px;
+  margin-top: 2px;
+}
+
+.tasks-row-actions {
+  display: flex;
+  gap: 12px;
+  width: 1%;
+  white-space: nowrap;
+}
+
+.tasks-link-btn {
+  border: none;
+  background: transparent;
+  color: var(--saffron);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.tasks-link-btn:hover {
+  text-decoration: underline;
+}
+
+.tasks-link-btn-danger {
+  color: var(--brick);
+}
+
+/* ── Status pill ──────────────────────────────────────────────────────── */
+
+.tasks-status-pill {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--sandstone);
+  color: var(--inkwell);
+}
+
+.tasks-status-open {
+  background: var(--saffron-soft);
+  color: var(--saffron);
+}
+
+.tasks-status-done {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+/* ── Buttons / forms (shared by all Task Tracker modals) ────────────────── */
+
+.tasks-btn-primary, .tasks-btn-secondary {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tasks-btn-primary {
+  background: var(--saffron);
+  color: var(--white);
+}
+
+.tasks-btn-primary:disabled {
+  background: #E5C9A8;
+  cursor: not-allowed;
+}
+
+.tasks-btn-secondary {
+  background: var(--parchment);
+  color: var(--inkwell);
+  border: 1px solid #E7E0D3;
+}
+
+.tasks-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.tasks-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--slate);
+}
+
+.tasks-field input, .tasks-field select, .tasks-field textarea {
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #E7E0D3;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--white);
+  color: var(--inkwell);
+}
+
+.tasks-form-row {
+  display: flex;
+  gap: 14px;
+}
+
+.tasks-form-row .tasks-field {
+  flex: 1;
+}
+
+.tasks-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.tasks-error {
+  background: #FDECEA;
+  color: var(--brick);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  margin: 10px 0;
+}
+
+.tasks-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 27, 44, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.tasks-modal {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: 28px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.tasks-modal h3 {
+  margin: 0 0 16px;
+  color: var(--inkwell);
+}
+
+/* ── Mobile (375-430px phones) ───────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .tasks-container {
+    padding: 16px;
+  }
+
+  .tasks-row-actions {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  .tasks-link-btn {
+    min-height: 44px;
+    padding: 0 2px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .tasks-modal-overlay {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .tasks-modal {
+    max-width: 100%;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+
+  .tasks-form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+}

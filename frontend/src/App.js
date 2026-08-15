@@ -41,6 +41,7 @@ import InvoiceTrackerApp from './modules/invoices/pages/InvoiceTrackerApp';
 import AccountantInvoiceView from './modules/invoices/pages/AccountantInvoiceView';
 import DocumentsApp from './modules/documents/pages/DocumentsApp';
 import PermitTrackerApp from './modules/permits/pages/PermitTrackerApp';
+import TaskTrackerApp from './modules/tasks/pages/TaskTrackerApp';
 import ProjectsOverviewPage from './modules/project-hub/pages/ProjectsOverviewPage';
 import ProjectDetailPage from './modules/project-hub/pages/ProjectDetailPage';
 
@@ -55,7 +56,7 @@ import './styles/components.css';
 import './App.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/company-settings', '/trust', '/capital', '/daily-logs', '/invoices', '/documents', '/permits', '/work-items', '/projects-overview', '/project'];
+const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/company-settings', '/trust', '/capital', '/daily-logs', '/invoices', '/documents', '/permits', '/tasks', '/work-items', '/projects-overview', '/project'];
 
 // Every public route that renders its own <title>/<meta description>/
 // <link rel="canonical"> (see each page component). React 19 hoists
@@ -164,6 +165,7 @@ function App() {
           else if (path === '/invoices') setCurrentProduct('invoices');
           else if (path === '/documents') setCurrentProduct('documents');
           else if (path === '/permits') setCurrentProduct('permits');
+          else if (path === '/tasks') setCurrentProduct('tasks');
           else if (path === '/work-items') setCurrentProduct('work-items');
           else if (path === '/projects-overview') setCurrentProduct('projects-overview');
           else if (path === '/project') setCurrentProduct('project');
@@ -213,6 +215,7 @@ function App() {
       if (path === '/invoices') setCurrentProduct('invoices');
       if (path === '/documents') setCurrentProduct('documents');
       if (path === '/permits') setCurrentProduct('permits');
+      if (path === '/tasks') setCurrentProduct('tasks');
       if (path === '/work-items') setCurrentProduct('work-items');
       if (path === '/projects-overview') setCurrentProduct('projects-overview');
       if (path === '/project') setCurrentProduct('project');
@@ -787,6 +790,23 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
         <AppLayout userId={userId} onLogout={handleLogout} user={user}>
           <ProjectGate userId={userId} user={user}>
             <PermitTrackerApp user={user} userId={userId} />
+          </ProjectGate>
+        </AppLayout>
+      </ProjectProvider>
+    );
+  }
+
+  // ── POMAR Task Tracker ───────────────────────────────────────────────
+  // Same wiring as Capital Tracker/Daily Logs/Invoice Tracker/Documents/
+  // Permits — tasks hang off the generic projects table, so it uses the
+  // shared header/sidebar project switcher and ProjectGate, gated only by
+  // the 'tasks' feature flag.
+  if (currentProduct === 'tasks' || path === '/tasks') {
+    return (
+      <ProjectProvider userId={userId}>
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <ProjectGate userId={userId} user={user}>
+            <TaskTrackerApp user={user} userId={userId} />
           </ProjectGate>
         </AppLayout>
       </ProjectProvider>

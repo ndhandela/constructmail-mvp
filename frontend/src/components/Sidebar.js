@@ -117,6 +117,15 @@ const ICONS = {
       <path d="m9 14 2 2 4-4" />
     </svg>
   ),
+  tasks: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="6" height="6" rx="1" />
+      <path d="m4.5 8 1 1 2-2" />
+      <line x1="12" y1="8" x2="21" y2="8" />
+      <rect x="3" y="15" width="6" height="6" rx="1" />
+      <line x1="12" y1="18" x2="21" y2="18" />
+    </svg>
+  ),
   dashboard: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="3" width="7" height="9" rx="1" />
@@ -162,17 +171,19 @@ export const ACCOUNT_LEVEL_ITEMS = [
   { key: 'invoice_tracker', path: '/invoices', label: 'Invoices' },
   { key: 'documents', path: '/documents', label: 'Documents' },
   { key: 'permits', path: '/permits', label: 'Permits' },
+  { key: 'tasks', path: '/tasks', label: 'Tasks' },
 ];
 
 // The only modules a lead account (account_status === 'lead' — a
 // project-vendor sub, or an accountant/marketplace lead) can actually reach:
-// Daily Logs via a per-project services/vendor_access.py grant, Documents
-// and Permits via their own independent GC/Sub sharing model
-// (services/document_helpers.py / services/permit_helpers.py). Every other
-// module goes through services/access_control.require_feature_flag, which
-// unconditionally 403s any account_status='lead' user before it even looks
-// at company_id — so those stay hidden for leads.
-const LEAD_ACCESSIBLE_MODULE_KEYS = ['daily_logs', 'documents', 'permits'];
+// Daily Logs via a per-project services/vendor_access.py grant, Documents,
+// Permits, and Tasks via their own independent GC/Sub sharing model
+// (services/document_helpers.py / services/permit_helpers.py /
+// services/task_helpers.py). Every other module goes through
+// services/access_control.require_feature_flag, which unconditionally
+// 403s any account_status='lead' user before it even looks at
+// company_id — so those stay hidden for leads.
+const LEAD_ACCESSIBLE_MODULE_KEYS = ['daily_logs', 'documents', 'permits', 'tasks'];
 
 // ── New 3-tier nav (behind the 'new_nav' feature flag) ─────────────────────
 // Tier 1: fixed core (always present, not user-configurable).
@@ -206,6 +217,7 @@ export const PINNED_APP_CONFIG = {
   project_subs: { icon: 'vendors', label: 'Project - Subs', path: '/project?view=project-subs' },
   documents: { icon: 'documents', label: 'Documents', path: '/documents' },
   permits: { icon: 'permits', label: 'Permits', path: '/permits' },
+  tasks: { icon: 'tasks', label: 'Tasks', path: '/tasks' },
 };
 
 export { ICONS };

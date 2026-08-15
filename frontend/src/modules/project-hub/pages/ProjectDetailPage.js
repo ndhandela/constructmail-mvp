@@ -176,6 +176,7 @@ export default function ProjectDetailPage({ user, userId }) {
         <div className="ph-category-label">Work Items</div>
         <div className="ph-grid">
           <Card label="Work Items" description="Named tasks this project's milestones and budget items hang off" appKey="work_items" pinnedApps={pinnedApps} onTogglePin={togglePin} onOpen={() => { window.location.href = '/work-items'; }} />
+          <Card label="Task Tracker" description="A simple, assignable task list for this project" appKey="tasks" pinnedApps={pinnedApps} onTogglePin={togglePin} onOpen={() => { window.location.href = '/tasks'; }} />
         </div>
       </div>
 

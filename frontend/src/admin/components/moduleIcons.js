@@ -80,6 +80,15 @@ export const MODULE_ICONS = {
       <path d="m9 14 2 2 4-4" />
     </svg>
   ),
+  tasks: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="6" height="6" rx="1" />
+      <path d="m4.5 8 1 1 2-2" />
+      <line x1="12" y1="8" x2="21" y2="8" />
+      <rect x="3" y="15" width="6" height="6" rx="1" />
+      <line x1="12" y1="18" x2="21" y2="18" />
+    </svg>
+  ),
   new_nav: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="3" width="7" height="18" rx="1" />
@@ -107,6 +116,7 @@ export const MODULE_DEFS = [
   { key: 'invoice_tracker', label: 'Invoices', gated: true },
   { key: 'documents', label: 'Documents', gated: true },
   { key: 'permits', label: 'Permit Tracker', gated: true },
+  { key: 'tasks', label: 'Task Tracker', gated: true },
   { key: 'new_nav', label: 'New Left Nav', gated: true, note: 'Project-tracking redesign rollout' },
 ];
 
