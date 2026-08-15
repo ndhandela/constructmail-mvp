@@ -68,6 +68,34 @@ class InviteAccountantRequest(BaseModel):
     userId: int
     email: str
     name: Optional[str] = None
+    # Which projects this accountant can see invoices for — mirrors
+    # routers/team.py's InviteTeammateRequest.projectIds. Unlike that
+    # flow, an accountant grant with an empty list is a valid, deliberate
+    # "no project access yet" state (fail-closed default), not just "no
+    # projects to grant" — see accountant_project_access's table comment.
+    projectIds: list[int] = []
+
+
+async def _set_accountant_project_access(conn, company_accountant_access_id: int, company_id: int, project_ids: list[int]):
+    """Replaces the full set of granted projects for one accountant grant
+    — shared by invite (fresh or re-invite) and the standalone edit
+    endpoint below, mirroring routers/team.py's update_member_projects
+    replace-in-place semantics."""
+    valid_rows = await conn.fetch(
+        "SELECT id FROM projects WHERE company_id = $1 AND id = ANY($2::int[])",
+        company_id, project_ids,
+    )
+    valid_ids = [r["id"] for r in valid_rows]
+    await conn.execute(
+        "DELETE FROM accountant_project_access WHERE company_accountant_access_id = $1",
+        company_accountant_access_id,
+    )
+    for pid in valid_ids:
+        await conn.execute(
+            """INSERT INTO accountant_project_access (company_accountant_access_id, project_id)
+               VALUES ($1, $2) ON CONFLICT DO NOTHING""",
+            company_accountant_access_id, pid,
+        )
 
 
 @router.post("/companies/{company_id}/invite")
@@ -98,9 +126,11 @@ async def invite_accountant(company_id: int, req: InviteAccountantRequest):
         if existing and existing["status"] == "accepted":
             raise HTTPException(409, "This accountant already has access to this company")
 
-        row = await upsert_accountant_invite(
-            conn, company_id, accountant_user_id, invited_by_user_id=req.userId,
-        )
+        async with conn.transaction():
+            row = await upsert_accountant_invite(
+                conn, company_id, accountant_user_id, invited_by_user_id=req.userId,
+            )
+            await _set_accountant_project_access(conn, row["id"], company_id, req.projectIds)
 
     await _send_invite_email(email, company["name"], is_reinvite=bool(existing))
     return {"success": True, "access": dict(row)}
@@ -188,12 +218,23 @@ async def list_my_accountant_access(userId: int):
 
 @router.get("/companies/{company_id}")
 async def list_company_accountants(company_id: int, userId: int):
+    """project_names closes the original visibility gap this feature was
+    built for — the owner-facing accountant list in Company Settings can
+    now show "which invoices (by project) is this accountant seeing"
+    without a separate view."""
     pool = await get_pool()
     async with pool.acquire() as conn:
         await _require_company_owner(conn, userId, company_id)
         rows = await conn.fetch(
             """SELECT caa.id AS access_id, caa.accountant_user_id, u.name AS accountant_name,
-                      u.email AS accountant_email, caa.status, caa.invited_at, caa.accepted_at, caa.removed_at
+                      u.email AS accountant_email, caa.status, caa.invited_at, caa.accepted_at, caa.removed_at,
+                      COALESCE(
+                          (SELECT array_agg(p.name ORDER BY p.name)
+                           FROM accountant_project_access apa
+                           JOIN projects p ON p.id = apa.project_id
+                           WHERE apa.company_accountant_access_id = caa.id),
+                          ARRAY[]::text[]
+                      ) AS project_names
                FROM company_accountant_access caa
                JOIN users u ON u.id = caa.accountant_user_id
                WHERE caa.company_id = $1
@@ -201,3 +242,49 @@ async def list_company_accountants(company_id: int, userId: int):
             company_id,
         )
     return {"success": True, "accountants": [dict(r) for r in rows]}
+
+
+@router.get("/{access_id}/projects")
+async def get_accountant_projects(access_id: int, requesterId: int):
+    """Mirrors routers/team.py's get_member_projects — lets the owner see
+    and edit an existing accountant grant's project scope after the fact,
+    not just at invite time."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        access = await conn.fetchrow(
+            "SELECT company_id FROM company_accountant_access WHERE id = $1", access_id,
+        )
+        if not access:
+            raise HTTPException(404, "Accountant access record not found")
+        await _require_company_owner(conn, requesterId, access["company_id"])
+
+        rows = await conn.fetch(
+            """SELECT p.id, p.name, (apa.project_id IS NOT NULL) AS has_access
+               FROM projects p
+               LEFT JOIN accountant_project_access apa
+                   ON apa.project_id = p.id AND apa.company_accountant_access_id = $1
+               WHERE p.company_id = $2 ORDER BY p.created_at""",
+            access_id, access["company_id"],
+        )
+    return {"success": True, "projects": [dict(r) for r in rows]}
+
+
+class UpdateAccountantProjectsRequest(BaseModel):
+    requesterId: int
+    projectIds: list[int]
+
+
+@router.put("/{access_id}/projects")
+async def update_accountant_projects(access_id: int, req: UpdateAccountantProjectsRequest):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        access = await conn.fetchrow(
+            "SELECT company_id FROM company_accountant_access WHERE id = $1", access_id,
+        )
+        if not access:
+            raise HTTPException(404, "Accountant access record not found")
+        await _require_company_owner(conn, req.requesterId, access["company_id"])
+
+        async with conn.transaction():
+            await _set_accountant_project_access(conn, access_id, access["company_id"], req.projectIds)
+    return {"success": True}

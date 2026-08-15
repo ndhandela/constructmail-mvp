@@ -11,12 +11,14 @@ services/vendor_access.py's "member" vs "vendor" split:
      status; delete is further limited to the company owner or the
      invoice's own uploader (require_can_modify_invoice below).
   2. "accountant" path — an ACCEPTED company_accountant_access row for
-     this exact (company_id, user_id). No project_members/feature_flags
-     involvement — this is a company-wide, read-only grant that works even
-     for lead-status accounts require_feature_flag would otherwise
-     hard-block. Never allowed to write.
+     this exact (company_id, user_id), narrowed by whatever project_ids
+     that grant has in accountant_project_access (see migration 019 — a
+     grant with zero rows there sees zero invoices, fail-closed, not
+     company-wide). No project_members/feature_flags involvement — this
+     works even for lead-status accounts require_feature_flag would
+     otherwise hard-block. Never allowed to write.
 """
-from typing import Optional
+from typing import FrozenSet, Optional
 
 from fastapi import HTTPException
 
@@ -24,11 +26,16 @@ from services.access_control import require_feature_flag
 
 
 class InvoiceAccess:
-    __slots__ = ("kind", "can_write")
+    __slots__ = ("kind", "can_write", "project_ids")
 
-    def __init__(self, kind: str, can_write: bool):
+    def __init__(self, kind: str, can_write: bool, project_ids: Optional[FrozenSet[int]] = None):
         self.kind = kind  # "member" | "accountant"
         self.can_write = can_write
+        # Only meaningful for kind == "accountant" — the set of project_ids
+        # this grant is scoped to (empty set means none, not unrestricted).
+        # None for "member", whose scoping instead runs through
+        # project_members, applied separately by each caller.
+        self.project_ids = project_ids
 
     @property
     def is_accountant(self) -> bool:
@@ -47,13 +54,18 @@ async def require_company_invoice_access(conn, user_id: int, company_id: int) ->
     filtered to one project) and the accountant view alike."""
     if await _is_accountant(conn, user_id):
         row = await conn.fetchrow(
-            """SELECT status FROM company_accountant_access
+            """SELECT id, status FROM company_accountant_access
                WHERE company_id = $1 AND accountant_user_id = $2 AND status = 'accepted'""",
             company_id, user_id,
         )
         if not row:
             raise HTTPException(403, "You do not have accountant access to this company")
-        return InvoiceAccess("accountant", can_write=False)
+        project_rows = await conn.fetch(
+            "SELECT project_id FROM accountant_project_access WHERE company_accountant_access_id = $1",
+            row["id"],
+        )
+        project_ids = frozenset(r["project_id"] for r in project_rows)
+        return InvoiceAccess("accountant", can_write=False, project_ids=project_ids)
 
     user = await conn.fetchrow("SELECT company_id FROM users WHERE id = $1", user_id)
     if not user or user["company_id"] != company_id:

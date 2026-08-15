@@ -144,8 +144,10 @@ async def list_invoices(
         params = [companyId]
 
         # A non-owner company member only sees invoices for projects
-        # they're actually a member of — an owner (and an accountant, whose
-        # grant is company-wide by design) sees every project's invoices.
+        # they're actually a member of — an owner sees every project's
+        # invoices. An accountant sees only the projects explicitly
+        # granted in accountant_project_access (empty set = zero rows,
+        # fail-closed — see services/invoice_helpers.py).
         if access.kind == "member":
             user = await conn.fetchrow("SELECT permission_level FROM users WHERE id = $1", userId)
             if not (user and user["permission_level"] == "owner"):
@@ -153,6 +155,9 @@ async def list_invoices(
                 conditions.append(
                     f"EXISTS (SELECT 1 FROM project_members pm WHERE pm.project_id = i.project_id AND pm.user_id = ${len(params)})"
                 )
+        elif access.kind == "accountant":
+            params.append(list(access.project_ids))
+            conditions.append(f"i.project_id = ANY(${len(params)}::int[])")
 
         if project_id is not None:
             params.append(project_id)
@@ -351,6 +356,9 @@ async def get_invoice_download_url(invoice_id: int, userId: int):
             is_owner = bool(user and user["permission_level"] == "owner")
             if not member and not is_owner:
                 raise HTTPException(403, "You do not have access to this project")
+        elif access.kind == "accountant":
+            if invoice["project_id"] not in access.project_ids:
+                raise HTTPException(403, "You do not have access to this project's invoices")
 
         url = await r2_storage.get_invoice_pdf_url(invoice["pdf_storage_path"])
 

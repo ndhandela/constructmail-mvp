@@ -18,6 +18,15 @@ async def get_pool() -> asyncpg.Pool:
 async def init_db():
     pool = await get_pool()
     async with pool.acquire() as conn:
+        # Snapshot taken before the DDL below runs, so the block reads
+        # "did this table exist prior to this very startup" — used to
+        # gate _backfill_existing_accountant_project_access to a true
+        # one-time run (see that function's docstring for why it can't be
+        # idempotent-safe to re-run like the other backfills below it).
+        accountant_project_access_existed = await conn.fetchval(
+            "SELECT to_regclass('public.accountant_project_access') IS NOT NULL"
+        )
+
         await conn.execute("""
             CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -1225,6 +1234,26 @@ async def init_db():
             CREATE INDEX IF NOT EXISTS company_accountant_access_accountant_user_id_idx ON company_accountant_access (accountant_user_id);
             CREATE INDEX IF NOT EXISTS company_accountant_access_company_id_idx ON company_accountant_access (company_id);
 
+            -- Per-project scoping for an accountant grant (migration 019):
+            -- company_accountant_access above used to be all-or-nothing —
+            -- every project in the company, no way for the owner to narrow
+            -- it. Zero rows here for a given company_accountant_access_id
+            -- means "no project access", not "unrestricted" — enforced in
+            -- services/invoice_helpers.require_company_invoice_access, which
+            -- treats an empty set as fail-closed. See
+            -- _backfill_existing_accountant_project_access below for how
+            -- grants that predate this migration keep their prior
+            -- company-wide access instead of silently losing it.
+            CREATE TABLE IF NOT EXISTS accountant_project_access (
+                id SERIAL PRIMARY KEY,
+                company_accountant_access_id INT NOT NULL REFERENCES company_accountant_access(id) ON DELETE CASCADE,
+                project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                UNIQUE(company_accountant_access_id, project_id)
+            );
+            CREATE INDEX IF NOT EXISTS accountant_project_access_caa_id_idx ON accountant_project_access (company_accountant_access_id);
+            CREATE INDEX IF NOT EXISTS accountant_project_access_project_id_idx ON accountant_project_access (project_id);
+
             -- POMAR Documents (migration 015): project-scoped document
             -- storage shared between a GC and its Subs. company_id is the
             -- project's owning company (denormalized from projects.company_id,
@@ -1420,6 +1449,8 @@ async def init_db():
         await _backfill_clash_project_ids(conn)
         await _backfill_vendor_and_connect_project_ids(conn)
         await _backfill_project_members(conn)
+        if not accountant_project_access_existed:
+            await _backfill_existing_accountant_project_access(conn)
 
     print("✓ Database initialized")
 
@@ -1512,4 +1543,28 @@ async def _backfill_project_members(conn):
         """INSERT INTO project_members (project_id, user_id, role)
            SELECT id, user_id, 'owner' FROM projects
            ON CONFLICT (project_id, user_id) DO NOTHING"""
+    )
+
+
+async def _backfill_existing_accountant_project_access(conn):
+    """
+    One-time backfill for migration 019 (accountant_project_access), run
+    only when init_db() finds the table didn't already exist — unlike the
+    other backfills in this file, this one is deliberately NOT safe to
+    re-run on every startup: an owner narrowing an accountant down to zero
+    projects would look identical to "never backfilled" (zero rows), and
+    re-running would silently restore company-wide access, undoing their
+    choice. Every company_accountant_access row that already existed the
+    moment this migration first ran was granted under the old company-wide
+    model (see that table's own comment), so it's backfilled here with
+    every one of that company's current projects — nobody loses access the
+    instant this ships. Any accountant invited after this migration starts
+    from an explicit selection instead (routers/invoice_accountant_access.py).
+    """
+    await conn.execute(
+        """INSERT INTO accountant_project_access (company_accountant_access_id, project_id)
+           SELECT caa.id, p.id
+           FROM company_accountant_access caa
+           JOIN projects p ON p.company_id = caa.company_id
+           ON CONFLICT (company_accountant_access_id, project_id) DO NOTHING"""
     )

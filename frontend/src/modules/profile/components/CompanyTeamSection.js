@@ -26,6 +26,14 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
   const [companyProjects, setCompanyProjects] = useState([]);
   const [selectedInviteProjectIds, setSelectedInviteProjectIds] = useState(new Set());
   const [projectsLoading, setProjectsLoading] = useState(true);
+  const [selectedAccountantInviteProjectIds, setSelectedAccountantInviteProjectIds] = useState(new Set());
+
+  const [editingAccountantId, setEditingAccountantId] = useState(null);
+  const [accountantProjectsList, setAccountantProjectsList] = useState([]);
+  const [accountantProjectsLoading, setAccountantProjectsLoading] = useState(false);
+  const [selectedAccountantProjectIds, setSelectedAccountantProjectIds] = useState(new Set());
+  const [savingAccountantProjects, setSavingAccountantProjects] = useState(false);
+  const [accountantProjectsMsg, setAccountantProjectsMsg] = useState(null);
 
   const [editingMemberId, setEditingMemberId] = useState(null);
   const [memberProjects, setMemberProjects] = useState([]);
@@ -75,6 +83,7 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
         const projects = data.projects || [];
         setCompanyProjects(projects);
         setSelectedInviteProjectIds(new Set(projects.map((p) => p.id)));
+        setSelectedAccountantInviteProjectIds(new Set(projects.map((p) => p.id)));
       })
       .catch((err) => console.error('Fetch company projects error:', err))
       .finally(() => setProjectsLoading(false));
@@ -82,6 +91,24 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
 
   const toggleInviteProjectId = (id) => {
     setSelectedInviteProjectIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAccountantInviteProjectId = (id) => {
+    setSelectedAccountantInviteProjectIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAccountantProjectId = (id) => {
+    setSelectedAccountantProjectIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -211,6 +238,15 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
   const handleInviteAccountant = async (e) => {
     e.preventDefault();
     if (!accountantEmail.trim()) return;
+    if (projectsLoading) return;
+    // Same belt-and-suspenders guard as handleInvite above — an accountant
+    // invite with no project access is a valid but almost-certainly-not-
+    // what-the-owner-meant state, so require an explicit choice whenever
+    // the company actually has projects to grant.
+    if (companyProjects.length > 0 && selectedAccountantInviteProjectIds.size === 0) {
+      setAccountantMsg({ type: 'error', text: 'Select at least one project to give this accountant access to.' });
+      return;
+    }
     setInvitingAccountant(true);
     setAccountantMsg(null);
     try {
@@ -221,6 +257,7 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
           userId: Number(userId),
           email: accountantEmail.trim(),
           name: accountantName.trim() || null,
+          projectIds: Array.from(selectedAccountantInviteProjectIds),
         }),
       });
       const data = await res.json();
@@ -264,6 +301,55 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
       setMemberProjectsMsg({ type: 'error', text: 'Network error. Try again.' });
     } finally {
       setSavingMemberProjects(false);
+    }
+  };
+
+  const toggleEditAccountant = async (accessId) => {
+    if (editingAccountantId === accessId) {
+      setEditingAccountantId(null);
+      return;
+    }
+    setEditingAccountantId(accessId);
+    setAccountantProjectsMsg(null);
+    setAccountantProjectsLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/invoice-accountants/${accessId}/projects?requesterId=${userId}`);
+      const data = await res.json();
+      if (data.success) {
+        setAccountantProjectsList(data.projects || []);
+        setSelectedAccountantProjectIds(new Set((data.projects || []).filter((p) => p.has_access).map((p) => p.id)));
+      }
+    } catch (err) {
+      console.error('Fetch accountant projects error:', err);
+    } finally {
+      setAccountantProjectsLoading(false);
+    }
+  };
+
+  const handleSaveAccountantProjects = async (accessId) => {
+    setSavingAccountantProjects(true);
+    setAccountantProjectsMsg(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/invoice-accountants/${accessId}/projects`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requesterId: Number(userId),
+          projectIds: Array.from(selectedAccountantProjectIds),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAccountantProjectsMsg({ type: 'error', text: data.detail || 'Could not update access.' });
+        return;
+      }
+      setEditingAccountantId(null);
+      fetchAccountants();
+    } catch (err) {
+      console.error('Update accountant projects error:', err);
+      setAccountantProjectsMsg({ type: 'error', text: 'Network error. Try again.' });
+    } finally {
+      setSavingAccountantProjects(false);
     }
   };
 
@@ -479,12 +565,73 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
           {accountants.length > 0 && (
             <div className="team-member-list" style={{ marginBottom: 20 }}>
               {accountants.map((a) => (
-                <div className="team-member-row" key={a.access_id}>
-                  <div>
-                    <div className="team-member-name">{a.accountant_name || a.accountant_email}</div>
-                    <div className="team-member-email">{a.accountant_email}</div>
+                <div className="team-member-row-wrap" key={a.access_id}>
+                  <div className="team-member-row">
+                    <div>
+                      <div className="team-member-name">{a.accountant_name || a.accountant_email}</div>
+                      <div className="team-member-email">{a.accountant_email}</div>
+                      <div className="profile-readonly-note" style={{ marginTop: 4 }}>
+                        {a.project_names && a.project_names.length > 0
+                          ? `Access: ${a.project_names.join(', ')}`
+                          : 'No project access yet'}
+                      </div>
+                    </div>
+                    <div className="team-member-row-actions">
+                      <span className={`team-role-pill team-role-${a.status}`}>{a.status}</span>
+                      <button
+                        type="button"
+                        className="team-edit-btn"
+                        onClick={() => toggleEditAccountant(a.access_id)}
+                        aria-label="Edit project access"
+                        aria-expanded={editingAccountantId === a.access_id}
+                      >
+                        ✎
+                      </button>
+                    </div>
                   </div>
-                  <span className={`team-role-pill team-role-${a.status}`}>{a.status}</span>
+
+                  {editingAccountantId === a.access_id && (
+                    <div className="team-access-panel">
+                      {accountantProjectsLoading ? (
+                        <p className="profile-readonly-note">Loading project access…</p>
+                      ) : accountantProjectsList.length === 0 ? (
+                        <p className="profile-readonly-note">No projects yet.</p>
+                      ) : (
+                        <div className="team-access-checkbox-list">
+                          {accountantProjectsList.map((p) => (
+                            <label className="team-access-checkbox-item" key={p.id}>
+                              <input
+                                type="checkbox"
+                                checked={selectedAccountantProjectIds.has(p.id)}
+                                onChange={() => toggleAccountantProjectId(p.id)}
+                              />
+                              {p.name}
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                      <div className="profile-save-row">
+                        <button
+                          type="button"
+                          className="profile-save-btn"
+                          disabled={savingAccountantProjects || accountantProjectsLoading}
+                          onClick={() => handleSaveAccountantProjects(a.access_id)}
+                        >
+                          {savingAccountantProjects ? 'Saving…' : 'Save'}
+                        </button>
+                        <button
+                          type="button"
+                          className="team-cancel-btn"
+                          onClick={() => setEditingAccountantId(null)}
+                        >
+                          Cancel
+                        </button>
+                        {accountantProjectsMsg && (
+                          <span className={`profile-msg ${accountantProjectsMsg.type}`}>{accountantProjectsMsg.text}</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -511,9 +658,28 @@ export default function CompanyTeamSection({ userId, isOwner, companyId, trustEn
                 />
               </div>
             </div>
+
+            {companyProjects.length > 0 && (
+              <div className="profile-field" style={{ marginBottom: 16 }}>
+                <label>Give access to:</label>
+                <div className="team-access-checkbox-list">
+                  {companyProjects.map((p) => (
+                    <label className="team-access-checkbox-item" key={p.id}>
+                      <input
+                        type="checkbox"
+                        checked={selectedAccountantInviteProjectIds.has(p.id)}
+                        onChange={() => toggleAccountantInviteProjectId(p.id)}
+                      />
+                      {p.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="profile-save-row">
-              <button type="submit" className="profile-save-btn" disabled={invitingAccountant}>
-                {invitingAccountant ? 'Sending…' : 'Invite accountant'}
+              <button type="submit" className="profile-save-btn" disabled={invitingAccountant || projectsLoading}>
+                {invitingAccountant ? 'Sending…' : projectsLoading ? 'Loading projects…' : 'Invite accountant'}
               </button>
               {accountantMsg && <span className={`profile-msg ${accountantMsg.type}`}>{accountantMsg.text}</span>}
             </div>
