@@ -194,6 +194,8 @@
 }
 
 .tasks-field input, .tasks-field select, .tasks-field textarea {
+  width: 100%;
+  box-sizing: border-box;
   padding: 9px 12px;
   border-radius: var(--radius-sm);
   border: 1px solid #E7E0D3;
@@ -210,6 +212,12 @@
 
 .tasks-form-row .tasks-field {
   flex: 1;
+  /* Without this, a flex item won't shrink below its content's intrinsic
+     width (min-width: auto by default) — a native date input's own
+     minimum width was pushing this row (and the modal around it) wider
+     than the modal's max-width, showing a horizontal scrollbar instead of
+     wrapping the input to fit. */
+  min-width: 0;
 }
 
 .tasks-form-actions {
