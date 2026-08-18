@@ -1,0 +1,36 @@
+-- Migration: 029_legal_consents.sql
+-- Documents the versioned ToS/Privacy Policy consent gate added by
+-- fastapi_backend/db.py's init_db() on every startup (idempotent CREATE
+-- TABLE IF NOT EXISTS — no raw SQL to run here, this is a record of what
+-- that block, plus db.py's _seed_legal_documents, does):
+--
+--   * New table: legal_documents (id, doc_type CHECK IN ('tos','privacy'),
+--     version, content [markdown, placeholder text prefixed with an HTML
+--     comment flagging it as not lawyer-reviewed], effective_date,
+--     is_active, created_at, UNIQUE(doc_type, version)). A partial unique
+--     index enforces at most one is_active = true row per doc_type at a
+--     time. Seeded on startup with one v1.0.0 row per doc_type
+--     (_seed_legal_documents, idempotent via the UNIQUE constraint).
+--   * New table: user_consents (id, user_id FK -> users [ON DELETE
+--     CASCADE], doc_type CHECK IN ('tos','privacy'), version, accepted_at,
+--     ip_address, user_agent nullable) — an append-only acceptance log,
+--     indexed on (user_id, doc_type). A user's current standing for a
+--     doc_type is always "their most recent row for that doc_type,"
+--     resolved fresh in services/legal_helpers.py, never stored/cached.
+--   * New endpoints (routers/legal.py): GET /api/legal/current (active
+--     tos + privacy content), GET /api/legal/consent-status?userId=
+--     (per-doc_type accepted/current version + overall consent_required),
+--     POST /api/legal/accept (records one doc_type's acceptance with the
+--     caller's IP/User-Agent; 400s if the submitted version isn't the
+--     currently active one).
+--   * routers/auth.py's POST /api/auth/login and GET /api/auth/me both
+--     now include a consent_required flag, computed the same way, so the
+--     frontend can gate the app shell (frontend/src/components/
+--     ConsentModal.js) both right after login and on every session
+--     refresh.
+--
+--   * No admin UI for editing legal_documents in this pass — bumping a
+--     version is a direct DB update: insert the new version row with
+--     is_active = true (flipping the old row's is_active to false), which
+--     immediately re-requires consent from every user, no backfill
+--     needed.

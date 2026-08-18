@@ -13,6 +13,7 @@ from routers import documents
 from routers import permits
 from routers import tasks
 from routers import user_preferences
+from routers import legal
 from services import trust_reminders, marketplace_verification
 
 
@@ -70,6 +71,7 @@ app.include_router(documents.router)
 app.include_router(permits.router)
 app.include_router(tasks.router)
 app.include_router(user_preferences.router)
+app.include_router(legal.router)
 
 
 @app.exception_handler(Exception)

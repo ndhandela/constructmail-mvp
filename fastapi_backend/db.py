@@ -1476,6 +1476,41 @@ async def init_db():
             INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active)
             VALUES (true, NULL, 'tasks', 0, 'monthly', true)
             ON CONFLICT (module_name) WHERE is_global = true DO NOTHING;
+
+            -- Versioned Terms of Service / Privacy Policy consent gate
+            -- (migration 029). legal_documents holds one *active* version
+            -- per doc_type at a time — the partial unique index below
+            -- enforces that — and bumping a version is a direct DB update
+            -- for now (no admin UI in this pass): flip the old row's
+            -- is_active to false and insert the new version. user_consents
+            -- is an append-only acceptance log; a user's current standing
+            -- for a doc_type is always "their most recent row for that
+            -- doc_type," resolved fresh in services/legal_helpers.py rather
+            -- than stored/cached, so re-accepting after a version bump just
+            -- adds another row.
+            CREATE TABLE IF NOT EXISTS legal_documents (
+                id SERIAL PRIMARY KEY,
+                doc_type VARCHAR(20) NOT NULL CHECK (doc_type IN ('tos', 'privacy')),
+                version VARCHAR(20) NOT NULL,
+                content TEXT NOT NULL,
+                effective_date TIMESTAMPTZ NOT NULL,
+                is_active BOOLEAN NOT NULL DEFAULT FALSE,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                UNIQUE(doc_type, version)
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS legal_documents_one_active_per_type_idx
+                ON legal_documents (doc_type) WHERE is_active = TRUE;
+
+            CREATE TABLE IF NOT EXISTS user_consents (
+                id SERIAL PRIMARY KEY,
+                user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                doc_type VARCHAR(20) NOT NULL CHECK (doc_type IN ('tos', 'privacy')),
+                version VARCHAR(20) NOT NULL,
+                accepted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                ip_address VARCHAR(45),
+                user_agent TEXT
+            );
+            CREATE INDEX IF NOT EXISTS user_consents_user_id_doc_type_idx ON user_consents (user_id, doc_type);
         """)
 
         await _backfill_clash_project_ids(conn)
@@ -1483,6 +1518,7 @@ async def init_db():
         await _backfill_project_members(conn)
         if not accountant_project_access_existed:
             await _backfill_existing_accountant_project_access(conn)
+        await _seed_legal_documents(conn)
 
     print("✓ Database initialized")
 
@@ -1600,3 +1636,99 @@ async def _backfill_existing_accountant_project_access(conn):
            JOIN projects p ON p.company_id = caa.company_id
            ON CONFLICT (company_accountant_access_id, project_id) DO NOTHING"""
     )
+
+
+_TOS_V1_CONTENT = """<!-- PLACEHOLDER — NOT LAWYER REVIEWED, DO NOT RELY ON THIS -->
+# Terms of Service
+
+**Version 1.0.0**
+
+## 1. Acceptance of Terms
+
+By creating an account or otherwise accessing or using POMAR (the "Service"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.
+
+## 2. The Service Is Provided "As Is"
+
+THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE," WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, OR NON-INFRINGEMENT. WE DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, ERROR-FREE, OR SECURE.
+
+## 3. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT WILL POMAR OR ITS OFFICERS, EMPLOYEES, OR AGENTS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, DATA, OR GOODWILL, ARISING FROM OR RELATED TO YOUR USE OF THE SERVICE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. OUR TOTAL LIABILITY FOR ANY CLAIM ARISING OUT OF OR RELATING TO THESE TERMS OR THE SERVICE WILL NOT EXCEED THE AMOUNT YOU PAID US, IF ANY, IN THE TWELVE MONTHS PRECEDING THE CLAIM.
+
+## 4. Acceptable Use
+
+You agree not to: (a) use the Service for any unlawful purpose; (b) attempt to gain unauthorized access to any account, system, or network related to the Service; (c) upload content that infringes another party's intellectual property or other rights; (d) interfere with or disrupt the integrity or performance of the Service; or (e) use the Service to transmit malicious code.
+
+## 5. Your Account and Content
+
+You are responsible for maintaining the confidentiality of your account credentials and for all activity under your account. You retain ownership of the project data and documents you upload; you grant us a limited license to host, process, and display that content solely to provide the Service to you.
+
+## 6. Termination
+
+We may suspend or terminate your access to the Service at any time, with or without cause or notice, including for violation of these Terms. You may stop using the Service and request account deletion at any time.
+
+## 7. Changes to These Terms
+
+We may update these Terms from time to time. Material changes will require you to accept a new version before continuing to use the Service.
+"""
+
+_PRIVACY_V1_CONTENT = """<!-- PLACEHOLDER — NOT LAWYER REVIEWED, DO NOT RELY ON THIS -->
+# Privacy Policy
+
+**Version 1.0.0**
+
+## 1. Information We Collect
+
+We collect information you provide directly, including your name, email address, company information, and the project data, documents, and files you upload or create while using POMAR (the "Service").
+
+## 2. How We Use Your Information
+
+We use this information to: provide and operate the Service; authenticate your account; enable collaboration features between your team and project participants; power AI-assisted features (such as document analysis and drafting assistance); communicate with you about your account and the Service; and maintain the security and integrity of the Service.
+
+## 3. Third Parties We Share Data With
+
+We use the following third-party service providers to operate the Service, each of which processes a limited set of data on our behalf:
+
+- **Brevo** — for sending transactional and account-related email.
+- **Cloudflare R2** — for storing uploaded documents and files.
+- **Anthropic (Claude API)** — for AI-assisted features, which may process project data and document content you submit to those features.
+
+We do not sell your personal information or your project data to third parties.
+
+## 4. Data Retention
+
+We retain your account and project data for as long as your account is active, or as needed to provide the Service, comply with legal obligations, or resolve disputes.
+
+## 5. Security
+
+We use reasonable administrative, technical, and physical safeguards designed to protect your information. No method of transmission or storage is completely secure, and we cannot guarantee absolute security.
+
+## 6. Changes to This Policy
+
+We may update this Privacy Policy from time to time. Material changes will require you to accept a new version before continuing to use the Service.
+"""
+
+
+async def _seed_legal_documents(conn):
+    """
+    One-time (idempotent via legal_documents' UNIQUE(doc_type, version), so
+    safe to call on every startup) seed of the initial v1.0.0 ToS/Privacy
+    Policy rows for migration 029. This is placeholder legal text — see the
+    HTML comment at the top of each document's content, which markdown
+    rendering never surfaces to end users (frontend/src/components/
+    ConsentModal.js). Bumping a version afterward is a direct DB update
+    (insert the new version row with is_active = true; the partial unique
+    index on legal_documents flips the old row's is_active to false in the
+    same statement) — there's no admin UI for this in this pass, and this
+    seed never runs again once the two v1.0.0 rows exist.
+    """
+    for doc_type, version, content in (
+        ("tos", "1.0.0", _TOS_V1_CONTENT),
+        ("privacy", "1.0.0", _PRIVACY_V1_CONTENT),
+    ):
+        await conn.execute(
+            """INSERT INTO legal_documents (doc_type, version, content, effective_date, is_active)
+               VALUES ($1, $2, $3, NOW(), TRUE)
+               ON CONFLICT (doc_type, version) DO NOTHING""",
+            doc_type, version, content,
+        )

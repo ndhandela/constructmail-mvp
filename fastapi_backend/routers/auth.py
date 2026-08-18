@@ -10,6 +10,7 @@ from services.project_helpers import accept_pending_invites
 from services.access_control import get_active_modules, is_feature_enabled
 from services.magic_link import issue_magic_link
 from services.marketplace_sessions import issue_session_token
+from services.legal_helpers import get_consent_status
 import os
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
@@ -122,6 +123,10 @@ async def get_me(userId: int):
         user["company_region"] = await conn.fetchval(
             "SELECT region FROM companies WHERE id = $1", user["company_id"]
         ) if user["company_id"] else None
+        # Re-checked on every /me call (not just at login) so a returning
+        # session whose consent_status now shows a version mismatch — e.g.
+        # we bumped a version server-side — is also caught on refresh.
+        user["consent_required"] = (await get_consent_status(conn, userId))["consent_required"]
         # Surfaces any pending Vendor Management invites on every /me call
         # (already fetched on every page load) rather than a dedicated
         # endpoint — see routers/project_vendor_access.py.
@@ -215,7 +220,8 @@ async def login(req: LoginRequest):
             company = await conn.fetchrow("SELECT status FROM companies WHERE id = $1", user["company_id"])
             if company and company["status"] != "active":
                 raise HTTPException(403, "Your company account has been deactivated. Contact your POMAR administrator.")
-    return {"success": True, "userId": user["id"]}
+        consent = await get_consent_status(conn, user["id"])
+    return {"success": True, "userId": user["id"], "consent_required": consent["consent_required"]}
 
 
 @router.post("/forgot-password")

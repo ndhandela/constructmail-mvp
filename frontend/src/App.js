@@ -4,6 +4,7 @@ import { UnsavedChangesProvider } from './contexts/UnsavedChangesContext';
 import { InstallPromptProvider } from './contexts/InstallPromptContext';
 import Auth from './modules/shared/auth/Auth';
 import SelectRole from './modules/shared/auth/SelectRole';
+import ConsentModal from './components/ConsentModal';
 import LandingPage from './pages/LandingPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Contact from './pages/Contact';
@@ -530,6 +531,24 @@ function App() {
           onRoleSelected={(role) => {
             setUser((prev) => ({ ...prev, role }));
           }}
+        />
+        <Footer />
+      </>
+    );
+  }
+
+  // ── Consent gate: block until the user accepts the current ToS/Privacy ──
+  // Policy version. Checked here (not just right after login) so a
+  // returning session whose GET /api/auth/me now reports a version
+  // mismatch — e.g. we bumped a version via a direct DB update — is also
+  // caught on refresh/deep-link, same as the SelectRole gate above.
+  if (userId && user && user.role && user.consent_required && PRODUCT_PATHS.includes(path)) {
+    return (
+      <>
+        <Header userId={userId} onLogout={handleLogout} user={user} />
+        <ConsentModal
+          userId={userId}
+          onAccepted={() => setUser((prev) => ({ ...prev, consent_required: false }))}
         />
         <Footer />
       </>
