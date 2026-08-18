@@ -212,14 +212,10 @@
   white-space: nowrap;
 }
 
-.ph-status-pill-ok {
-  background: var(--green-bg);
-  color: var(--green);
-}
-
-.ph-status-pill-warn {
-  background: var(--saffron-soft);
-  color: var(--saffron);
+.ph-overview-phase {
+  font-size: 12px;
+  color: var(--slate);
+  margin: 2px 0 0;
 }
 
 /* ── Per-card signal rows (Permits / Milestones / Invoices) ─────────────── */
@@ -278,37 +274,184 @@
   font-weight: 400;
 }
 
-.ph-overview-stat-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 8px;
+.ph-overview-stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--inkwell);
 }
 
-.ph-overview-stat-label {
+/* ── Budget donut + figures ───────────────────────────────────────────── */
+
+.ph-overview-budget-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.ph-donut {
+  position: relative;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ph-donut-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--inkwell);
+  pointer-events: none;
+}
+
+.ph-overview-budget-figures {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ── Next milestone / last log detail rows ───────────────────────────── */
+
+.ph-overview-detail-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+}
+
+.ph-detail-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.ph-detail-label {
+  color: var(--slate);
+  flex-shrink: 0;
+  width: 82px;
+}
+
+.ph-detail-value {
+  color: var(--inkwell);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ph-detail-sub {
+  color: var(--slate);
+  font-weight: 400;
+}
+
+.ph-detail-row-warn .ph-detail-label,
+.ph-detail-row-warn .ph-detail-sub,
+.ph-detail-row-warn .ph-detail-value {
+  color: var(--brick);
+  font-weight: 600;
+}
+
+.ph-last-log {
+  align-items: flex-start;
+}
+
+.ph-last-log-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  margin-top: 4px;
+}
+
+.ph-last-log-stale .ph-last-log-dot {
+  background: var(--saffron);
+}
+
+.ph-last-log-stale .ph-detail-value,
+.ph-last-log-stale .ph-detail-sub {
+  color: var(--saffron);
+}
+
+/* ── Portfolio summary (KPI tiles + comparison chart) ────────────────── */
+
+.ph-portfolio {
+  margin-bottom: 32px;
+}
+
+.ph-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.ph-kpi-tile {
+  background: white;
+  border: 1px solid rgba(14,27,44,0.1);
+  border-left: 1px solid rgba(14,27,44,0.1);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ph-kpi-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+
+.ph-kpi-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--inkwell);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ph-kpi-sub {
   font-size: 12px;
   color: var(--slate);
 }
 
-.ph-overview-stat-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--inkwell);
+.ph-comparison-chart {
+  background: white;
+  border: 1px solid rgba(14,27,44,0.1);
+  border-left: 1px solid rgba(14,27,44,0.1);
+  padding: 20px 20px 8px;
 }
 
-.ph-overview-progress-track {
-  background: var(--border-light);
-  height: 6px;
-  width: 100%;
+.ph-comparison-chart .ph-category-label {
   margin-bottom: 4px;
 }
 
-.ph-overview-progress-fill {
-  height: 100%;
-  background: var(--saffron);
+.ph-chart-tooltip {
+  background: white;
+  border: 1px solid rgba(14,27,44,0.1);
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--inkwell);
+  box-shadow: 0 4px 12px rgba(14,27,44,0.12);
 }
 
-.ph-overview-progress-fill-over {
-  background: var(--brick);
+.ph-chart-tooltip strong {
+  display: block;
+  margin-bottom: 4px;
+  font-family: 'Space Grotesk', sans-serif;
 }
 

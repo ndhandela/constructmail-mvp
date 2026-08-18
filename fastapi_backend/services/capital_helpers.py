@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Optional
 
 # Shared building block for every committed/spent rollup below. A budget
 # item's committed amount is its own manually-entered committed_amount
@@ -104,6 +105,89 @@ async def get_project_milestone_summary(conn, project_id: int) -> dict:
     if due_soon:
         return {"status": "due_soon", "count": due_soon, "label": f"{due_soon} due this week"}
     return {"status": "on_schedule", "count": 0, "label": "On schedule"}
+
+
+async def get_project_next_milestone(conn, project_id: int) -> Optional[dict]:
+    """The single soonest not-yet-complete milestone across every work item
+    on the project — used by the Projects Overview dashboard card (routers/
+    dashboard.py), distinct from get_project_milestone_summary's aggregate
+    count above (that answers "how many are overdue"; this answers "what's
+    next"). due_soon uses the same 7-day window as
+    get_project_milestone_summary for consistency."""
+    row = await conn.fetchrow(
+        """SELECT m.name, m.target_date
+           FROM milestones m JOIN work_items wi ON wi.id = m.work_item_id
+           WHERE wi.project_id = $1 AND m.status != 'complete'
+           ORDER BY m.target_date ASC NULLS LAST, m.id
+           LIMIT 1""",
+        project_id,
+    )
+    if not row:
+        return None
+    target = row["target_date"]
+    if target is None:
+        return {"name": row["name"], "due_date": None, "overdue": False, "due_soon": False}
+    today = date.today()
+    return {
+        "name": row["name"],
+        "due_date": target.isoformat(),
+        "overdue": target < today,
+        "due_soon": today <= target <= today + timedelta(days=7),
+    }
+
+
+def get_project_progress_pct(work_items: list) -> float:
+    """Budget-dollar-weighted average of work_items.percent_complete —
+    project-wide counterpart to get_spend_by_work_item's per-item "60% done
+    but 85% spent" comparison, reusing its already-fetched work_items list
+    rather than a second query. Falls back to a plain average when no
+    work item has any budget dollars behind it yet (weighting by zero would
+    otherwise divide by zero), and to 0 when there are no work items at
+    all."""
+    if not work_items:
+        return 0.0
+    total_budgeted = sum(wi["budgeted_amount"] for wi in work_items)
+    if total_budgeted <= 0:
+        return round(sum(wi["percent_complete"] for wi in work_items) / len(work_items), 1)
+    weighted = sum(wi["percent_complete"] * wi["budgeted_amount"] for wi in work_items)
+    return round(weighted / total_budgeted, 1)
+
+
+# Percentage points project-wide spend% is allowed to run ahead of
+# project-wide progress% before that alone counts as "at risk" (see
+# classify_project_risk). Matches the 15-point gap frontend/src/modules/
+# capital/capitalUtils.js's progressColor() already used for this exact
+# "60% done but 85% spent" comparison at the single-work-item level
+# (currently unreferenced by any page, but its threshold is the closest
+# prior art in the app, so this reuses its number rather than inventing a
+# new one).
+RISK_PACE_GAP_THRESHOLD_PCT = 15
+
+
+def classify_project_risk(
+    total_budgeted: float,
+    total_actual: float,
+    progress_pct: float,
+    milestone_overdue: bool = False,
+    milestone_due_soon: bool = False,
+) -> str:
+    """Single source of truth for the Projects Overview dashboard's risk
+    status — reused for both the per-project donut color and the portfolio
+    comparison-chart bar color (routers/dashboard.py) so the two visuals
+    never disagree. Priority: actual spend over the approved total always
+    wins ('over_budget') regardless of pace/milestones; short of that, a
+    close/overdue next milestone OR spend running significantly ahead of
+    physical progress both independently mean 'at_risk'; otherwise
+    'on_track'."""
+    if total_budgeted > 0 and total_actual > total_budgeted:
+        return "over_budget"
+
+    spend_pct = (total_actual / total_budgeted * 100) if total_budgeted else 0.0
+    if milestone_overdue or milestone_due_soon:
+        return "at_risk"
+    if (spend_pct - progress_pct) >= RISK_PACE_GAP_THRESHOLD_PCT:
+        return "at_risk"
+    return "on_track"
 
 
 async def get_spend_by_work_item(conn, project_id: int) -> dict:
