@@ -130,30 +130,42 @@ def compute_permit_status(expiration_date: date, expiring_soon_days: int, today:
     return "active"
 
 
+async def get_project_permit_details(conn, project_id: int) -> list:
+    """Every permit on a project with its live-computed status, soonest
+    expiration first — backs both get_project_permit_summary's aggregate
+    rollup below and the Projects Overview "Permits" tooltip (routers/
+    dashboard.py), so both read the same per-permit status computation off
+    one query instead of two. No access gate here: the only callers
+    (routers/capital.py's list_capital_projects, routers/dashboard.py)
+    already scoped the project list to the caller's own project_members
+    rows, which is always the GC's own company (see this module's docstring
+    — a Sub never gets a project_members row, only project_vendor_access)."""
+    rows = await conn.fetch(
+        "SELECT permit_type, expiration_date FROM permits WHERE project_id = $1 ORDER BY expiration_date",
+        project_id,
+    )
+    today = date.today()
+    details = []
+    for row in rows:
+        threshold = await get_expiring_soon_days(conn, project_id, row["permit_type"])
+        details.append({
+            "permit_type": row["permit_type"],
+            "expiration_date": row["expiration_date"].isoformat(),
+            "status": compute_permit_status(row["expiration_date"], threshold, today),
+        })
+    return details
+
+
 async def get_project_permit_summary(conn, project_id: int) -> dict:
     """Lightweight rollup for the Projects Overview dashboard card — counts,
     not just the booleans permit_status_summary above returns, since the
-    card shows a one-line label like '2 expired'. No access gate here: the
-    only caller (routers/capital.py's list_capital_projects) already scoped
-    the project list to the caller's own project_members rows, which is
-    always the GC's own company (see services/permit_helpers module docstring
-    — a Sub never gets a project_members row, only project_vendor_access)."""
-    rows = await conn.fetch(
-        "SELECT permit_type, expiration_date FROM permits WHERE project_id = $1", project_id,
-    )
-    if not rows:
+    card shows a one-line label like '2 expired'."""
+    details = await get_project_permit_details(conn, project_id)
+    if not details:
         return {"status": "all_current", "count": 0, "label": "No permits on file"}
 
-    today = date.today()
-    expired = 0
-    expiring_soon = 0
-    for row in rows:
-        threshold = await get_expiring_soon_days(conn, project_id, row["permit_type"])
-        status = compute_permit_status(row["expiration_date"], threshold, today)
-        if status == "expired":
-            expired += 1
-        elif status == "expiring_soon":
-            expiring_soon += 1
+    expired = sum(1 for d in details if d["status"] == "expired")
+    expiring_soon = sum(1 for d in details if d["status"] == "expiring_soon")
 
     if expired:
         return {"status": "expired", "count": expired, "label": f"{expired} expired"}

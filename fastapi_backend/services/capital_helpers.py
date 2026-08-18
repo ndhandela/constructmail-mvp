@@ -107,33 +107,43 @@ async def get_project_milestone_summary(conn, project_id: int) -> dict:
     return {"status": "on_schedule", "count": 0, "label": "On schedule"}
 
 
-async def get_project_next_milestone(conn, project_id: int) -> Optional[dict]:
-    """The single soonest not-yet-complete milestone across every work item
-    on the project — used by the Projects Overview dashboard card (routers/
-    dashboard.py), distinct from get_project_milestone_summary's aggregate
-    count above (that answers "how many are overdue"; this answers "what's
-    next"). due_soon uses the same 7-day window as
-    get_project_milestone_summary for consistency."""
-    row = await conn.fetchrow(
+async def get_project_upcoming_milestones(conn, project_id: int, limit: int = 3) -> list:
+    """The soonest not-yet-complete milestones across every work item on the
+    project, nearest first — backs both get_project_next_milestone below
+    (limit=1) and the Projects Overview "Milestones" tooltip (routers/
+    dashboard.py, limit=3), so a single query serves both instead of
+    fetching the same rows twice per request. due_soon uses the same 7-day
+    window as get_project_milestone_summary for consistency."""
+    rows = await conn.fetch(
         """SELECT m.name, m.target_date
            FROM milestones m JOIN work_items wi ON wi.id = m.work_item_id
            WHERE wi.project_id = $1 AND m.status != 'complete'
            ORDER BY m.target_date ASC NULLS LAST, m.id
-           LIMIT 1""",
-        project_id,
+           LIMIT $2""",
+        project_id, limit,
     )
-    if not row:
-        return None
-    target = row["target_date"]
-    if target is None:
-        return {"name": row["name"], "due_date": None, "overdue": False, "due_soon": False}
     today = date.today()
-    return {
-        "name": row["name"],
-        "due_date": target.isoformat(),
-        "overdue": target < today,
-        "due_soon": today <= target <= today + timedelta(days=7),
-    }
+    milestones = []
+    for row in rows:
+        target = row["target_date"]
+        if target is None:
+            milestones.append({"name": row["name"], "due_date": None, "overdue": False, "due_soon": False})
+            continue
+        milestones.append({
+            "name": row["name"],
+            "due_date": target.isoformat(),
+            "overdue": target < today,
+            "due_soon": today <= target <= today + timedelta(days=7),
+        })
+    return milestones
+
+
+async def get_project_next_milestone(conn, project_id: int) -> Optional[dict]:
+    """The single soonest not-yet-complete milestone — distinct from
+    get_project_milestone_summary's aggregate count above (that answers
+    "how many are overdue"; this answers "what's next")."""
+    milestones = await get_project_upcoming_milestones(conn, project_id, limit=1)
+    return milestones[0] if milestones else None
 
 
 def get_project_progress_pct(work_items: list) -> float:

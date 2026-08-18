@@ -26,19 +26,24 @@ from services.access_control import require_feature_flag
 
 
 async def get_project_invoice_summary(conn, project_id: int) -> dict:
-    """Lightweight overdue-count rollup for the Projects Overview dashboard
-    card. There's no stored 'overdue' status (STATUSES below is just
-    pending/paid) — overdue is derived at read time as a pending invoice
-    whose due_date has passed, same as any other status shown here."""
-    count = await conn.fetchval(
-        """SELECT COUNT(*) FROM invoices
+    """Overdue count + total dollar amount rollup for the Projects Overview
+    dashboard card and its "Invoices" tooltip (routers/dashboard.py, which
+    wants the dollar total alongside the count). There's no stored
+    'overdue' status (STATUSES below is just pending/paid) — overdue is
+    derived at read time as a pending invoice whose due_date has passed,
+    same as any other status shown here."""
+    row = await conn.fetchrow(
+        """SELECT COUNT(*) AS count, COALESCE(SUM(amount), 0) AS total_amount
+           FROM invoices
            WHERE project_id = $1 AND status = 'pending'
              AND due_date IS NOT NULL AND due_date < CURRENT_DATE""",
         project_id,
     )
+    count = row["count"]
+    total_amount = float(row["total_amount"])
     if count:
-        return {"status": "overdue", "count": count, "label": f"{count} overdue"}
-    return {"status": "none_overdue", "count": 0, "label": "None overdue"}
+        return {"status": "overdue", "count": count, "total_amount": total_amount, "label": f"{count} overdue"}
+    return {"status": "none_overdue", "count": 0, "total_amount": 0.0, "label": "None overdue"}
 
 
 class InvoiceAccess:

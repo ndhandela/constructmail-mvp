@@ -8,6 +8,15 @@
   padding: 48px 24px 80px;
 }
 
+/* Projects Overview specifically gets a wider column than the rest of
+   Project Hub (Project Detail keeps ph-container's 900px) — this page is
+   the one with a multi-tile KPI row + comparison chart + card grid that
+   actually benefits from desktop-monitor width; still just a max-width so
+   it shrinks naturally on laptop/tablet viewports. */
+.ph-container-wide {
+  max-width: 1560px;
+}
+
 .ph-header {
   margin-bottom: 32px;
 }
@@ -167,8 +176,8 @@
 
 .ph-overview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 16px;
 }
 
 .ph-overview-card {
@@ -360,26 +369,15 @@
   font-weight: 600;
 }
 
-.ph-last-log {
-  align-items: flex-start;
-}
-
-.ph-last-log-dot {
-  flex-shrink: 0;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--green);
-  margin-top: 4px;
-}
-
-.ph-last-log-stale .ph-last-log-dot {
-  background: var(--saffron);
-}
-
-.ph-last-log-stale .ph-detail-value,
-.ph-last-log-stale .ph-detail-sub {
+/* Lighter-severity sibling of ph-detail-row-warn (brick/red, for a
+   definite problem like an overdue milestone) — amber, for a signal that's
+   merely worth a glance, like a stale daily log. Same saffron used by
+   ph-signal-warn's icons below and the "At risk" status pill. */
+.ph-detail-row-caution .ph-detail-label,
+.ph-detail-row-caution .ph-detail-sub,
+.ph-detail-row-caution .ph-detail-value {
   color: var(--saffron);
+  font-weight: 600;
 }
 
 /* ── Portfolio summary (KPI tiles + comparison chart) ────────────────── */
@@ -453,5 +451,70 @@
   display: block;
   margin-bottom: 4px;
   font-family: 'Space Grotesk', sans-serif;
+}
+
+/* ── Hover tooltips on Permits/Milestones/Invoices/Last log rows ────────
+   CSS-only (no JS hover state, no new dependency) — the only other
+   "tooltip" precedent in the app is ph-chart-tooltip above (a recharts
+   overlay, mouse-tracked, not hover-CSS), so this borrows its same visual
+   language (white card, hairline border, soft shadow) rather than
+   inventing a new one. Absolutely positioned and hidden via
+   opacity/visibility so it never affects row height or card layout when
+   not hovered. */
+.ph-tooltip-wrap {
+  position: relative;
+}
+
+.ph-tooltip-popover {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  margin-bottom: 6px;
+  min-width: 220px;
+  max-width: 300px;
+  background: white;
+  border: 1px solid rgba(14,27,44,0.1);
+  box-shadow: 0 4px 12px rgba(14,27,44,0.14);
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--inkwell);
+  z-index: 20;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  pointer-events: none;
+}
+
+.ph-tooltip-wrap:hover .ph-tooltip-popover {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.ph-tooltip-popover-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  color: var(--inkwell);
+  margin-bottom: 4px;
+}
+
+.ph-tooltip-popover-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--slate);
+}
+
+.ph-tooltip-popover-row + .ph-tooltip-popover-row {
+  margin-top: 2px;
+}
+
+.ph-tooltip-popover-row span:first-child {
+  color: var(--inkwell);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 

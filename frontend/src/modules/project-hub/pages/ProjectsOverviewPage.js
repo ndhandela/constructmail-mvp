@@ -53,21 +53,92 @@ function formatLogTimestamp(iso) {
   return `${dayDiff} days ago`;
 }
 
+// Lightweight CSS-only hover popover — no tooltip component/library exists
+// anywhere else in the app (checked before building this), so this is the
+// one new small piece of UI, styled to match ph-chart-tooltip's existing
+// look. Renders children unwrapped when there's no content, so a row with
+// nothing extra to show (e.g. a module that's not enabled) never pays for
+// the wrapper or gets a dead hover state.
+function RowTooltip({ content, children }) {
+  if (!content) return children;
+  return (
+    <div className="ph-tooltip-wrap" onClick={(e) => e.stopPropagation()}>
+      {children}
+      <div className="ph-tooltip-popover">{content}</div>
+    </div>
+  );
+}
+
+function permitsTooltip(details) {
+  if (!details) return null;
+  if (details.length === 0) return <div>No permits on file.</div>;
+  return (
+    <>
+      <div className="ph-tooltip-popover-title">Permits</div>
+      {details.map((p, i) => (
+        <div className="ph-tooltip-popover-row" key={i}>
+          <span>{p.permit_type}</span>
+          <span>{p.status === 'expired' ? 'expired' : 'expires'} {formatDueDate(p.expiration_date)}</span>
+        </div>
+      ))}
+    </>
+  );
+}
+
+function milestonesTooltip(milestones) {
+  if (!milestones || milestones.length === 0) return null;
+  return (
+    <>
+      <div className="ph-tooltip-popover-title">Upcoming milestones</div>
+      {milestones.map((m, i) => (
+        <div className="ph-tooltip-popover-row" key={i}>
+          <span>{m.name}</span>
+          <span>{m.due_date ? `${m.overdue ? 'overdue' : 'due'} ${formatDueDate(m.due_date)}` : 'no date'}</span>
+        </div>
+      ))}
+    </>
+  );
+}
+
+function invoicesTooltip(invoicesStatus) {
+  if (!invoicesStatus) return null;
+  if (!invoicesStatus.count) return <div>None overdue.</div>;
+  const plural = invoicesStatus.count === 1 ? 'invoice' : 'invoices';
+  return (
+    <div>
+      {invoicesStatus.count} {plural} overdue, totaling {formatCurrency(invoicesStatus.total_amount)}.
+    </div>
+  );
+}
+
+function lastLogTooltip(lastLog) {
+  if (!lastLog) return null;
+  return (
+    <>
+      <div className="ph-tooltip-popover-title">Daily log entry</div>
+      <div>{lastLog.full_text || 'No details recorded.'}</div>
+      {lastLog.logged_by && <div style={{ marginTop: 6, color: 'var(--slate)' }}>Logged by {lastLog.logged_by}</div>}
+    </>
+  );
+}
+
 // signal is null when the module isn't enabled for the caller's company
 // (routers/capital.py's list_capital_projects) — shown as a neutral, unlit
 // row rather than hidden, so the card's shape stays consistent across
 // projects/companies with different modules turned on.
-function SignalRow({ label, signal, warnStatuses }) {
+function SignalRow({ label, signal, warnStatuses, tooltip }) {
   const isNeutral = !signal;
   const isWarn = signal && warnStatuses.includes(signal.status);
   const tone = isNeutral ? 'neutral' : isWarn ? 'warn' : 'ok';
 
   return (
-    <div className={`ph-signal-row ph-signal-${tone}`}>
-      <span className="ph-signal-icon">{isNeutral ? '—' : isWarn ? WARN_ICON : CHECK_ICON}</span>
-      <span className="ph-signal-label">{label}</span>
-      <span className="ph-signal-text">{isNeutral ? 'Not enabled' : signal.label}</span>
-    </div>
+    <RowTooltip content={tooltip}>
+      <div className={`ph-signal-row ph-signal-${tone}`}>
+        <span className="ph-signal-icon">{isNeutral ? '—' : isWarn ? WARN_ICON : CHECK_ICON}</span>
+        <span className="ph-signal-label">{label}</span>
+        <span className="ph-signal-text">{isNeutral ? 'Not enabled' : signal.label}</span>
+      </div>
+    </RowTooltip>
   );
 }
 
@@ -153,23 +224,40 @@ function ProjectCard({ project, summary, dash, loading, onOpen }) {
               )}
             </div>
 
-            <div className={`ph-detail-row ph-last-log${logStale ? ' ph-last-log-stale' : ''}`}>
-              <span className="ph-last-log-dot" />
-              {lastLog ? (
-                <span className="ph-detail-value">
-                  <span className="ph-detail-sub">{formatLogTimestamp(lastLog.logged_at)}</span>
-                  {lastLog.excerpt && ` — ${lastLog.excerpt}`}
-                </span>
-              ) : (
-                <span className="ph-detail-value ph-muted">No daily logs yet</span>
-              )}
-            </div>
+            <RowTooltip content={lastLogTooltip(lastLog)}>
+              <div className={`ph-detail-row${logStale ? ' ph-detail-row-caution' : ''}`}>
+                <span className="ph-detail-label">Last log</span>
+                {lastLog ? (
+                  <span className="ph-detail-value">
+                    {formatLogTimestamp(lastLog.logged_at)}
+                    {lastLog.excerpt && <span className="ph-detail-sub"> — "{lastLog.excerpt}"</span>}
+                  </span>
+                ) : (
+                  <span className="ph-detail-value ph-muted">No daily logs yet</span>
+                )}
+              </div>
+            </RowTooltip>
           </div>
 
           <div className="ph-overview-signals">
-            <SignalRow label="Permits" signal={summary?.permits_status} warnStatuses={['expiring_soon', 'expired']} />
-            <SignalRow label="Milestones" signal={summary?.milestones_status} warnStatuses={['due_soon', 'overdue']} />
-            <SignalRow label="Invoices" signal={summary?.invoices_status} warnStatuses={['overdue']} />
+            <SignalRow
+              label="Permits"
+              signal={summary?.permits_status}
+              warnStatuses={['expiring_soon', 'expired']}
+              tooltip={permitsTooltip(dash?.permits_detail)}
+            />
+            <SignalRow
+              label="Milestones"
+              signal={summary?.milestones_status}
+              warnStatuses={['due_soon', 'overdue']}
+              tooltip={milestonesTooltip(dash?.upcoming_milestones)}
+            />
+            <SignalRow
+              label="Invoices"
+              signal={summary?.invoices_status}
+              warnStatuses={['overdue']}
+              tooltip={invoicesTooltip(summary?.invoices_status)}
+            />
           </div>
         </>
       )}
@@ -312,7 +400,7 @@ export default function ProjectsOverviewPage({ user, userId }) {
   );
 
   return (
-    <div className="ph-container">
+    <div className="ph-container ph-container-wide">
       <div className="ph-header">
         <div className="ph-badge">DASHBOARD</div>
         <h1 className="ph-title">Your projects</h1>
