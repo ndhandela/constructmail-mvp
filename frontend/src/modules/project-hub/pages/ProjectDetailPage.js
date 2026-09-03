@@ -218,6 +218,12 @@ export default function ProjectDetailPage({ user, userId }) {
             alert={permitAlert?.has_expired ? 'expired' : permitAlert?.has_expiring_soon ? 'expiring_soon' : null}
           />
           <Card label="Documents" description="Project documents" appKey="documents" pinnedApps={pinnedApps} onTogglePin={togglePin} onOpen={() => { window.location.href = '/documents'; }} />
+          {/* India-only, same fully-hidden (not locked/upgrade) gating as
+              Dashboard.js/Sidebar.js — a non-IN org should never learn
+              Trust exists. */}
+          {user?.company_region === 'IN' && user?.active_modules?.trust && (
+            <Card label="Trust" description="RERA compliance — QPR drafts and buyer disclosure" appKey="trust" pinnedApps={pinnedApps} onTogglePin={togglePin} onOpen={() => { window.location.href = '/trust'; }} />
+          )}
         </div>
       </div>
     </div>
