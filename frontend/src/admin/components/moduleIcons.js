@@ -97,6 +97,20 @@ export const MODULE_ICONS = {
       <line x1="14" y1="17" x2="21" y2="17" />
     </svg>
   ),
+  orders: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+      <path d="M3 6h18" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
+    </svg>
+  ),
+  stock: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 8 12 3 3 8l9 5 9-5z" />
+      <path d="M3 8v8l9 5 9-5V8" />
+      <path d="M12 13v8" />
+    </svg>
+  ),
 };
 
 // Canonical module list for the admin flags UI. `gated: false` marks
@@ -117,6 +131,8 @@ export const MODULE_DEFS = [
   { key: 'documents', label: 'Documents', gated: true },
   { key: 'permits', label: 'Permit Tracker', gated: true },
   { key: 'tasks', label: 'Task Tracker', gated: true },
+  { key: 'orders', label: 'Orders', gated: true },
+  { key: 'stock', label: 'Stock', gated: true },
   { key: 'new_nav', label: 'New Left Nav', gated: true, note: 'Project-tracking redesign rollout' },
 ];
 
