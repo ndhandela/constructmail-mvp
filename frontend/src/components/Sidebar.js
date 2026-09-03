@@ -134,6 +134,20 @@ const ICONS = {
       <rect x="3" y="16" width="7" height="5" rx="1" />
     </svg>
   ),
+  orders: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+      <path d="M3 6h18" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
+    </svg>
+  ),
+  stock: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 8 12 3 3 8l9 5 9-5z" />
+      <path d="M3 8v8l9 5 9-5V8" />
+      <path d="M12 13v8" />
+    </svg>
+  ),
   project: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
@@ -172,6 +186,8 @@ export const ACCOUNT_LEVEL_ITEMS = [
   { key: 'documents', path: '/documents', label: 'Documents' },
   { key: 'permits', path: '/permits', label: 'Permits' },
   { key: 'tasks', path: '/tasks', label: 'Tasks' },
+  { key: 'orders', path: '/orders', label: 'Orders' },
+  { key: 'stock', path: '/stock', label: 'Stock' },
 ];
 
 // The only modules a lead account (account_status === 'lead' — a
@@ -200,6 +216,12 @@ const GLOBAL_TOOL_ITEMS = [
   { key: 'mail', path: '/mail', label: 'Mail' },
   { key: 'clash', path: '/clash', label: 'Clash' },
   { key: 'marketplace', path: '/marketplace', label: 'Marketplace' },
+  // Orders + Stock follow Marketplace's always-visible-but-locked pattern —
+  // shown here regardless of the company's flags; the page itself renders a
+  // ModuleLockedNotice when 'orders' / 'stock' isn't enabled. The two are
+  // independent: either, both, or neither can be on.
+  { key: 'orders', path: '/orders', label: 'Orders' },
+  { key: 'stock', path: '/stock', label: 'Stock' },
 ];
 
 // Tier 3: user-pinned favorites (frontend/src/modules/project-hub — pinned

@@ -43,6 +43,8 @@ import AccountantInvoiceView from './modules/invoices/pages/AccountantInvoiceVie
 import DocumentsApp from './modules/documents/pages/DocumentsApp';
 import PermitTrackerApp from './modules/permits/pages/PermitTrackerApp';
 import TaskTrackerApp from './modules/tasks/pages/TaskTrackerApp';
+import OrdersApp from './modules/orders/pages/OrdersApp';
+import StockApp from './modules/stock/pages/StockApp';
 import ProjectsOverviewPage from './modules/project-hub/pages/ProjectsOverviewPage';
 import ProjectDetailPage from './modules/project-hub/pages/ProjectDetailPage';
 
@@ -57,7 +59,7 @@ import './styles/components.css';
 import './App.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/company-settings', '/trust', '/capital', '/daily-logs', '/invoices', '/documents', '/permits', '/tasks', '/work-items', '/projects-overview', '/project'];
+const PRODUCT_PATHS = ['/clash', '/mail', '/dashboard', '/vendors', '/connect', '/marketplace', '/profile', '/company-settings', '/trust', '/capital', '/daily-logs', '/invoices', '/documents', '/permits', '/tasks', '/orders', '/stock', '/work-items', '/projects-overview', '/project'];
 
 // Every public route that renders its own <title>/<meta description>/
 // <link rel="canonical"> (see each page component). React 19 hoists
@@ -167,6 +169,8 @@ function App() {
           else if (path === '/documents') setCurrentProduct('documents');
           else if (path === '/permits') setCurrentProduct('permits');
           else if (path === '/tasks') setCurrentProduct('tasks');
+          else if (path === '/orders') setCurrentProduct('orders');
+          else if (path === '/stock') setCurrentProduct('stock');
           else if (path === '/work-items') setCurrentProduct('work-items');
           else if (path === '/projects-overview') setCurrentProduct('projects-overview');
           else if (path === '/project') setCurrentProduct('project');
@@ -217,6 +221,8 @@ function App() {
       if (path === '/documents') setCurrentProduct('documents');
       if (path === '/permits') setCurrentProduct('permits');
       if (path === '/tasks') setCurrentProduct('tasks');
+      if (path === '/orders') setCurrentProduct('orders');
+      if (path === '/stock') setCurrentProduct('stock');
       if (path === '/work-items') setCurrentProduct('work-items');
       if (path === '/projects-overview') setCurrentProduct('projects-overview');
       if (path === '/project') setCurrentProduct('project');
@@ -238,7 +244,17 @@ function App() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/me?userId=${uid}`, { signal: controller.signal });
+      let response;
+      try {
+        response = await fetch(`${API_BASE_URL}/api/auth/me?userId=${uid}`, { signal: controller.signal });
+      } catch (abortErr) {
+        // A spurious client-side abort — the double-invoked effect under
+        // StrictMode, or a browser coalescing two identical in-flight GETs —
+        // must not tear down a valid session. Retry once, unsignalled,
+        // before falling through to the logout path below.
+        if (abortErr?.name !== 'AbortError') throw abortErr;
+        response = await fetch(`${API_BASE_URL}/api/auth/me?userId=${uid}`);
+      }
       if (!response.ok) throw new Error(`GET /api/auth/me failed: ${response.status}`);
       const data = await response.json();
       setUser(data);
@@ -826,6 +842,38 @@ if (currentProduct === 'dashboard' || path === '/dashboard') {
         <AppLayout userId={userId} onLogout={handleLogout} user={user}>
           <ProjectGate userId={userId} user={user}>
             <TaskTrackerApp user={user} userId={userId} />
+          </ProjectGate>
+        </AppLayout>
+      </ProjectProvider>
+    );
+  }
+
+  // ── POMAR Orders ────────────────────────────────────────────────────
+  // Same wiring as Capital Tracker/Daily Logs/Invoice Tracker — orders hang
+  // off the generic projects table, so it uses the shared header/sidebar
+  // project switcher and ProjectGate, gated only by the 'orders' feature
+  // flag. Independent of both 'capital' and 'stock'.
+  if (currentProduct === 'orders' || path === '/orders') {
+    return (
+      <ProjectProvider userId={userId}>
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <ProjectGate userId={userId} user={user}>
+            <OrdersApp user={user} userId={userId} />
+          </ProjectGate>
+        </AppLayout>
+      </ProjectProvider>
+    );
+  }
+
+  // ── POMAR Stock ─────────────────────────────────────────────────────
+  // Same wiring, gated only by the 'stock' feature flag. Independent of
+  // both 'capital' and 'orders'.
+  if (currentProduct === 'stock' || path === '/stock') {
+    return (
+      <ProjectProvider userId={userId}>
+        <AppLayout userId={userId} onLogout={handleLogout} user={user}>
+          <ProjectGate userId={userId} user={user}>
+            <StockApp user={user} userId={userId} />
           </ProjectGate>
         </AppLayout>
       </ProjectProvider>

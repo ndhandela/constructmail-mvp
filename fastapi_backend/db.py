@@ -1511,6 +1511,126 @@ async def init_db():
                 user_agent TEXT
             );
             CREATE INDEX IF NOT EXISTS user_consents_user_id_doc_type_idx ON user_consents (user_id, doc_type);
+
+            -- POMAR Orders (procurement) + Stock (inventory) — migration 030.
+            -- Two INDEPENDENTLY feature-flagged modules ('orders' / 'stock'),
+            -- each usable with the other disabled (a company can have either,
+            -- both, or neither). The ONLY point of contact between them is
+            -- services/receipt_integration.record_receipt(), invoked when a
+            -- vendor order is marked received: if the company has 'stock'
+            -- enabled AND an order line's item_description matches an
+            -- inventory_items.name on the same project, it writes one 'in'
+            -- inventory_transaction per match (source_order_id set) and hands
+            -- any unmatched lines back to the caller. There is deliberately no
+            -- shared table, endpoint, or UI component beyond that one call.
+            --
+            -- Nothing derived is stored:
+            --   * An order's total is always SUM(order_line_items.line_total)
+            --     for that order (services/order_helpers.get_order_total) —
+            --     there is no orders.total column. (line_total itself IS
+            --     stored per line, = qty * unit_cost, recomputed on write.)
+            --   * An inventory item's on-hand qty is always computed by
+            --     summing inventory_transactions (services/stock_helpers.
+            --     ON_HAND_SQL) — there is no current-stock column.
+            --
+            -- The committed-vs-actual budget split, by contrast, IS a stored
+            -- mutation of budget_items (unlike Invoice Tracker's read-time CTE
+            -- fold-in): a vendor order in 'draft'/'sent' adds its total to the
+            -- linked budget_items.committed_amount; marking it 'received' moves
+            -- that total out of committed_amount and into actual_spent; a
+            -- direct purchase adds straight to actual_spent when logged and
+            -- never touches committed_amount. Every order create/update/delete
+            -- reverses its previous budget footprint and applies the new one
+            -- (services/order_helpers.apply_budget_delta), keeping the two
+            -- columns consistent without a nightly reconcile.
+            CREATE TABLE IF NOT EXISTS orders (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                work_item_id INT NOT NULL REFERENCES work_items(id) ON DELETE CASCADE,
+                -- Free-text strings, NOT a DB enum (deliberately — see the
+                -- module spec): vendor orders flow draft -> sent -> received
+                -- -> closed, direct purchases flow draft -> logged. Validated
+                -- in routers/orders.py, not here, so the set can grow without
+                -- a migration.
+                order_type VARCHAR(20) NOT NULL DEFAULT 'vendor',
+                vendor_id INT REFERENCES vendors(id) ON DELETE SET NULL,
+                vendor_name_freetext VARCHAR(255),
+                purchased_by_user_id INT REFERENCES users(id) ON DELETE SET NULL,
+                purchase_date DATE,
+                status VARCHAR(20) NOT NULL DEFAULT 'draft',
+                budget_item_id INT REFERENCES budget_items(id) ON DELETE SET NULL,
+                notes TEXT,
+                attachment_url TEXT,
+                created_by INT NOT NULL REFERENCES users(id),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS orders_project_id_idx ON orders (project_id);
+            CREATE INDEX IF NOT EXISTS orders_work_item_id_idx ON orders (work_item_id);
+            CREATE INDEX IF NOT EXISTS orders_vendor_id_idx ON orders (vendor_id);
+            CREATE INDEX IF NOT EXISTS orders_budget_item_id_idx ON orders (budget_item_id);
+
+            CREATE TABLE IF NOT EXISTS order_line_items (
+                id SERIAL PRIMARY KEY,
+                order_id INT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+                item_description VARCHAR(255) NOT NULL,
+                qty NUMERIC(14,2) NOT NULL DEFAULT 0,
+                unit VARCHAR(50),
+                unit_cost NUMERIC(14,2) NOT NULL DEFAULT 0,
+                line_total NUMERIC(16,2) NOT NULL DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS order_line_items_order_id_idx ON order_line_items (order_id);
+
+            -- Project-scoped, matching how Capital Tracker's `categories` are
+            -- scoped (categories.project_id) — the module spec's stated tie
+            -- breaker. Nothing here is company-level.
+            CREATE TABLE IF NOT EXISTS inventory_items (
+                id SERIAL PRIMARY KEY,
+                project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                name VARCHAR(255) NOT NULL,
+                unit VARCHAR(50),
+                reorder_threshold NUMERIC(14,2) NOT NULL DEFAULT 0,
+                reorder_qty NUMERIC(14,2) NOT NULL DEFAULT 0,
+                last_known_unit_cost NUMERIC(14,2) NOT NULL DEFAULT 0,
+                created_by INT NOT NULL REFERENCES users(id),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS inventory_items_project_id_idx ON inventory_items (project_id);
+
+            -- On-hand is SUM over this ledger, never a stored column:
+            -- 'in' adds qty, 'out' subtracts qty, 'adjustment' adds qty as
+            -- signed (a correction of -3 is stored as qty = -3). source_order_id
+            -- is set only for the rows record_receipt() writes from a received
+            -- order; every manual usage / starting-stock entry leaves it NULL.
+            CREATE TABLE IF NOT EXISTS inventory_transactions (
+                id SERIAL PRIMARY KEY,
+                inventory_item_id INT NOT NULL REFERENCES inventory_items(id) ON DELETE CASCADE,
+                type VARCHAR(20) NOT NULL,
+                qty NUMERIC(14,2) NOT NULL DEFAULT 0,
+                source_order_id INT REFERENCES orders(id) ON DELETE SET NULL,
+                logged_by_user_id INT REFERENCES users(id) ON DELETE SET NULL,
+                notes TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS inventory_transactions_item_id_idx ON inventory_transactions (inventory_item_id);
+            CREATE INDEX IF NOT EXISTS inventory_transactions_source_order_id_idx ON inventory_transactions (source_order_id);
+
+            -- Seeds global 'orders' / 'stock' flag rows (defaulting OFF), same
+            -- pattern as every other module — see the 'capital' seed above.
+            INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
+            VALUES (NULL, 'orders', 'Orders', 'orders', false, true)
+            ON CONFLICT (feature_key) WHERE is_global = true DO NOTHING;
+            INSERT INTO feature_flags (company_id, feature_key, feature_name, module, is_enabled, is_global)
+            VALUES (NULL, 'stock', 'Stock', 'stock', false, true)
+            ON CONFLICT (feature_key) WHERE is_global = true DO NOTHING;
+
+            INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active)
+            VALUES (true, NULL, 'orders', 0, 'monthly', true)
+            ON CONFLICT (module_name) WHERE is_global = true DO NOTHING;
+            INSERT INTO module_pricing (is_global, company_id, module_name, monthly_price, billing_cycle, is_active)
+            VALUES (true, NULL, 'stock', 0, 'monthly', true)
+            ON CONFLICT (module_name) WHERE is_global = true DO NOTHING;
         """)
 
         await _backfill_clash_project_ids(conn)

@@ -12,6 +12,8 @@ from routers import invoices, invoice_accountant_access
 from routers import documents
 from routers import permits
 from routers import tasks
+from routers import orders as orders_router
+from routers import stock as stock_router
 from routers import user_preferences
 from routers import legal
 from routers import dashboard
@@ -71,6 +73,8 @@ app.include_router(invoice_accountant_access.router)
 app.include_router(documents.router)
 app.include_router(permits.router)
 app.include_router(tasks.router)
+app.include_router(orders_router.router)
+app.include_router(stock_router.router)
 app.include_router(user_preferences.router)
 app.include_router(legal.router)
 app.include_router(dashboard.router)
