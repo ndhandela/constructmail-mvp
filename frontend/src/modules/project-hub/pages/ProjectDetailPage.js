@@ -185,6 +185,7 @@ export default function ProjectDetailPage({ user, userId }) {
         <div className="ph-grid">
           <Card label="Budget" description="Budget vs. actual and spend by category" appKey="budget" pinnedApps={pinnedApps} onTogglePin={togglePin} onOpen={() => setActiveView('budget')} />
           <Card label="Invoices" description="Track invoices for this project" appKey="invoices" pinnedApps={pinnedApps} onTogglePin={togglePin} onOpen={() => { window.location.href = '/invoices'; }} />
+          <Card label="Orders" description="Vendor orders and direct purchases against the budget" appKey="orders" pinnedApps={pinnedApps} onTogglePin={togglePin} onOpen={() => { window.location.href = '/orders'; }} />
         </div>
       </div>
 
@@ -192,6 +193,7 @@ export default function ProjectDetailPage({ user, userId }) {
         <div className="ph-category-label">Field</div>
         <div className="ph-grid">
           <Card label="Daily logs" description="Crew, weather, delays, and site photos" appKey="daily_logs" pinnedApps={pinnedApps} onTogglePin={togglePin} onOpen={() => { window.location.href = '/daily-logs'; }} />
+          <Card label="Stock" description="On-site inventory with reorder alerts" appKey="stock" pinnedApps={pinnedApps} onTogglePin={togglePin} onOpen={() => { window.location.href = '/stock'; }} />
           {owner && (
             <Card label="Project - Subs" description="Subs invited to log site work on this project" appKey="project_subs" pinnedApps={pinnedApps} onTogglePin={togglePin} onOpen={() => setActiveView('project-subs')} />
           )}

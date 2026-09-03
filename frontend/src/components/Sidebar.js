@@ -240,6 +240,8 @@ export const PINNED_APP_CONFIG = {
   documents: { icon: 'documents', label: 'Documents', path: '/documents' },
   permits: { icon: 'permits', label: 'Permits', path: '/permits' },
   tasks: { icon: 'tasks', label: 'Tasks', path: '/tasks' },
+  orders: { icon: 'orders', label: 'Orders', path: '/orders' },
+  stock: { icon: 'stock', label: 'Stock', path: '/stock' },
 };
 
 export { ICONS };
